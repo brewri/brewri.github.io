@@ -1,0 +1,2618 @@
+<!DOCTYPE html><html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Brewri</title>	
+	<link rel="stylesheet" type="text/css" href="main.css">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;700&display=swap"> 
+	
+	<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+	<meta content="utf-8" http-equiv="encoding">
+	<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+	<meta http-equiv="Pragma" content="no-cache">
+	<meta http-equiv="Expires" content="0">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">	
+</head>
+
+<body>
+	<strong id="msg" class="msg" style="display:none;"></strong>
+	
+	<div class="containerDiv">
+	
+	<div id="firstDiv" class="firstDiv" style="background-color:hsl(0, 0%, 80%)">		
+		<div id="profilePanel" class="objectWrapper" style="margin-bottom:10px; margin-top:30px" onclick="openSubAccordion(this)">
+			<div class="clickFlash" style="display:flex; justify-content:space-between; margin:0px 10px; align-items:baseline" onclick="toggleSubAccordion(this)">
+				<div id="displayName" style="text-overflow:ellipsis; overflow:hidden; font-size:1.1em; white-space:nowrap; font-weight:bold; flex-grow:1" class="flash">Guest</div>
+				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
+			</div>
+
+			<div id="editPanel" class="accordion" style="max-height:0px; margin:0px 10px">
+				<div style="text-align:center; margin-top:20px">
+					<button tabindex="-1" class="left" onclick="generateSeed()">Generate PIN</button><button id="current" class="center" tabindex="-1" onclick="showCurrent()" autocomplete="off" disabled>Current PIN</button><button id="clear" class="right" onclick="if (confirm('Log out of the current account? (Have you saved your account PIN elsewhere?!)')) clickClearSeed();" autocomplete="off" disabled>Log Out</button>
+				</div>
+				
+				<div style="display:flex; justify-content:space-between; margin-top:15px; margin-bottom:10px">
+					<input id="seed" placeholder="PIN (secret - save securely)..." style="padding-right:30px; flex-grow:1; flex-basis:20px;" type="password" autocomplete="off" onclick="this.select()" oninput="importSeed();">
+					<button  tabindex="-1" class="close-icon" onclick="closeCopy(this.previousElementSibling)"></button>			
+					<button id="show" tabindex="-1" style="font-size:0.85em; margin-left:10px" onclick="toggleVisibility()">Show</button>
+				</div>
+			</div>	
+		</div>	
+		
+		<div id="subPanel" class="objectWrapper" style="padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
+			<div class="clickFlash leftRightBase" style="margin-top:0px; margin:0px 10px" onclick="toggleSubAccordion(this)">
+				<span style="font-size:0.9em; color:#888; margin-left:0px">Subscriptions</span>
+			</div>
+			<div class="accordion">
+				<ul id="subscriptions" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:10px;"></ul>
+			</div>
+		</div>
+
+		<div class="objectWrapper" style="padding-right:0px; margin-bottom:10px; overflow:hidden; display:flex; flex-direction:column" onclick="openSubAccordion(this)">
+			<div class="clickFlash leftRightBase" style="margin-top:0px; margin:0px 10px" onclick="toggleSubAccordion(this)">
+				<span style="font-size:0.9em; color:#888; margin-left:0px">Library</span>
+			</div>
+			<div class="accordion">
+				<div id="libraryPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- Reading list (log in above to persist) -</div>
+				<ul id="library" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:10px"></ul>
+			</div>
+		</div>
+		
+	</div>
+	
+	
+	<div id="secondDiv" class="secondDiv">
+	
+		<div style="margin-top:25px; padding-top:15px; padding-bottom:10px; margin-bottom:40px; display:flex; position:sticky; top:-1px; background-color:white; opacity:0.93; z-index:2" >
+			<button id="browseButton" style="min-width:fit-content" class="left active" onclick="loadPanel('browse', true)" title="Alt + 1">Browse</button><button id="readButton" style="min-width:fit-content" class="center" onclick="loadPanel('read', true)" autocomplete="off" title="Alt + 2">Read</button><button id="postButton" style="min-width:fit-content" class="right" onclick="loadPanel('post', true)" autocomplete="off" title="Alt + 3">Write</button>
+		
+			<div id="popularTags" class="hideScroll" style="margin-left:40px; overflow:auto; display:flex; align-items:center; font-size:0.85em"></div>
+		</div>
+		
+		<div id="browse" style="margin-bottom:80px; max-width:1200px">			
+			<div>
+				<span style="font-weight:bold; font-size:1.1em; cursor:pointer;" onclick="queryBrowse()" id="browseHeading"></span>
+				<span id="loadingMsg" style="margin-left:10px; font-style:italic; display:none">Loading...</span>
+			</div>
+			<div style="display:flex">
+				<div style="flex-basis:1px; flex-grow:5; margin-right:50px;">
+					<ul id="discovery"></ul>
+				</div>
+				
+				<div style="flex-basis:1px; flex-grow:4; margin-right:20px; overflow:hidden">					
+					<div id="bioPreview" style="overflow:hidden">
+						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:40px"></div>
+						
+						<div style="display:flex; justify-content:right;">
+							<button id="info" onclick="openBio()" style="font-size:0.85em">Edit Profile</button>
+							<div id="bioLine" style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>						
+							<button id="subscribe" onclick="subscribeHandler()" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>
+							&nbsp;<button id="sponsor" onclick="sponsorHandler(this)" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>	
+						</div>
+				
+						<div id="bioSponsor" style="margin-top:30px; display:none;">
+							<div id="theirFunName" style="margin-bottom:10px; font-weight:600"> - </div>					
+							<div style="font-size:0.85em; color:#888">Unique public address</div>
+							<div class='address' id="theirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
+							<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
+							<span id="theirThreshold" style="margin:5px 0px 15px 10px;">&nbsp;-&nbsp;</span>&nbsp;XNO or more
+							<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
+							<input id="sponsorInput" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
+							<button id="sendButton" onclick="sendMoney(this)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
+							</div>
+						</div>
+					</div>
+					
+					<div id="bioEditor" style="display:none">					
+						<input id="bio-name" style="width:100%; margin-bottom:10px; margin-top:30px; font-size:1em; font-weight:600" autocomplete="off" placeholder="Public display name..." type="text" onkeyup="if (event.keyCode == 27) this.value = '';">
+
+						<input class="colorslider" id="colorslider" type="range" min="0" max="360" step="1" oninput="color(this)" value="0" autocomplete="off"/>														
+														
+						<div id="bioBlocks" style="margin-top:40px; margin-bottom:40px"></div>
+						<div style="font-size:0.85em; margin-top:20px; color:#888">Premium sponsorship • 30 days</div>
+						<div style="display:flex; justify-content:right; margin-top:5px; align-items:baseline">
+						<input id="inputPrice" onkeyup="" onkeydown="" autocomplete="off" placeholder="0.00" onblur="prepTwoDigit(this)" style="margin-left:20px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0"><span style="font-size:0.9em">XNO</span>
+						</div>
+						
+						<button onclick="setData()" style="margin-top:30px">Update</button>
+						<button onclick="closeBio()">Cancel</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div id="post" style="display:none; margin-bottom:80px; max-width:1200px;">
+		
+			<div style="flex-basis:1px; flex-grow:2; margin-right:50px; position:relative; margin-top:10px;">
+			
+				<div style="display:flex; justify-content:center; position:absolute; right:0px; top:-20px;">
+					<button id="editButton" class="left active" onclick="showEditor()" title="Alt + Q">Editor</button><button id="previewButton" class="right" style="margin-left:4px" onclick="showPreview()" title="Alt + W">Preview</button>
+				</div>
+				
+				<div id="postEditor" style="margin-bottom:40px; margin-top:30px"></div>
+				<div id="postPreview" style="white-space:pre-wrap; margin-bottom:40px; margin-top:30px; display:none"></div>
+				
+			</div>
+			
+			<div style="flex-basis:1px; flex-grow:1; max-width:360px; overflow:hidden">
+				<input id="postTitle" style="font-weight:bold; font-size:1.1em; width:100%; margin-bottom:10px;" autocomplete="off" placeholder="Title (required)..." type="text" onkeyup="if (event.keyCode == 27) this.value = '';">
+				<div id="editid" style="font-size:0.85em; margin-left:10px; display:none">
+					<span id="creationEdit"></span><span id="modificationEdit"></span>
+				</div>
+				
+				<div id="editTags" style="font-size:0.85em; margin-top:15px"></div>
+				<div style="display:flex; margin-top:10px">
+					<input id="set-tag" style="padding-right:30px; flex-grow:1; margin-right:10px" autocomplete="off" placeHolder="tag (lowercase)..." type="text" onkeyup="if (event.keyCode == 27) this.value = ''; if (event.keyCode == 13) addTag()" onblur="addTag()" autocapitalize="off">
+					<button tabindex="-1" style="font-size:0.85em; min-width:fit-content" onclick="addTag()">Add</button>
+				</div>
+						
+				<div style="display:flex; margin-top:30px; justify-content:space-between; align-items:baseline">
+					<span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; font-size:0.9em; font-weight:bold">(none)</span>
+				</div>
+				
+				<div style="margin-top:5px; display:flex; justify-content:space-between; flex-grow:1">
+					<input placeHolder="Previous post link..." id="set-prev" autocomplete="off"
+						   style="padding-right:30px; flex-grow:1; width:1px" type="text" autocapitalize="off" onkeyup="if (event.keyCode == 27) this.value = ''; checkTitle(this);" oninput="checkTitle(this);">
+					<button tabindex="-1" class="close-icon" onclick="closeCopy(this.previousElementSibling)"></button>
+					<button id="recip-prev" onclick="toggle(this)" tabindex="-1" style="font-size:0.85em; min-width:fit-content; margin-left:10px" disabled>Reciprocate</button>
+				</div>
+				
+				<div style="display:flex; margin-top:30px; justify-content:space-between; align-items:baseline">
+					<span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap; font-size:0.9em; font-weight:bold">(none)</span>
+				</div>
+				
+				<div style="margin-top:5px; display:flex; justify-content:space-between; flex-grow:1">
+					<input placeHolder="Next post link..." id="set-next" autocomplete="off"
+						   style="padding-right:30px; flex-grow:1; width:1px" type="text" autocapitalize="off" onkeyup="if (event.keyCode == 27) this.value = ''; checkTitle(this);"oninput="checkTitle(this);">
+					<button tabindex="-1" class="close-icon" onclick="closeCopy(this.previousElementSibling)"></button>
+					<button id="recip-next" onclick="toggle(this)" tabindex="-1" style="font-size:0.85em; min-width:fit-content; margin-left:10px" disabled>Reciprocate</button>
+				</div>
+					
+				
+				<div style="margin-top:50px; display:flex;">
+					<button id="submitButton" onclick="publish()" tabindex="-1" disabled>Publish</button>
+					<button id="clearButton" style="margin-left:5px" tabindex="-1" onclick="cancelPost()">Clear</button>	
+				</div>
+			</div>
+		</div>
+		
+		<div id="read" style="display:none; margin-bottom:80px; max-width:1200px;">
+			<div style="flex-basis:1px; flex-grow:2; margin-right:50px;">
+				
+				<div id="readContent" style="white-space:pre-wrap; margin-bottom:40px; margin-top:40px">Browse for something interesting!</div>
+				
+				
+				<textarea id="commentContent" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
+				<div style="display:flex; justify-content:right;">
+					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>
+					<button id="comment" style="font-size:0.85em" onclick="comment()" autocomplete="off" disabled>Comment</button>
+				</div>
+				
+				<ul id="readComments" style="white-space:pre-wrap; margin-top:10px"><ul>
+			</div>
+			
+	
+			<div style="flex-basis:1px; flex-grow:1; max-width:360px; overflow:hidden">
+			
+				<div id="readTitle" style="font-weight:bold; font-size:1.1em; margin-bottom:3px;">Title</div>	
+				
+				<div style="font-size:0.85em">
+					<div id="tags">
+						<a id="author" onclick="queryBrowse(this.title)" style="cursor:pointer; font-weight:600">Author</a>
+						<a onclick="queryBrowse(this.title)" style="cursor:pointer"> • tags</a>
+					</div>
+				
+					<div style="margin-top:3px">
+						<span id="creation">Date published</span><span id="modification"> (date updated)</span>
+						<a id="edit" onclick="event.preventDefault(); fillEdit(); queryPost();" style="cursor:pointer; display:none"> • Update</a>
+					</div>
+				</div>
+				
+				<ul id="mapul"></ul>
+			</div>
+		</div>
+		
+	</div>
+	
+	</div>
+	
+<script src="nacl.js"></script>
+<script src="xno.js"></script>
+<script src="tweetnacl.js"></script>
+<script src="dompurify.js"></script>
+  <script src="marked.js"></script>
+<script>
+
+// crypto methods ///////////////////////////////////////////////////////////////////////
+
+var XNO = {};
+var hardMax = 100;
+
+XNO.checkSeed = function(seed) { return typeof seed === "string" && /^[0-9a-fA-F]{64}$/.test(seed);};
+
+XNO.checkAddress = function(address) { 
+	if (!(typeof address === "string") || !/^(nano_)[13][13-9a-km-uw-z]{59}$/.test(address)) return false;
+	const checksumBytes = decodeNanoBase32(address.substr(5 + 52));
+	const computedChecksumBytes = blake2b(decodeNanoBase32(address.substr(5, 52)), null, 5).reverse();
+	for (let i = 0; i < checksumBytes.length; i++) {
+		if (checksumBytes[i] !== computedChecksumBytes[i]) return false;
+	}
+	return true;
+};
+
+XNO.generateSeed = function() {
+	const seed = new Uint8Array(32);
+	crypto.getRandomValues(seed);
+	return Array.prototype.map.call(seed, (x) => ('00' + x.toString(16)).slice(-2)).join('').toUpperCase();
+};
+
+XNO.derivePrivateKey = function(seed, index) {
+  const indexBuffer = new ArrayBuffer(4)
+  const indexView = new DataView(indexBuffer)
+  indexView.setUint32(0, index)
+  const indexBytes = new Uint8Array(indexBuffer)
+
+  const context = blake2bInit(32)
+  blake2bUpdate(context, hexToByteArray(seed))
+  blake2bUpdate(context, indexBytes)
+  return byteArrayToHex(blake2bFinal(context))
+}
+
+XNO.addressFromSeed = function(seed) { return XNO.addrFromPub(XNO.pubFromPriv(XNO.derivePrivateKey(seed, 0))); }
+XNO.pubFromPriv = function(privateKey) { return byteArrayToHex(derivePublicFromSecret(hexToByteArray(privateKey))); };
+XNO.addrFromPub = function(publicKey) { return 'nano_' + encodeNanoBase32(hexToByteArray(publicKey)) + encodeNanoBase32(blake2b(hexToByteArray(publicKey), null, 5).reverse()); }
+XNO.pubFromAddr = function(address) { return byteArrayToHex(decodeNanoBase32(address.substr(5, 52))); };
+
+XNO.sign = function(message) { return byteArrayToHex(signDetached(enc.encode(message), hexToByteArray(XNO.privateKey))); }
+XNO.verify = function(message, signature, address) {
+	try { return verifyDetached(enc.encode(message), hexToByteArray(signature), hexToByteArray(XNO.pubFromAddr(address))); }
+	catch { return false };
+}
+
+XNO.unpackSeed = function(seed, index) {
+	XNO.seed = seed;
+	XNO.privateKey = XNO.derivePrivateKey(seed, index);
+	XNO.publicKey = XNO.pubFromPriv(XNO.privateKey);
+	XNO.address = XNO.addrFromPub(XNO.publicKey);
+	XNO.encryptKey = nacl.box.keyPair.fromSecretKey(hexToByteArray(XNO.privateKey));
+}
+
+function byteArrayToHex(byteArray) {
+  if (!byteArray) return '';
+  let hexStr = '';
+  for (let i = 0; i < byteArray.length; i++) {
+    let hex = (byteArray[i] & 0xff).toString(16)
+    hex = hex.length === 1 ? `0${hex}` : hex;
+    hexStr += hex;
+  }
+  return hexStr.toUpperCase()
+}
+
+function hexToByteArray(hex) {
+  if (!hex) return new Uint8Array();
+  const a = [];
+  for (let i = 0; i < hex.length; i += 2) {
+    a.push(parseInt(hex.substr(i, 2), 16));
+  }
+  return new Uint8Array(a);
+}
+
+function prepTwoDigit(elt) { if (elt.validationMessage != 'Please enter a number.') elt.value = twoDigit(elt.value); }
+
+function twoDigit(str) {
+	if (!str) return str;
+	let parts = str.toString().split(".");
+	if (parts[0].length == 0) parts[0] = "0";
+	let fraction = '';
+	if (parts.length > 1) fraction = parts[1];
+	while (fraction.length < 2) {
+		fraction += '0';
+	}
+	while (fraction[fraction.length - 1] == "0" && fraction.length > 2) {
+		fraction = fraction.slice(0, -1);
+	}
+	return `${parts[0]}.${fraction}`;	
+}
+
+
+
+let ccc = {};
+ccc['XNO'] = {shift:30, flashColor:'#def', keyType:'seed', min:0, fee:0, donation:'nano_1gpquwssoy8491ajmxp9cxjb3o38imcxidissob7cxc38o6h6r4d8gg639b7',
+				server:'https://proxy.nanos.cc/proxy',				
+				gettingStarted:'https://nanolinks.info/',
+				
+				faucet: 'https://nanodrop.io/',
+				representative:'nano_1natrium1o3z5519ifou7xii8crpxpk8y65qmkih8e8bpsjri651oza8imdd',
+				repRec:'https://mynano.ninja/api/accounts/verified'};
+				
+				
+for (let symbol in ccc) { 
+	ccc[symbol].queue = new Promise(function(resolve, reject) { resolve(true); });
+}
+	
+ccc['XNO'].getPending = function() {return post(ccc['XNO'].server, {action: 'pending', account: XNO.address, source:true}); };
+ccc['XNO'].receive = function(hash) { return enqueue('XNO', function() {return nanoReceive('XNO', hash);}); };	
+ccc['XNO'].getBlock = function(hash) { return post(ccc['XNO'].server, {action: 'block_info', json_block: true, hash: hash}); };		
+ccc['XNO'].sendTo = function(destination, amt) { return enqueue('XNO', function() {return nanoSend('XNO', destination, amt);}); };
+ccc['XNO'].createBlock = function(secretKey, data) {
+	if (typeof data.work === 'undefined') throw new Error('Work is not set');
+	if (!XNO.checkAddress(data.representative)) throw new Error('Representative is not valid');
+
+	let correctedPrevious = data.previous;
+	if (data.previous === null) correctedPrevious = BLANK_HASH;
+
+	let linkIsAddress = false;
+	let correctedLink = data.link;
+	if (data.link === null) correctedLink = BLANK_HASH;
+	else if (XNO.checkAddress(correctedLink)) linkIsAddress = true;
+	if (correctedPrevious === BLANK_HASH && (linkIsAddress || correctedLink === BLANK_HASH)) throw new Error('Block is impossible');
+
+	let publicKey = XNO.pubFromPriv(secretKey);
+	let linkBytes;
+	if (XNO.checkAddress(correctedLink)) linkBytes = hexToByteArray(XNO.pubFromAddr(correctedLink));
+	else linkBytes = hexToByteArray(correctedLink);
+	
+	const context = blake2bInit(32)
+	blake2bUpdate(context, STATE_BLOCK_PREAMBLE_BYTES)
+	blake2bUpdate(context, hexToByteArray(publicKey))
+	blake2bUpdate(context, hexToByteArray(correctedPrevious))
+	blake2bUpdate(context, hexToByteArray(XNO.pubFromAddr(data.representative)))
+	blake2bUpdate(context, hexToByteArray(BigInt(data.balance).toString(16).padStart(32, '0')))
+	blake2bUpdate(context, linkBytes)
+	const hashBytes = blake2bFinal(context)
+	let link
+	let linkAsAddress
+	if (linkIsAddress) {
+		linkAsAddress = correctedLink
+		link = XNO.pubFromAddr(linkAsAddress)
+	} else {
+		link = correctedLink
+		linkAsAddress = XNO.addrFromPub(link)
+	}
+	const block = {
+		type: 'state',
+		account: XNO.addrFromPub(publicKey),
+		previous: correctedPrevious,
+		representative: data.representative,
+		balance: data.balance,
+		link,
+		// eslint-disable-next-line @typescript-eslint/camelcase
+		link_as_account: linkAsAddress,
+		work: data.work,
+		signature: byteArrayToHex(signDetached(hashBytes, hexToByteArray(secretKey))),
+	}
+	return { hash: byteArrayToHex(hashBytes), block: block };
+}
+
+
+async function nanoReceive(symbol, hash) {
+	let blockInfoFetch = post(ccc[symbol].server, {action: 'block_info', json_block: true, hash: hash});
+	let oldBalance = '0';
+	let previous = '0'.padStart(64, '0');
+	let representative = ccc[symbol].representative;
+	let workInput = XNO.publicKey;
+	
+	let frontierBlock = await fetchFrontier(symbol, await ccc[symbol].getAccountInfo());
+	if (frontierBlock) {
+		oldBalance = frontierBlock.balance;
+		previous = frontierBlock.hash;
+		representative = frontierBlock.representative;
+		workInput = frontierBlock.hash;
+	} else {
+		console.log("Fetched frontier failed check; attempting open block.");
+		await suggestRep(symbol);
+		representative = ccc[symbol].representative;
+	}
+	
+	return await blockInfoFetch.then(async function(blockInfo) {
+		if (!blockInfo) return false;
+		return await postBlock(symbol, 'receive', workInput, previous, representative, (BigInt(oldBalance) + BigInt(blockInfo.amount)).toString(), hash);
+	});
+};
+
+function suggestRep(symbol) {
+	return fetch(ccc[symbol].repRec).then(function(response) {
+		return response.json().then(function(data) { 
+			if (!data) return false;
+			data.sort(function(x, y) { return y.score - x.score; });
+			let repAddr = data[0].account;
+			if (!repAddr) repAddr = data[0].address;
+			if (repAddr) {
+				ccc[symbol].representative = repAddr;
+				inputEvent(D(`${symbol}-new-rep`), repAddr);
+			}
+		});
+	}).catch(function() {networkFailMsg();});
+}
+
+
+ccc['XNO'].getAccountInfo = function() { return nanoGetAccountInfo('XNO'); };
+function nanoGetAccountInfo(symbol) {
+	return post(ccc[symbol].server, {action: 'account_info', pending: true, representative: true, account: XNO.address}).then(function(accountInfo) {
+		if (accountInfo && !accountInfo.frontier) {
+			accountInfo.balance = "0";
+			accountInfo.detail = "Unopened account.";
+		} 
+		return accountInfo;
+	});
+}
+
+function enqueue(symbol, func) {
+	ccc[symbol].queue = ccc[symbol].queue.then(func);
+	return ccc[symbol].queue;
+}
+
+function post(url, params) {
+    return new Promise((resolve, reject) => {
+        let xhttp = new XMLHttpRequest();
+        xhttp.timeout = 10*1000; // 10 seconds
+        xhttp.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				if (this.status == 200) {
+					try { resolve(JSON.parse(this.responseText)); } 
+					catch(e) {
+						console.error('Failed to parse response from node');
+						console.error(this.responseText);
+						resolve();
+					}
+				} else {
+					console.log('Failed to connect to '+ url);
+					networkFailMsg();
+					resolve();
+				}
+			}
+        };
+        xhttp.open("POST", url, true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify(params));
+    });
+}	
+
+async function nanoSend(symbol, destination, amt) {
+	// check frontier
+	let frontierBlock = await fetchFrontier(symbol, await ccc[symbol].getAccountInfo());
+	if (!frontierBlock) return false;
+	
+	return await postBlock(symbol, 'send', frontierBlock.hash, frontierBlock.hash, frontierBlock.representative, 
+		(BigInt(frontierBlock.balance) - BigInt(amt)).toString(), destination);
+}
+
+async function postBlock(symbol, subtype, workInput, previous, representative, balance, link) {
+	let rawWorkThreshold = await post(ccc[symbol].server, { action: 'active_difficulty' });
+	let work_threshold = rawWorkThreshold.network_current;
+	if (subtype == 'receive') work_threshold = rawWorkThreshold.network_receive_current;
+
+	let prework = (await post(ccc[symbol].server, {action: 'work_generate', hash: workInput, difficulty: work_threshold}));
+	if (!prework) {
+		showMsg("Proof of work failed. Amount NOT processed; try again.");
+		return false;
+	}
+	let work = prework.work;
+	if (work === undefined) work = null;
+	
+	let block = ccc[symbol].createBlock(XNO.privateKey, {
+		work: work,
+		previous: previous,
+		representative: representative.replace('ban_', 'nano_'),
+		balance: balance,
+		link: link.replace('ban_', 'nano_')
+	});
+	
+	if (symbol == "BAN") {
+		block.block.representative = block.block.representative.replace('nano_', 'ban_');
+		block.block.representative = block.block.representative.replace('xrb_', 'ban_');
+		block.block.account = block.block.account.replace('nano_', 'ban_');
+		block.block.account = block.block.account.replace('xrb_', 'ban_');
+		delete block.block.link_as_account;
+	}
+	
+	let formData = {action: 'process', json_block: true, subtype: subtype, block: block.block};
+	if (work === null) {
+		formData.do_work = true;
+		formData.block.work = undefined;
+	}
+	post(ccc[symbol].server, formData);
+	return confirmBlock(symbol, block.hash);
+}
+
+
+function confirmBlock(symbol, hash) {
+	return new Promise(async function(resolve, reject) {
+		let firstBlockInfo = await ccc[symbol].getBlock(hash);
+		if (firstBlockInfo && firstBlockInfo.confirmed == "true") resolve(firstBlockInfo);
+		else {
+			let counter = 0;
+			waitCheckHash();
+			function waitCheckHash() {
+				setTimeout(async function() {
+					let blockInfo = await ccc[symbol].getBlock(hash);
+					if (blockInfo && blockInfo.confirmed == "true") resolve(hash);
+					else if (counter < 15) {
+						counter++;
+						waitCheckHash();
+					} else {
+						showMsg("Transfer seems to have failed or is delayed.");
+						resolve();
+					}
+				}, 1000);
+			}
+		}
+	});
+}
+
+function fetchFrontier(symbol, accountInfo) {
+	if (!accountInfo || !accountInfo.frontier) return false;
+	return post(ccc[symbol].server, {action: 'block_info', json_block: true, hash: accountInfo.frontier}).then(function(res) {
+		if (!res) return false;
+		let fetchedFrontierBlock = res.contents;
+
+		let producedFrontierBlock = ccc[symbol].createBlock(XNO.privateKey, {
+			work: fetchedFrontierBlock.work,
+			previous: fetchedFrontierBlock.previous,
+			representative: accountInfo.representative.replace('ban_', 'nano_'),
+			balance: accountInfo.balance,
+			link: fetchedFrontierBlock.link
+		}).block;	
+		if (fetchedFrontierBlock.signature != producedFrontierBlock.signature) {
+			console.error(fetchedFrontierBlock);
+			console.error(producedFrontierBlock);
+			alert("Frontier block failed verification. This should NOT happen.");
+			return false;
+		}
+		fetchedFrontierBlock.hash = accountInfo.frontier;
+		return fetchedFrontierBlock;
+	});
+}
+
+function rawFromUnit(symbol, str) {
+	let shift = ccc[symbol].shift;
+	let parts = str.toString().split(".");	
+	let fraction = '';
+	if (parts.length > 1) fraction = parts[1];
+	while (fraction.length < shift) {
+		fraction += '0';
+	}
+	return `${parts[0]}${fraction}`;
+}
+
+function unitFromRaw(symbol, str) {
+	let shift = ccc[symbol].shift;
+	let n = str.toString();	
+	while (n.length < shift + 1) {
+		n = '0' + n;
+	}
+	let whole = n.substring(0, n.length - shift);
+	let cut = 0;
+	while (n[n.length - 1 - cut] == '0' && cut < shift - 2) cut++;
+	let fraction = n.substring(n.length - shift, n.length - cut);
+	return whole + '.' + fraction;	
+}
+
+async function withdraw(symbol, elt, amt, destaddr, them) {
+	elt.disabled = true;
+	let totalAmt = BigInt(rawFromUnit(symbol, amt));
+	let balance = BigInt(rawFromUnit(symbol, D('balance').textContent));
+	let safetyMax = BigInt(rawFromUnit(symbol, hardMax));
+	if (totalAmt > safetyMax) showMsg("Limit for built-in wallet: " + hardMax + " XNO");
+	else if (totalAmt > balance) showMsg("Insufficient funds.");
+	else {
+		let confirmMessage = "Sponsor less than amount required for premium content?";
+		if (totalAmt > BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) confirmMessage = "Sponsor more than amount required for premium content?";
+		if (totalAmt == BigInt(rawFromUnit(symbol, D('theirThreshold').textContent)) || confirm(confirmMessage)) {
+			if (totalAmt >= BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) showMsg("Sponsoring \'" + them + "\'...", null, true);
+			else showMsg("Tipping \'" + them + "\'...", null, true);
+			let sendResp = await ccc[symbol].sendTo(destaddr, totalAmt.toString());
+			if (sendResp) {
+				console.log(sendResp);
+				flash(D('balance'), unitFromRaw(symbol, BigInt(rawFromUnit(symbol, D('balance').textContent)) - totalAmt));
+				
+				if (totalAmt >= BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) {
+					showMsg("Sponsored \'" + them + "\' with " + amt + " " + symbol + "! Premium content now available.");
+					if (ws) ws.emit('sponsor', {userid:destaddr, blockid:sendResp });
+				} else showMsg("Tipped \'" + them + "\' " + amt + " " + symbol + "!");
+				
+				D('sponsorInput').value = "";
+				refreshData(symbol);
+			}
+		}
+	}
+	elt.disabled = false;
+	return false;
+}
+
+function sendMoney(elt) {
+	if (D('sponsorInput').validationMessage == "Please enter a number." || D('sponsorInput').value <= 0) {
+		showMsg("Enter a positive value.");
+		flash(D('sponsorInput'));
+	} else withdraw("XNO", elt, D('sponsorInput').value, D('theirAddress').textContent, D('theirFunName').textContent);
+}
+
+
+function refreshData(symbol) {	
+	if (!symbol) symbol = "XNO";
+	console.log("refreshing");
+	ccc[symbol].getAccountInfo().then(function(accountInfo) {
+		if (!XNO.address || !accountInfo) return false;
+		
+		if (accountInfo.balance !== undefined) flash(D('balance'), unitFromRaw(symbol, accountInfo.balance));
+		// if (accountInfo.pending !== undefined) flash(D(`${symbol}-balance-pending`), unitFromRaw(symbol, accountInfo.pending));
+		
+		if (accountInfo.detail == "Unopened account.") {
+			if (symbol == "XNO" || symbol == "BAN") cyclePending(symbol);
+		} else cyclePending(symbol);
+		return accountInfo;
+	});
+}
+
+function cyclePending(symbol) {
+	if (!XNO.address) return false;
+	console.log("cycling");
+	ccc[symbol].getPending().then(async function(data) {
+		if (data) {
+			let count = 0;
+			for (const block in data.blocks) {
+				await ccc[symbol].receive(block);
+				count++;
+			}
+			if (count) refreshData(symbol);
+		}
+	});	
+}
+
+// Global variables and macros; and initializers ///////////////////////////////////////////////////////////////////////
+
+var readPostid = "";
+var readPostContent = "";
+var editPostid = "";
+var editPostContent = "";
+var editPostPending = false;
+var floatState = false;
+var backList = [];
+var browseURL = {};
+
+var DOMdisplayNameQueue = {};
+
+var displayNameCache = {};
+var colorCache = {};
+var postCache = {};
+var userCache = {};
+var browseCache = {};
+
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+let browseHeight = 0;
+let readHeight = 0;
+let postHeight = 0;
+
+const adj = ["Disillusioned", "Nihilistic", "Disenchanted", "Embittered", "Worldly", "Embattled", "Cynical", "Skeptical", "Contemplative", 
+				"Introspective", "Meditative", "Pensive", "Philosophical", "Stoic", "Apathetic", "Analytical", "Scholarly", "Erudite", "Composed", "Detached"];
+const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedgehog", "Penguin", "Squirrel", "Turtle", "Koala", "Hatchling", "Kit", "Joey", "Fledgling", 
+					"Fawn", "Foal", "Calf", "Cub", "Colt", "Piglet", "Eaglet", "Owlet"];
+
+var url = new URL(window.location);
+var serverURL = 'wss://mktplc-server.fly.dev';
+var ws;
+setupWebsocket(true);
+
+let localSeed = localStorage.getItem("localSeed");
+if (localSeed) inputEvent(D("seed"), localSeed);
+
+cancelPost();
+loadURL();
+
+// Websocket code ///////////////////////////////////////////////////////////////////////
+
+function setupWebsocket(fresh) {
+	ws = new WebSocket(serverURL);
+	ws.customEvents = {};
+	ws.on = function(cueName, eventAction) { ws.customEvents[cueName] = eventAction; };
+	ws.emit = function(cueName, payload) { 
+		if (ws.readyState == 1) ws.send(JSON.stringify({cueName:cueName, payload:payload})); 
+		return (ws.readyState == 1);
+	};
+	
+	// Standard commands
+	ws.onclose = function() { setupWebsocket(); }
+	ws.onopen = function() { 
+		console.log("Connected to server!"); 
+		if (fresh) loadURL();
+		if (XNO.address) {
+			let ts = Date.now();
+			ws.emit('authenticateUser', {userid: XNO.address, ts, signature:XNO.sign(ts, XNO.address)});
+		}
+	};
+	ws.onmessage = function(event) {
+		let data;
+		try { data = JSON.parse(event.data); }
+		catch { 
+			console.error("Unparseable server message.")
+			console.error(event.data);
+			return false;
+		}			
+		if (data && data.cueName && ws.customEvents[data.cueName]) ws.customEvents[data.cueName](data.payload);
+		else {
+			console.error("Unrecognized server message.")
+			console.error(event.data);
+		}
+	};
+
+	// Custom commands ////////////////////////////////////////////////////////
+	
+	ws.on('authenticateUserResponse', function(data) {
+		clearDOM(D('subscriptions'));
+		if (XNO.address) makeSubLi(XNO.address);
+		if (data.edges) {
+			data.edges.sort(function(x, y) { 
+				if (x.lastpublishedts && !y.lastpublishedts) return -1;
+				if (!x.lastpublishedts && y.lastpublishedts) return 1;
+				return y.lastpublishedts - x.lastpublishedts; 
+			});
+			for (let i = 0; i < data.edges.length; i++) {
+				makeSubLi(data.edges[i].userid, data.edges[i]);
+			}
+		}		
+		receiveDOMdisplayName(data);
+		D('displayName').style.color = "";
+		D('browseHeading').style.color = "";
+		
+		clearDOM(D('library'));
+		data.library.sort(function(x, y) { return x.pushedts - y.pushedts; });
+		for (let i = 0; i < data.library.length; i++) {
+			cachePost(data.library[i]);
+			makeLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
+		}
+		requestNames();
+	});
+	
+	ws.on('queryTagCountsResponse', function(data) {
+		clearDOM(D('popularTags'));
+
+		let tagElt = make('a', 'Recent');
+		tagElt.style = "flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px";
+		tagElt.onclick = function() { queryBrowse(); };
+		D('popularTags').appendChild(tagElt);
+		
+		for (let tag in data) {
+			if (data[tag] > 0) {
+				let tagElt = make('a', tag); // " • " + tag);
+				tagElt.style = "flex-shrink:0; margin-left:20px; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px";
+				tagElt.onclick = function() { queryBrowse(null, tag); };
+				D('popularTags').appendChild(tagElt);
+			}
+		}
+	});
+	
+	ws.on('queryUsersResponse', function(data) { 
+		for (let i = 0; i < data.length; i++) {
+			receiveDOMdisplayName(data[i]);
+		}
+		D('displayName').style.color = "";
+		D('browseHeading').style.color = "";
+	});
+	
+	ws.on('queryPostsRecentResponse', function(data) { fillBrowseList(data); });	
+	ws.on('queryTagResponse', function (data) { fillBrowseList(data); });	
+	
+	ws.on('queryPostsFromUser', function (data) {
+		let update = (!userCache[data.user.userid] || JSON.stringify(userCache[data.user.userid].content) != JSON.stringify(data.user.content));
+		fillBrowseList(data.posts);
+		if (data.user.userid) {
+			userCache[data.user.userid] = data.user;
+			fillBio(data.user.userid, !update);
+			if (D(data.user.userid) && D(data.user.userid).children[2]) D(data.user.userid).children[2].style = "font-size:0.85em; color:#888";
+		}
+	});
+	
+	ws.on('updateUserResponse', function (data) {
+		userCache[data.userid] = data;
+		fillBio(data.userid);		
+	});
+	
+	ws.on('queryPostResponse', function(data) {
+		cachePost(data);
+		if (editPostid == data.postid && editPostPending) fillEdit(data.postid, true); 
+	});
+	
+	ws.on('updatePostResponse', function(data) { 
+		cachePost(data);
+		fillPost(data.postid);
+		cancelPost(true);
+	});
+	
+	ws.on('updateCommentResponse', function(data) {	addComment(data); });
+	
+	ws.on('queryPostChainResponse', function(data) { 
+		clearDOM(D('mapul'));
+		let chain = [];
+		for (let x in data) {
+			chain.push(data[x].userid + "-" + data[x].createdts.toString());
+		}
+		for (let x in data) {
+			cachePost(data[x], chain);
+		}
+		requestNames();
+	});
+	
+	ws.on('subscribeResponse', function(data) {	console.log(data); });
+	
+	ws.on('sponsorResponse', function(data) { 
+		console.log(data);
+		makeSubLi(data.userid2, data); 
+	});
+}
+
+
+// Main panel UI interaction handlers ///////////////////////////////////////////////////////////////////////
+
+function queryBrowse(userid, tag, suppressPanel) {
+	closeBio();
+	D('info').style.display = "none";
+		
+	D('sponsor').disabled = true;	
+	D('subscribe').disabled = true;	
+	D('sendButton').disabled = true;
+	D('bioPreview').style.display = "none";
+	
+	D('theirFunName').style.color = "";	
+	D('theirFunName').textContent = "\xa0-\xa0";
+	D('theirFunName').title = "";
+	D('theirAddress').textContent = "\xa0-\xa0";
+	D('theirThreshold').textContent = "\xa0-\xa0";
+	
+	if (D('browseHeading').title) {
+		if (D(D('browseHeading').title)) removeActiveBar(D(D('browseHeading').title));
+		if (D("tag-" + D('browseHeading').title)) removeActiveBar(D("tag-" + D('browseHeading').title));
+	}
+	
+	if (userid) {		
+		D('bioPreview').style.display = "";
+		D('sponsor').disabled = false;
+		if (XNO.address) {
+			D('subscribe').disabled = false;
+			if (userid != XNO.address) D('sendButton').disabled = false;
+		}		
+		if (userid == XNO.address) D('info').style.display = "";
+		queueDOMdisplayName(userid, D('theirFunName'));
+		D('theirAddress').textContent = userid;		
+		if (D(userid)) activeBar(D(userid));
+		
+		queueDOMdisplayName(userid, D('browseHeading'), true);
+		fillBio(userid);
+		browseURL = {userid};
+	} else if (tag) {	
+		D('bioPreview').style.display = "";
+		if (XNO.address) D('subscribe').disabled = false;			
+		if (D("tag-" + tag)) activeBar(D("tag-" + tag));
+		
+		D('browseHeading').title = tag;
+		D('browseHeading').textContent = tag;
+		D('bio').textContent = "An unmoderated tag."
+		browseURL = {tag};
+	} else {	
+		D('browseHeading').title = "Recent";
+		D('browseHeading').textContent = "Recent";
+		D('bio').textContent = "The trickle of recent posts."
+		browseURL = {};
+	}
+	
+	D('browseHeading').onclick = function() { queryBrowse(userid, tag); };
+	if (active('sponsor')) sponsorHandler(D('sponsor'));
+	
+	if (browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
+	else D('discovery').style.opacity = "0.5";
+	if (ws && ws.readyState == 1) {
+		D('loadingMsg').style.display = "";
+		if (userid) ws.emit("queryPostsFromUser", {userid});
+		else if (tag) ws.emit("queryTag", {tag});
+		else ws.emit('queryPostsRecent');
+		
+		if ((!userid && !tag) || !D('popularTags').children.length) ws.emit('queryTagCounts');
+	}
+	
+	if (!suppressPanel) loadPanel('browse');
+}
+
+function sponsorHandler(elt) {
+	if (active(elt)) {
+		D('bioSponsor').style.display = "none";
+		D('sponsorInput').value = "";
+	} else {
+		D('bioSponsor').style.display = "";
+		D('sponsorInput').focus();
+		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"end"});
+	}
+	toggle(elt);
+}
+
+function subscribeHandler() {
+	if (D("tag-" + D('browseHeading').title)) flash(D("tag-" + D('browseHeading').title));
+	else if (D(D('browseHeading').title)) flash(D(D('browseHeading').title));
+	else {
+		makeSubLi(D('browseHeading').title);
+		if (ws) ws.emit("subscribe", {userid: D('browseHeading').title});
+	}	
+	if (D(D('browseHeading').title)) D(D('browseHeading').title).scrollIntoView({behavior: "smooth", block:"nearest"});
+	else D("tag-" + D('browseHeading').title).scrollIntoView({behavior: "smooth", block:"nearest"});
+}
+
+function addTag() {
+	let newTagFlag = D('set-tag').value.toLowerCase().trim();
+	D('set-tag').value = "";
+	D('set-tag').select();
+	if (!newTagFlag) return true;
+	for (let i = 0; i < D('editTags').children.length; i++) {
+		if (D('editTags').children[i].textContent == newTagFlag) {
+			flash(D('editTags').children[i]);
+			return true;
+		}
+	}
+	let newTag = make('span', newTagFlag);
+	newTag.onclick = function() { remove(newTag); }
+	newTag.style = "cursor:pointer; margin:5px 10px 0px 10px; padding:3px 5px 3px 5px; border-radius:5px; display:inline-block";
+	D('editTags').appendChild(newTag);
+	flash(newTag);
+}
+
+function publish() {
+	if (!D('postTitle').value.trim()) {
+		alert("Title required.");
+		return false;
+	}
+	let prev = "";
+	try { prev = new URLSearchParams((new URL(D('set-prev').value)).search).get('postid');} 
+	catch { prev = "" };
+	let next = "";	
+	try { next = new URLSearchParams((new URL(D('set-next').value)).search).get('postid');} 
+	catch { next = "" };
+	
+	let tags = [];
+	for (let i = 0; i < D('editTags').children.length; i++) {	
+		tags.push(D('editTags').children[i].textContent);
+	}
+	let postData = {wall:parseEditorWall(), content:parseEditorContent(D('postEditor')), title:D('postTitle').value.trim(), tags,
+							prev_: prev, next_: next, recip_prev: active('recip-prev'), recip_next: active('recip-next'), createdts: parseInt(D('creationEdit').title)};
+	console.log(postData);
+	ws.emit('updatePost', postData);
+}
+
+function checkTitle(elt) {
+	let prev = "";
+	try { prev = new URLSearchParams((new URL(elt.value)).search).get('postid');} 
+	catch { prev = "" };
+	let titleElt = elt.parentNode.previousElementSibling.firstElementChild;
+	let buttonElt = elt.parentNode.lastElementChild;
+	
+	if (prev) {
+		if (postCache[prev]) titleElt.textContent = postCache[prev].title;
+		else titleElt.textContent = "(unknown post)";
+		
+		if (prev.split("-")[0] == XNO.address) {
+			buttonElt.classList.add('active');
+			buttonElt.disabled = false;
+		} else {
+			buttonElt.classList.remove('active');
+			buttonElt.disabled = true;		
+		}		
+	} else {
+		titleElt.textContent = "(none)"; 
+		buttonElt.classList.remove('active');
+		buttonElt.disabled = true;
+	}
+}
+
+function commentKeypress() {
+	if (event.keyCode == 27 && (!D('commentContent').value.length || confirm("Delete comment?"))) {
+		D('commentContent').value = "";
+		D('commentContent').style.display = "none";
+		D("comment").textContent = "Comment";
+		event.stopPropagation();
+	} else if (D('commentContent').value) D("comment").textContent = "Comment";
+	else D("comment").textContent = "Cancel";
+}
+
+function comment() {
+	if (D('commentContent').style.display) {
+		D('commentContent').style.display = "";
+		D("comment").textContent = "Cancel";
+		D('commentContent').focus();
+	} else {
+		D('commentContent').style.display = "none";
+		D("comment").textContent = "Comment";
+		ws.emit('updateComment', {content:D('commentContent').value, postid: D('author').title + "-" + D('creation').title});
+		D('commentContent').value = "";
+	}
+}
+
+function showEditor() {
+	clearDOM(D('postPreview'));
+	D('editButton').classList.add('active');
+	D('previewButton').classList.remove('active');
+	D('postEditor').style.display = "";
+	D('postPreview').style.display = "none";
+}
+
+function hasDraft() {
+	for (let i = 0; i < D('postEditor').children.length; i++) {
+		if (D('postEditor').children[i].firstChild.value) return true;
+	}
+	return false;
+}
+
+function parseEditorWall() {
+	let wall = [];
+	let k = 0;
+	for (let i = 0; i < D('postEditor').children.length; i++) {
+		if (D('postEditor').children[i].firstChild.value) {
+			if (active(D('postEditor').children[i].children[1].firstChild)) wall.push(k);
+			k++;
+		}
+	}
+	return wall;
+}
+
+function parseEditorContent(elt) {
+	let content = [];
+	for (let i = 0; i < elt.children.length; i++) {
+		if (elt.children[i].firstChild.value) content.push({content:elt.children[i].firstChild.value, type:elt.children[i].firstChild.title});
+	}	
+	return content;
+}
+
+function showPreview(elt) {
+	fillContent(D('postPreview'), parseEditorContent(D('postEditor')), parseEditorWall(), XNO.address);	
+	D('previewButton').classList.add('active');
+	D('editButton').classList.remove('active');
+	D('postEditor').style.display = "none";
+	D('postPreview').style.display = "";
+}
+
+function loadPanel(type, manual, holdHistory) {
+	let prevType = "browse";
+	if (D('browse').style.display != 'none') {
+		browseHeight = Math.ceil(D('secondDiv').scrollTop);
+		if (type == prevType) browseHeight = 0;
+	}
+	if (D('read').style.display != 'none') {
+		prevType = "read";
+		readHeight = Math.ceil(D('secondDiv').scrollTop);
+		if (type == prevType) readHeight = 0;
+	}
+	if (D('post').style.display != 'none') {
+		prevType = "post";
+		postHeight = Math.ceil(D('secondDiv').scrollTop);
+		if (type == prevType) postHeight = 0;
+	}
+	
+	let newManual = (manual && type != prevType);
+	if (newManual) backList.push(prevType);	
+	function changeHistory() {
+		if (!holdHistory) {
+			if (newManual && floatState) window.history.replaceState(null, "", url);
+			else {
+				window.history.pushState(null, "", url);
+				backList = [];
+				floatState = newManual;
+			}
+		}
+	}
+	
+	let params = new URLSearchParams(window.location.search);
+	if (type == "read") {
+		url.search = new URLSearchParams({postid:readPostid});
+		
+		if (readPostid && params.get('postid') != readPostid) changeHistory();
+		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
+		else document.title = "Read - Brewri";
+	} else if (type == "browse") {
+		let newTitle = "Brewri";
+		if (browseURL.userid) {		
+			url.search = new URLSearchParams({userid:browseURL.userid});
+			newTitle = funName(browseURL.userid) + " - Brewri";
+		} else if (browseURL.tag) {
+			url.search = new URLSearchParams({tag:browseURL.tag});
+			newTitle = browseURL.tag + " - Brewri";
+		} else url.search = new URLSearchParams();
+		
+		if (browseURL && (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid'))) changeHistory();
+		document.title = newTitle;
+	}
+
+	if (type != "browse" && active('sponsor')) sponsorHandler(D('sponsor'));
+		
+	D('post').style.display = 'none';
+	D('read').style.display = 'none';
+	D('browse').style.display = 'none';
+	D(type).style.display = "flex";
+	
+	if (type == "read") D('secondDiv').scrollTo(0, readHeight);
+	if (type == "post") D('secondDiv').scrollTo(0, postHeight);	
+	if (type == "browse") {
+		D(type).style.display = "";
+		D('secondDiv').scrollTo(0, browseHeight);	
+	}
+	
+	D('postButton').classList.remove('active');
+	D('readButton').classList.remove('active');
+	D('browseButton').classList.remove('active');	
+	D(type + "Button").classList.add('active');
+}
+
+function cachePost(metaData, chain) {
+	if (!metaData.postid) metaData.postid = metaData.userid + "-" + metaData.createdts.toString();	
+	if (!metaData.userid) {
+		let split = metaData.postid.split("-");
+		metaData.userid = split[0];
+		metaData.createdts = parseInt(split[1]);
+	}
+	
+	if (!postCache[metaData.postid]) postCache[metaData.postid] = {};
+	let cacheData = postCache[metaData.postid];
+
+	cacheData.title = metaData.title;
+	cacheData.userid = metaData.userid;
+	cacheData.createdts = metaData.createdts;
+	cacheData.postid = metaData.postid;
+
+	if (metaData.modifiedts) cacheData.modifiedts = metaData.modifiedts;
+	if (metaData.content) {	
+		if (!cacheData.content || typeof metaData.content === "string" || typeof metaData.content === "string") cacheData.content = metaData.content;
+		else if (cacheData.content.length != cacheData.content.length) cacheData.content = metaData.content;
+		else {
+			for (let i = 0; i < metaData.content.length; i++) {
+				if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
+			}
+		}
+	}
+	if (metaData.tags) cacheData.tags = metaData.tags;
+	if (metaData.comments) cacheData.comments = metaData.comments;
+	if (metaData.prev_) cacheData.prev_ = metaData.prev_;
+	if (metaData.next_) cacheData.next_ = metaData.next_;
+	if (metaData.wall) cacheData.wall = metaData.wall;	
+	if (chain) cacheData.chain = chain;
+	
+	if (readPostid == metaData.postid) fillPost(metaData.postid, true);
+}
+
+function activeBar(elt) {
+	elt.firstElementChild.style.borderLeft = "solid 2px hsl(var(--hue), var(--butsat), 80%)";		
+	elt.firstElementChild.style.paddingLeft = "10px";
+}
+
+function removeActiveBar(elt) {
+	elt.firstElementChild.style.borderLeft = "";	
+	elt.firstElementChild.style.paddingLeft = "5px";
+}
+
+function fillBio(userid, block) {
+	let data = userCache[userid];
+	if (!data) D('bio').textContent = "Full of possibilities.";
+	else {
+		if (data.sponsor_price) D('theirThreshold').textContent = data.sponsor_price;
+		else D('theirThreshold').textContent = "1.00";
+		if (!block) {
+			if (data.bio && data.bio.length) fillContent(D('bio'), data.bio);
+			else D('bio').textContent = "Full of possibilities."
+		}
+		receiveDOMdisplayName(data);
+		D('displayName').style.color = "";
+		D('browseHeading').style.color = "";
+	}
+}
+
+function fillEditorContent(data, elt) {
+	clearDOM(elt);	
+	if (data && data.length) {
+		for (let i = 0; i < data.length; i++) {
+			let block = appendBlock(data[i].type, null, elt);
+			inputEvent(block.firstChild, data[i].content);
+		}
+	} else appendBlock("text", null, elt);
+}
+
+function openBio() {
+	D('bioPreview').style.display = "none";
+	D('bioEditor').style.display = "";
+	
+	if (displayNameCache[XNO.address]) D('bio-name').value = funName(XNO.address);
+	D('bio-name').placeholder = funName(XNO.address, true) + "...";
+	if (colorCache[XNO.address]) inputEvent(D('colorslider'), funColor(XNO.address, false, true));
+	else inputEvent(D('colorslider'), 0);
+	
+	let data = userCache[XNO.address];
+	if (!data) data = {};	
+	fillEditorContent(data.bio, D('bioBlocks'));	
+	if (data.sponsor_price) D('inputPrice').value = data.sponsor_price;
+	else D('inputPrice').textContent = "1.00";
+	
+	D('bio-name').focus();
+}
+
+function closeBio() {
+	D('bioEditor').style.display = "none";
+	if (D('browseHeading').title != "Recent") D('bioPreview').style.display = "";
+	clearDOM(D('bioBlocks'));
+	
+	D('bio-name').value = "";
+	D('bio-name').placeholder = "Public display name...";
+	
+	if (XNO.address) {
+		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+		setCSS('--hue', funColor(XNO.address, false, true));
+	}
+}
+
+function receiveDOMdisplayName(data) {
+	let {userid, displayname, color} = data;
+	if (displayname) displayNameCache[userid] = displayname;
+	else delete displayNameCache[userid];	
+	if (color) colorCache[userid] = color;
+	else delete colorCache[userid];
+	
+	if (DOMdisplayNameQueue[userid]) {
+		for (let j = 0; j < DOMdisplayNameQueue[userid].length; j++) {
+			DOMdisplayNameQueue[userid][j].textContent = funName(userid);
+			DOMdisplayNameQueue[userid][j].style.color = funColor(userid);
+		}
+	}
+	delete DOMdisplayNameQueue[userid];	
+	
+	if (new URLSearchParams(window.location.search).get('userid') == userid) document.title = funName(userid) + " - Brewri";
+	
+	if (userid == XNO.address) {
+		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+		setCSS('--hue', funColor(XNO.address, false, true));
+	}
+}
+
+function fillBrowseList(data) {
+	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
+	D('loadingMsg').style.display = "none";
+	clearDOM(D('discovery'));
+	D('discovery').style.opacity = "";
+	
+	if (data) {
+		data.sort(function(x, y) { return y.createdts - x.createdts; });
+		for (let i = 0; i < data.length; i++) {	
+			cachePost(data[i]);				
+			let mediaBox;
+			if (typeof postCache[data[i].postid].content !== "string") {
+				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
+					let content = postCache[data[i].postid].content[j];
+					if (content.type == "image" || content.type == "media") {
+						mediaBox = fillMediaBox(content.content.trim().split(" "), true);					
+						break;
+					}		
+				}
+			}
+			
+			let postli = make('li');
+			postli.id = data[i].postid + "-disc";
+			postli.style.marginBottom = "10px";			
+			postli.appendChild(fullLabel(data[i].postid, false, mediaBox));			
+			if (readPostid == data[i].postid) activeBar(postli);
+			D('discovery').appendChild(postli);
+		}
+	}	
+	requestNames();
+}
+						
+function fillMediaBox(mediaURL, preview) {
+	let mediaBox;
+	if (mediaURL.length) mediaURL = mediaURL[0].split("[");
+	if (mediaURL.length) mediaURL = mediaURL[0].trim();
+	else mediaURL = "";			
+	let match = mediaURL.match(/^.*(youtu\.be\/|vi?\/|u\/\w\/|embed\/|\?vi?=|\&vi?=)([^#\&\?]*).*/);			
+	let ext = mediaURL.slice(-4).toLowerCase();	
+	
+	if (match && match[2].length == 11) {
+		mediaBox = make('div');		
+		mediaBox.style = "position:relative";
+		
+		let frame = make('div');
+		frame.style = "padding-bottom:56%";	
+		mediaBox.appendChild(frame);	
+		
+		let youtube = make("iframe");
+		youtube.style = "border:0px; background-color:black; position:absolute; height:100%; width:100%; top:0px; left:0px;";
+		youtube.src = "https://www.youtube.com/embed/" + match[2] + "?modestbranding=1"							
+		mediaBox.appendChild(youtube);
+	} else if (ext == ".mp4" || ext == ".ogg" || ext == "webm") {
+		mediaBox = make("video");
+		mediaBox.controls = true;
+		mediaBox.src = mediaURL;
+		fileSize(mediaURL);
+	} else if (ext == ".mp3" || ext == ".wav") {
+		mediaBox = make("audio");
+		mediaBox.style = "margin:auto";
+		mediaBox.controls = true;
+		mediaBox.src = mediaURL;
+		fileSize(mediaURL);
+	} else {
+		mediaBox = make('picture');
+		mediaBox.style = "display:flex; justify-content:center";
+		
+		let imagediv = make("img");
+		imagediv.style = "font-style:italic; height:fit-content; margin:auto; max-width:100%; max-height:100%";
+		imagediv.alt = "loading image...";
+		mediaBox.appendChild(imagediv);
+		fileSize(mediaURL).then(function(size) {
+			if (!preview || size < 262144) {
+				imagediv.alt = "- missing image -";
+				imagediv.src = mediaURL;
+			} else if (size > 0) imagediv.alt = "- large image -";
+			else imagediv.alt = "- missing image -";
+		}).catch(function() { imagediv.alt = "- missing image -"; });
+	}						
+	mediaBox.style.width = "100%";	
+	return mediaBox;
+}	
+
+function fullLabel(postid, library, mediaBox) {
+	let data = postCache[postid];
+	let postTitle = make('div', data.title);
+	postTitle.title = data.title;
+	postTitle.style = "overflow:hidden; text-overflow:ellipsis;"
+			
+	// author and tags
+	let tags = make('div');
+	tags.style = "font-size:0.85em; overflow: hidden; text-overflow:ellipsis;"
+	if (mediaBox) {
+		tags.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
+		postTitle.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
+		postTitle.style.marginBottom = "3px";
+	}
+	tags.appendChild(authorLabel(data.userid));	
+	if (data.tags) {
+		for (let i = 0; i < data.tags.length; i++) {			
+			tags.appendChild(tagLabel(data.tags[i]));
+		}
+	}
+	
+	// Meta: dates, edit
+	let postMeta = make('div');
+	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis";		
+	postMeta.appendChild(timeLabel(data.createdts, data.modifiedts));
+	
+	if (data.wall && data.wall.length) {	
+		let premium = make('span', " • Premium");
+		postMeta.appendChild(premium);			
+		premium.style.opacity = "0.5";		
+		premium.style.fontStyle = "italic";
+		let colorIn = true;
+		for (let i = 0; i < data.wall.length; i++) {
+			if (!data.content[data.wall[i]].content) colorIn = false;
+		}
+		if (colorIn || data.userid == XNO.address) {
+			premium.style.fontStyle = "";
+			premium.style.transitionProperty = "opacity";
+			premium.style.transitionDuration = "1s";
+			premium.style.transitionTimingFunction = "";
+			setTimeout(function() {	premium.style.opacity = ""; }, 0);
+		}
+	}
+	
+	if (data.userid == XNO.address) {
+		let editBut = make('a', " • Update");			
+		editBut.onclick = function() {
+			event.stopPropagation();
+			fillEdit(postid);
+		}
+		postMeta.appendChild(editBut);		
+	}
+	
+	// Hover buttons	
+	let postLink = make('button', "Link");
+	postLink.classList.add("left");
+	postLink.style.marginRight = "4px";
+	postLink.onclick = function() {
+		event.stopPropagation();
+		event.preventDefault();
+		url.search = new URLSearchParams({postid});
+		clickCopy(this, url.href);
+	};
+	
+	let addBut = make('button', "＋");
+	addBut.classList.add("right");	
+	if (library) {
+		addBut.textContent = "✕";
+		addBut.onclick = function() {
+			event.stopPropagation();
+			event.preventDefault();
+			remove(label.parentNode);
+			if (ws) ws.emit('deleteLibrary', {postid:label.parentNode.id});
+			if (!D('library').firstElementChild) D('libraryPlaceholder').style.display = "";
+		};	
+	} else addBut.onclick = function() {
+		event.stopPropagation();
+		event.preventDefault();
+		if (!D(postid)) {
+			makeLibLi(postid);
+			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:Date.now() }] });
+		}
+		flash(D(postid));
+		D(postid).scrollIntoView({behavior: "smooth", block:"nearest"});
+	}
+	
+	let actions = make('div');
+	actions.style = "position:absolute; top:0px; right:0px; display:none; opacity:0.93";
+	actions.appendChild(postLink);
+	actions.appendChild(addBut);
+	
+	let label = make('a');
+	label.style = "display:flex; overflow:hidden; padding:5px; position:relative; color:#333";
+	
+	url.search = new URLSearchParams({postid});
+	label.href = url;
+	let sbdiv = make('div');
+	sbdiv.style = "text-overflow:ellipsis; overflow:hidden";
+	sbdiv.appendChild(postTitle);
+	sbdiv.appendChild(tags);
+	sbdiv.appendChild(postMeta);
+	label.appendChild(sbdiv);
+	if (mediaBox) {
+		sbdiv.style.flexBasis = "1px";
+		sbdiv.style.flexGrow = 1;	
+		
+		let sbdiv2 = make('button');
+		label.classList.add("parentbutton");
+		sbdiv2.classList.add("childbutton");
+		sbdiv2.style = "display:flex; flex-basis:1px; flex-grow:1; margin-left:10px; height:169px; border-radius:5px; overflow:hidden; padding:0px";
+		sbdiv2.appendChild(mediaBox);		
+		label.appendChild(sbdiv2);
+	}
+	label.appendChild(actions);
+	
+	label.onmouseenter = function() { actions.style.display = ""; };
+	label.onmouseleave = function() { actions.style.display = "none"; };
+	label.onclick = function() {
+		event.preventDefault();
+		fillPost(postid);
+		queryPost(postid);
+		if (!D(postid)) {
+			let ts = Date.now();
+			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
+			makeLibLi(postid, ts);
+		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
+		flash(this.parentNode);
+	}
+	return label;
+}
+
+function fillPost(postid, suppressPanel) {
+	D('commentContent').style.display = 'none';
+	D('commentContent').value = "";
+	D('comment').textContent = "Comment";
+	
+	// handle left bars
+	if (readPostid && D(readPostid)) removeActiveBar(D(readPostid));
+	if (readPostid && D(readPostid + "-disc")) removeActiveBar(D(readPostid + "-disc"));
+	if (D(postid)) activeBar(D(postid));
+	if (D(postid + "-disc")) activeBar(D(postid + "-disc"));
+	
+	let userid = postid.split("-")[0];
+	let createdts = parseInt(postid.split("-")[1]);
+	
+	D('readTitle').style.cursor = "pointer";
+	D('readTitle').onclick = function() {
+		queryPost(postid);
+	}
+	queueDOMdisplayName(userid, D('author'));
+	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
+	
+	D('creation').textContent = unixToDate(createdts);
+	D('creation').title = createdts;	
+	D('modification').textContent = "";
+	D('modification').title = "";
+	D('modification').style.display = "none";	
+	if (userid == XNO.address) D('edit').style.display = "";
+	else D('edit').style.display = "none";
+	
+	if (readPostid != postid) {
+		D('readTitle').textContent = "Loading...";
+		D('readContent').innerHTML = "<i>Loading...</i>";	
+	}	
+	if (XNO.address) D("comment").disabled = false;
+	clearDOM(D('readComments'));
+	clearDOM(D('mapul'));
+	
+	let metaData = postCache[postid];
+	if (metaData) {
+		// Title and label
+		D('readTitle').textContent = metaData.title;
+		
+		if (metaData.tags) {
+			for (let i = 0; i < metaData.tags.length; i++) {
+				D('tags').appendChild(tagLabel(metaData.tags[i]));
+			}
+		}
+		
+		if (metaData.modifiedts && unixToDate(metaData.modifiedts) != unixToDate(createdts)) {
+			D('modification').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
+			D('modification').title = metaData.modifiedts;
+			D('modification').style.display = "";
+		}
+		
+		// content
+		if (metaData.content) {
+			let theNewContent = JSON.stringify(metaData.content);
+			if (readPostid != postid || theNewContent != readPostContent) {
+				readPostContent = theNewContent;
+				if (typeof metaData.content === "string") D('readContent').textContent = metaData.content;
+				else fillContent(D('readContent'), metaData.content, metaData.wall, userid);
+			}
+		}
+		
+		// comments
+		if (metaData.comments) {
+			metaData.comments.sort(function(x, y) {	return parseInt(x.commentid.split("-")[1]) - parseInt(y.commentid.split("-")[1]); });		
+			for (let i = 0; i < metaData.comments.length; i++) { addComment(metaData.comments[i]); }	
+		}
+		
+		if (metaData.chain) {
+			for (let i = 0; i < metaData.chain.length; i++) {				
+				let postli = make('li');
+				postli.style.whiteSpace = "nowrap";
+				postli.appendChild(fullLabel(metaData.chain[i]));
+				if (postid == metaData.chain[i]) activeBar(postli);
+				D('mapul').appendChild(postli);
+			}
+		}
+	}
+	
+	readPostid = postid;
+	if (!suppressPanel) {
+		loadPanel('read');
+		ws.emit("queryPostChain", {userid, createdts});
+	} else if (new URLSearchParams(window.location.search).get('postid') == readPostid) {
+		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
+		else document.title = "Read - Brewri";
+	}
+}
+
+function fillContent(elt, content, wall, userid) {
+	clearDOM(elt);
+	for (let i = 0; i < content.length; i++) {	
+		let jsbox = make("div");
+		if (!content[i].content) {
+			let wording = "- Premium content";
+			if (content[i].type == "js") wording = "- An applet";
+			if (content[i].type == "media") wording = "- Media";
+		
+			jsbox.style = "text-align:center; margin:20px 0px; padding:30px 10px; font-style:italic";			
+			jsbox.appendChild(make('span', wording + " available to "));
+			let athlabel = authorLabel(userid);
+			athlabel.onclick = function() {			
+				event.preventDefault();
+				event.stopPropagation();
+				queryBrowse(userid);
+				if (!active('sponsor')) sponsorHandler(D('sponsor'));
+			}
+			jsbox.appendChild(athlabel);
+			jsbox.appendChild(make('span', "'s sponsors -"));
+		} else if (content[i].type == "js") {
+			jsbox = make("iframe");
+			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px;";
+			jsbox.onmouseenter = function() { jsbox.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)"; }
+			jsbox.onmouseleave = function() { jsbox.style.borderColor = "transparent"; }
+			jsbox.sandbox = "allow-scripts";
+			let str = `<script>window.onload = function() {
+				window.parent.postMessage({height:Math.max( document.body.scrollHeight, document.body.offsetHeight, document.body.clientHeight,
+				document.body.parentElement.scrollHeight, document.body.parentElement.offsetHeight, document.body.parentElement.clientHeight)}, '*');
+			};<` + "/" + `script>`;
+			jsbox.srcdoc = content[i].content + str;
+		} else if (content[i].type == "image" || content[i].type == "media") {
+			let str = content[i].content.trim();			
+			jsbox.appendChild(fillMediaBox(str.split(" ")));
+			let caption = str.match(/\[(.*)\]/);
+			if (!caption && str.indexOf(' ') + 1) {
+				caption = str.substring(str.indexOf(' ') + 1);
+				if (caption) caption = [ "[" + caption + "]", caption];
+			}
+			if (caption && caption.length > 1) {
+				let capbox = make("div", caption[1]);
+				capbox.style = "text-align:center; font-size:0.9em; margin-top:10px"; 
+				jsbox.appendChild(capbox);
+			}
+		} else {
+			jsbox.innerHTML = DOMPurify.sanitize(marked.parse(content[i].content));
+			jsbox.style.whiteSpace = "initial";
+		}
+		jsbox.style.marginBottom = "20px";
+		elt.appendChild(jsbox);
+	}
+	
+	if (wall) {
+		for (let i = 0; i < wall.length; i++) {
+			let block = elt.children[wall[i]];
+			block.style.opacity = "0.5";
+			if (content[wall[i]].content) {
+				block.style.transitionProperty = "opacity";
+				block.style.transitionDuration = "1s";
+				block.style.transitionTimingFunction = "";
+				setTimeout(function() { block.style.opacity = ""; }, 0);
+			} else {			
+				block.style.borderLeft = "2px solid transparent";
+				block.onmouseenter = function() {
+					block.style.opacity = "";
+					block.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+				};
+				block.onmouseleave = function() {
+					block.style.opacity = "0.5";
+					block.style.borderColor = "transparent";
+				};			
+			}
+		}
+	}
+}
+
+function fillEdit(postid, officialData) {
+	editPostPending = !officialData;	
+	if (!postid) postid = readPostid;
+	if (editPostPending) {
+		loadPanel('post');
+		queryPost(postid);
+	}
+	
+	let theNewContent = "";
+	let metaData = postCache[postid];
+	if (metaData) {	
+		theNewContent = JSON.stringify(metaData.content);
+		if (postid == editPostid && theNewContent == editPostContent) return false;	
+	}
+	if (!cancelPost()) return false;
+	
+	editPostid = postid;
+	editPostContent = theNewContent;
+	D('submitButton').textContent = "Publish Update";
+	D('clearButton').textContent = "Cancel";
+	
+	if (!metaData) return false;
+	
+	D('editid').style.display = "";
+	D('creationEdit').textContent = unixToDate(metaData.createdts);
+	D('creationEdit').title = metaData.createdts;
+	if (metaData.modifiedts && unixToDate(metaData.createdts) != unixToDate(metaData.modifiedts)) {
+		D('modificationEdit').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
+		D('modificationEdit').title = metaData.modifiedts;
+	}	
+	
+	if (typeof metaData.content === "string") {	
+		clearDOM(D('postEditor'));	
+		let block = appendBlock();
+		block.firstChild.value = metaData.content;
+	} else if (metaData.content) {	
+		fillEditorContent(metaData.content, D('postEditor'));		
+		if (metaData.wall) {
+			for (let i = 0; i < metaData.wall.length; i++) {
+				toggle(D('postEditor').children[metaData.wall[i]].children[1].firstElementChild);
+			}
+		}
+	} 
+	
+	D('postTitle').value = metaData.title;
+	
+	url.search = new URLSearchParams({postid: metaData.prev_});
+	if (metaData.prev_) {
+		inputEvent(D('set-prev'), url.href);
+		D("recip-prev").classList.remove('active');
+	}
+	url.search = new URLSearchParams({postid: metaData.next_});	
+	if (metaData.next_) {
+		inputEvent(D('set-next'), url.href);
+		D("recip-next").classList.remove('active');
+	}
+	
+	if (metaData.tags) {
+		for (let i = 0; i < metaData.tags.length; i++) {
+			D('set-tag').value = metaData.tags[i];
+			addTag();
+		}
+	}
+}
+
+function appendBlock(type, previous, parent) {
+	if (!parent) parent = D('postEditor');
+	let block = make('div');
+	block.tabIndex = "-1";
+	let textbox = make('textarea');
+	textbox.style = "height:150px; width:100%; tab-size:4";	
+	block.appendChild(textbox);	
+	
+	let sponsBut = make('button', "Premium");
+	sponsBut.style.marginRight = "5px";
+	sponsBut.style.fontSize = "0.85em";
+	sponsBut.tabIndex = "-1";
+	sponsBut.onclick = function() { toggle(this); }
+	
+	let buttonPanel = make('div');
+	buttonPanel.style = "display:flex; justify-content:right";
+	
+	let mdBut = make('button', "Text");
+	mdBut.classList.add("left");
+	mdBut.onclick = function() { 
+		textbox.title = "text";
+		textbox.placeholder = "Text (markdown formatting enabled)...";
+		textbox.spellcheck = true;
+		textbox.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
+		textbox.style.color = "";
+		if (textbox.value == "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>") textbox.value = "";
+		textbox.onkeydown = "";
+		textbox.oninput = "";
+		for (let i = 0; i < buttonPanel.children.length; i++) {
+			buttonPanel.children[i].classList.remove("active");
+		}
+		mdBut.classList.add("active");
+		textbox.focus();
+	}
+	
+	let jsBut = make('button', "HTML/JS");
+	jsBut.classList.add("center");
+	jsBut.onclick = function() { 	
+		textbox.title = "js";
+		textbox.placeholder = "HTML (JS scripts enabled)...";
+		textbox.spellcheck = false;
+		textbox.style.fontFamily = "";
+		textbox.style.color = "";
+		if (!textbox.value) textbox.value = "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>";
+		addTabbing(textbox);
+		textbox.oninput = "";
+		for (let i = 0; i < buttonPanel.children.length; i++) {
+			buttonPanel.children[i].classList.remove("active");
+		}
+		jsBut.classList.add("active");
+		textbox.focus();
+	};
+	
+	let mediaBut = make('button', "Media");
+	mediaBut.classList.add("right");
+	mediaBut.onclick = function() {
+		textbox.title = "media";
+		textbox.placeholder = "Image, audio, or video link [optional caption]...\n\nSupports: most images; mp3, wav; mp4, ogg, webm, Youtube URL";
+		textbox.spellcheck = false;
+		textbox.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
+		if (textbox.value == "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>") textbox.value = "";		
+		if (textbox.value) textbox.style.color = "#888";
+		else textbox.style.color = "";
+		textbox.onkeydown = "";
+		textbox.oninput = function() {
+			if (textbox.value) textbox.style.color = "#888";
+			else textbox.style.color = "";
+		}
+		for (let i = 0; i < buttonPanel.children.length; i++) {
+			buttonPanel.children[i].classList.remove("active");
+		}
+		mediaBut.classList.add("active");
+		textbox.focus();
+	};
+	
+	let delBut = make('button', "✕");
+	delBut.style.marginLeft = "15px";
+	delBut.classList.add("left");
+	delBut.onclick = function() { 
+		if (!textbox.value || confirm("Delete element?")) {
+			remove(block);		
+			if (parent.children.length == 1) parent.firstElementChild.lastElementChild.lastElementChild.lastElementChild.previousElementSibling.disabled = true;
+		}
+	};
+	
+	let addBut = make('button', "＋");
+	addBut.style.marginLeft = "4px";
+	addBut.classList.add("right");
+	addBut.onclick = function() { appendBlock("text", block, parent) };
+
+	buttonPanel.appendChild(mdBut);
+	buttonPanel.appendChild(jsBut);
+	buttonPanel.appendChild(mediaBut);
+	buttonPanel.appendChild(delBut);
+	buttonPanel.appendChild(addBut);
+	
+	if (!type) type = "text";
+	if (type == "js") jsBut.click();
+	else if (type == "image" || type == "media") mediaBut.click();
+	else mdBut.click();
+	
+	let buttonParent = make('div');
+	buttonParent.style = "margin-top:10px; margin-bottom:20px; display:flex; justify-content:space-between";
+	if (parent == D('postEditor')) buttonParent.appendChild(sponsBut);
+	else buttonParent.style.justifyContent = "right";
+	buttonParent.appendChild(buttonPanel);
+	
+	block.appendChild(buttonParent);
+	if (previous) {
+		if (previous.nextElementSibling) previous.parentNode.insertBefore(block, previous.nextElementSibling);
+		else previous.parentNode.appendChild(block);
+	} else parent.appendChild(block);	
+	
+	if (parent.children.length == 1) delBut.disabled = true;
+	else for (let i = 0; i < parent.children.length; i++) {
+		parent.children[i].lastElementChild.lastElementChild.lastElementChild.previousElementSibling.disabled = false;
+	}
+	for (let i = 0; i < buttonPanel.children.length; i++) {
+		buttonPanel.children[i].tabIndex = -1;
+	}
+	textbox.focus();
+	return block;
+}
+
+function cancelPost(override) {
+	if (!override && hasDraft() && !confirm("Clear draft?")) return false;
+	showEditor();
+	editPostid = "";
+	editPostContent = "";
+	D('editid').style.display = "none";
+	D('creationEdit').textContent = "";
+	D('creationEdit').title = "";
+	D('modificationEdit').textContent = "";
+	D('modificationEdit').title = "";	
+	
+	clearDOM(D('postEditor'));	
+	appendBlock();	
+	
+	D('postTitle').value = "";	
+	inputEvent(D('set-prev'), "");
+	inputEvent(D('set-next'), "");
+	
+	clearDOM(D('editTags'));
+	D('set-tag').value = "";
+	
+	D('submitButton').textContent = "Publish";
+	D('clearButton').textContent = "Clear";
+	return true;
+}
+
+function tagLabel(tagStr) {			
+	let displayStr = tagStr;
+	if (displayStr.length > 32) displayStr = displayStr.substring(0, 32) + "...";
+	let tag = make('a', " • " + displayStr);			
+	url.search = new URLSearchParams({tag:tagStr});
+	tag.href = url;
+	tag.onclick = function() {			
+		event.preventDefault();
+		event.stopPropagation();
+		queryBrowse(null, tagStr);
+	};
+	return tag;
+}
+
+function authorLabel(userid) {
+	let postAuthor = make('a');
+	postAuthor.style = "font-weight:600";
+	url.search = new URLSearchParams({userid});
+	postAuthor.href = url;
+	queueDOMdisplayName(userid, postAuthor);
+	postAuthor.onclick = function() {	
+		event.preventDefault();
+		event.stopPropagation();
+		queryBrowse(userid);
+	};	
+	return postAuthor;
+}
+
+function timeLabel(createdts, modifiedts) {	
+	let dateDiv = make('span');
+	
+	let postDate = make('span', timeSince(createdts));	
+	postDate.title = createdts;
+	dateDiv.appendChild(postDate);	
+	
+	if (modifiedts && timeSince(modifiedts) != timeSince(createdts)) {
+		let postModified = make('span', " (" + timeSince(modifiedts) + ")");
+		// postModified.style.fontStyle = "italic";
+		postModified.title = modifiedts;
+		dateDiv.appendChild(postModified);
+	}
+	return dateDiv;
+}
+
+function addComment(commentData) {
+	if (D(commentData.commentid)) {
+		D(commentData.commentid).textContent = commentData.content;
+		return false;
+	}	
+	
+	let userid = commentData.commentid.split("-")[0];	
+	let theLabel = make('div');
+	theLabel.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis";
+	theLabel.appendChild(authorLabel(userid));
+	
+	let dateDiv = timeLabel(parseInt(commentData.commentid.split("-")[1]), commentData.modifiedts);
+	dateDiv.style.color = "#888";
+	dateDiv.style.marginLeft = "5px";
+	theLabel.appendChild(dateDiv);
+
+	// reply editor
+	let editPanel = make('textarea');
+	
+	if (XNO.address == userid) {
+		let editBut = make('a', " • Edit");	
+		editBut.style.cursor = "pointer";
+		
+		editPanel.placeholder = "Reply...";
+		editPanel.style = "margin-bottom:5px; margin-top:10px; width:100%; display:none; font-size:0.9em";	
+		editPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
+		editPanel.oninput = function() {
+			if (editPanel.value) editBut.textContent = " • Publish Edit";
+			else editBut.textContent = " • Cancel";
+		};
+		editPanel.onkeyup = function() {
+			if (event.keyCode == 27) {
+				editPanel.value = "";
+				editPanel.style.display = "none";
+				editBut.textContent = " • Edit";
+				event.stopPropagation();
+			}
+		}
+		
+		// editBut.style = "padding:2px 8px; margin:2px; margin-left:10px;";				
+		editBut.onclick = function() {
+			if (editPanel.style.display) {
+				editPanel.style.display = "";
+				editPanel.value = D(commentData.commentid).textContent;
+				this.textContent = " • Cancel";
+				editPanel.focus();
+			} else {
+				editPanel.style.display = "none";
+				if (editPanel.value && editPanel.value != D(commentData.commentid).textContent)
+					ws.emit('updateComment', {content:editPanel.value, postid: commentData.postid, parentid: commentData.parentid, commentid: commentData.commentid });
+				this.textContent = " • Edit";
+			}
+		};
+		theLabel.appendChild(editBut);
+	}	
+			
+	let theComment = make('li', commentData.content);
+	theComment.id = commentData.commentid;
+	theComment.style = "margin-bottom:10px; font-size:0.9em";
+	
+	if (commentData.parentid) {
+		D(commentData.parentid + "-ul").appendChild(theLabel);	
+		if (XNO.address == userid) D(commentData.parentid + "-ul").appendChild(editPanel);	
+		D(commentData.parentid + "-ul").appendChild(theComment);
+	} else {
+		let repPanel = make('textarea');
+		let repBut = make('button', "Reply");
+		repPanel.style = "display:none; margin-left:20px; margin-bottom:15px; margin-top:20px; width:calc(100% - 20px); font-size:0.9em";		
+		repPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
+		repPanel.placeholder = "Reply...";
+		repPanel.oninput = function() {
+			if (repPanel.value) repBut.textContent = "Reply";
+			else repBut.textContent = "Cancel";
+		};
+		repPanel.onkeyup = function() {
+			if (event.keyCode == 27 && (!repPanel.value.length || confirm("Delete reply?"))) {
+				repPanel.value = "";
+				repPanel.style.display = "none";
+				repBut.textContent = "Reply";
+				event.stopPropagation();
+			}
+		}					
+		
+		// reply button
+		repBut.style = "font-size:0.85em;";
+		repBut.title = commentData.commentid;
+		if (!XNO.address) repBut.disabled = true;		
+		repBut.onclick = function() {
+			if (repPanel.style.display == "none") {
+				repPanel.style.display = "block";
+				this.textContent = "Cancel";
+				repPanel.focus();
+			} else {
+				repPanel.style.display = "none";
+				this.textContent = "Reply";
+				if (repPanel.value) ws.emit('updateComment', {content:repPanel.value, postid: commentData.postid, parentid: commentData.commentid });
+				repPanel.value = "";
+			}
+		};
+		
+		// future replies
+		let ulcomment = make('ul');
+		ulcomment.style = "margin-left:20px";
+		ulcomment.id = commentData.commentid + "-ul";
+		
+		let repButHolder = make('div');
+		repButHolder.style = "display:flex; justify-content:right; margin-bottom:10px;";
+		let repLine = make('div');
+		repLine.style = "background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1";
+		repButHolder.appendChild(repLine);
+		repButHolder.appendChild(repBut);
+		
+		if (D('readComments').children.length) D('readComments').insertBefore(repButHolder, D('readComments').firstElementChild);
+		else D('readComments').appendChild(repButHolder);
+		
+		D('readComments').insertBefore(repPanel, D('readComments').firstElementChild);
+		D('readComments').insertBefore(ulcomment, D('readComments').firstElementChild);
+		D('readComments').insertBefore(theComment, D('readComments').firstElementChild);
+		if (XNO.address == userid) D('readComments').insertBefore(editPanel, D('readComments').firstElementChild);
+		D('readComments').insertBefore(theLabel, D('readComments').firstElementChild);
+	}
+}
+
+
+// Sidebar UI interaction handlers ///////////////////////////////////////////////////////////////////////
+
+var clipboardText;
+
+function generateSeed() {
+	let newSeed = XNO.generateSeed();
+	inputEvent(D("seed"), newSeed);
+	if (XNO.seed == newSeed) {
+		navigator.clipboard.writeText(newSeed);
+		clipboardText = newSeed;
+		showMsg("New PIN copied to clipboard. Save it safely, elsewhere!");
+	}
+}
+
+function importSeed() {
+	let seed = D("seed").value;
+	let index = 0;
+	if (!XNO.checkSeed(seed)) { if (XNO.checkAddress(seed)) showMsg("Enter a PIN, not an address."); }
+	else if (index.length > 0 && (!/^[0-9]+$/.test(index) || index < 0 || index > Math.pow(2, 32) - 1)) showMsg("Invalid account index.");
+	else if (seed == XNO.seed) return false;
+	else {
+		if (!XNO.address || confirm('Log out of the current account? (Have you have saved your account PIN elsewhere?!)')) {
+			clearSeed();		
+			XNO.unpackSeed(seed, parseInt(index));						
+			queueDOMdisplayName(XNO.address, D('displayName'), true);
+			D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+			setCSS("--butsat", "50%");
+			setCSS("--hue", funColor(XNO.address, false, true));
+			
+			D("current").disabled = false;
+			D("clear").disabled = false;
+			D("submitButton").disabled = false;
+			D("libraryPlaceholder").textContent = "- Reading list -";
+			D("subPanel").style.display = "flex";
+			localStorage.setItem("localSeed", XNO.seed);
+			
+			makeSubLi(XNO.address);
+			if (D('browseHeading').title != "Recent") {
+				D('subscribe').disabled = false;
+				if (D('browseHeading').title != XNO.address) {
+					if (D('browseHeading').title.substring(0, 5) == "nano_") {
+						D('sponsor').disabled = false;
+						D('sendButton').disabled = false;
+					}
+				} else D('info').style.display = "";
+			}
+			
+			if (ws && ws.readyState == 1) {
+				let ts = Date.now();
+				ws.emit('authenticateUser', {userid: XNO.address, ts, signature:XNO.sign(ts, XNO.address)});			
+			}
+			if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
+			if (readPostid) fillPost(readPostid, true);
+			refreshData("XNO");
+		}
+		D("seed").value = "";
+	}
+}
+
+function clickClearSeed() {
+	clearSeed();	
+	XNO.privateKey = "";
+	XNO.publicKey = "";
+	XNO.address = "";
+	XNO.seed = "";
+	XNO.encryptKey = "";	
+	D('displayName').textContent = "Guest";	
+	D('firstDiv').style.backgroundColor = "hsl(0, 0%, 80%)";
+	setCSS("--butsat", "0%");
+	
+	D("current").disabled = true;	
+	D("clear").disabled = true;
+	D("submitButton").disabled = true;
+	D("libraryPlaceholder").textContent = "- Reading list (log in above to persist) -";
+	D("subPanel").style.display = "none";	
+	localStorage.removeItem("localSeed");
+	
+	D("comment").disabled = true;
+	inputEvent(D("seed"), "");
+	
+	if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
+	if (readPostid) fillPost(readPostid, true);
+}
+
+function clearSeed() {
+	// clearing actions that are needed even if switching accounts	
+	clearDOM(D('subscriptions'));
+	clearDOM(D('library'));
+	D('libraryPlaceholder').style.display = "";	
+	if (D('creationEdit').title) cancelPost(true);
+	D('subscribe').disabled = true;
+	D('sendButton').disabled = true;
+	if (active('sponsor')) sponsorHandler(D('sponsor'));
+	closeAccordion(D('editPanel'));
+	D('balance').textContent = "0.00";
+	
+	closeBio();
+	D('info').style.display = "none";
+}
+
+function queueDOMdisplayName(userid, elt, black) {
+	elt.title = userid;
+	elt.textContent = funName(userid);
+	if (!black) elt.style.color = funColor(userid);	
+	if (!DOMdisplayNameQueue[userid]) DOMdisplayNameQueue[userid] = [elt];
+	else DOMdisplayNameQueue[userid].push(elt);
+}
+
+function requestNames() {
+	let userids = [];	
+	for (let name in DOMdisplayNameQueue) {	userids.push(name);	}
+	if (ws && userids.length) ws.emit('queryUsers', {userids});
+}
+
+function queryPost(postid) {
+	if (!postid) postid = readPostid;
+	let split = postid.split("-");
+	ws.emit('queryPost', { userid: split[0], createdts: parseInt(split[1]) });	
+}
+
+function makeSubLi(userid, data) {
+	let tag = (userid.substring(0, 5) != "nano_");
+	
+	let subli = make('a');
+	subli.style = "display:block; width:100%; padding:4px; position:relative; color: #333";	
+	if (tag) url.search = new URLSearchParams({tag:userid});
+	else url.search = new URLSearchParams({userid});
+	subli.href = url;
+	subli.onclick = function() {
+		event.preventDefault();
+		if (!tag) queryBrowse(userid);
+		else queryBrowse(null, userid);
+		flash(this.parentNode);
+	};
+	
+	let actions = make('div');
+	actions.style = "position:absolute; top:0px; right:0px; display:none; opacity:0.8";
+	subli.appendChild(actions);	
+	subli.onmouseenter = function() { actions.style.display = ""; }
+	subli.onmouseleave = function() { actions.style.display = "none"; }
+	
+	if (userid != XNO.address && (!data || !data.expiryts || data.expiryts < Date.now())) {
+		let unsubBut = make("button", "✕");
+		unsubBut.style.marginRight = "5px";
+		unsubBut.onclick = function() {
+			event.stopPropagation();
+			event.preventDefault();
+			remove(subli.parentNode);
+			if (ws) ws.emit('unsubscribe', {userid});
+		};	
+		actions.appendChild(unsubBut);
+	}
+	
+	let nameSpan = make('span', userid);
+	if (!tag) queueDOMdisplayName(userid, nameSpan);
+	nameSpan.style.fontWeight = "600";
+	subli.appendChild(nameSpan);
+
+	if (data) {
+		if (data.lastpublishedts) {
+			let publishSpan = make('span', "\xa0\xa0" + timeSince(data.lastpublishedts));
+			publishSpan.style = "font-size:0.85em; color:#888";
+			if (data.lastaccessedts && data.lastaccessedts < data.lastpublishedts) publishSpan.style.fontWeight = "bold";
+			subli.appendChild(publishSpan);			
+		}
+		
+		if (data.expiryts) {
+			let expirySpan;
+			if (data.expiryts > Date.now()) {
+				newDate = 2*Date.now() - data.expiryts;
+				expirySpan = make('a', "Premium sponsorship • " + timeSince(newDate) + " left");
+			} else {			
+				expirySpan = make('a', "Sponsorship ended • " + timeSince(data.expiryts) + " ago");
+				expirySpan.style = "font-style:italic";
+			}
+			expirySpan.onclick = function() {			
+				event.preventDefault();
+				event.stopPropagation();
+				if (!tag) queryBrowse(userid);
+				else queryBrowse(null, userid);
+				if (!active('sponsor')) sponsorHandler(D('sponsor'));
+				flash(subli.parentNode);
+			}
+			
+			let expiryHolder = make('div');
+			expiryHolder.style = "font-size:0.85em;";
+			expiryHolder.appendChild(expirySpan);
+			subli.appendChild(expiryHolder);			
+		}
+	}
+	
+	let subliwrap = make("li");
+	if (tag) subliwrap.id = "tag-" + userid;
+	else subliwrap.id = userid;
+	subliwrap.appendChild(subli);
+	D('subscriptions').appendChild(subliwrap);
+	
+	if (D('browseHeading').title) {
+		if (D(D('browseHeading').title)) activeBar(D(D('browseHeading').title));
+		if (D("tag-" + D('browseHeading').title)) activeBar(D("tag-" + D('browseHeading').title));
+	}
+}
+
+function makeLibLi(postid, lastaccessedts, pushedts) {
+	let libli = make('li');
+	libli.id = postid;
+	libli.style.whiteSpace = "nowrap";
+	libli.appendChild(fullLabel(postid, true));	
+	if (!lastaccessedts) libli.firstElementChild.firstElementChild.style.fontWeight = "bold";	
+	//if (pushedts) libli.appendChild(make('span', timeSince(pushedts)));
+	if (postid == readPostid) activeBar(libli);
+	if (D('library').firstElementChild) D('library').insertBefore(libli, D('library').firstElementChild);
+	else {
+		D('library').appendChild(libli);
+		D('libraryPlaceholder').style.display = "none";
+	}
+}
+
+function showCurrent() {
+	if (XNO.seed) {
+		D(`seed`).value = XNO.seed;
+		flash(D(`seed`));
+	} else console.log("No seed loaded.");
+}
+
+function toggleVisibility() {
+	if (D("seed").type === "password") {
+		D("seed").type = "text";
+		D("show").classList.add('active');
+	} else {
+		D("seed").type = "password";		
+		D("show").classList.remove('active');
+	}
+}
+	
+function setData() {
+	if (ws && ws.readyState == 1) {		
+		queueDOMdisplayName(XNO.address, D('displayName'), true);
+		queueDOMdisplayName(XNO.address, D('browseHeading'), true);
+		queueDOMdisplayName(XNO.address, D(XNO.address).lastElementChild);
+		
+		ws.emit('updateUser', {displayname:D('bio-name').value, color:parseInt(D('colorslider').value), bio:parseEditorContent(D('bioBlocks')), sponsor_price: D('inputPrice').value });
+		closeBio();
+	}
+}
+
+// Global event listeners ///////////////////////////////////////////////////////////////////////
+
+window.addEventListener("beforeunload", function (e) {
+    var confirmationMessage = 'It looks like you have been drafting something. If you leave before posting, your changes will be lost.';
+	if (hasDraft() || D('commentContent').value.length > 0) {
+		(e || window.event).returnValue = confirmationMessage; //Gecko + IE
+		return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
+	}
+});
+
+window.addEventListener('popstate', loadURL);
+
+function loadURL() {
+	let params = new URLSearchParams(window.location.search);
+	let postid = params.get('postid');
+	let userid = params.get('userid');
+	let tag = params.get('tag');
+	if (postid) {
+		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse(null, null, true);
+		fillPost(postid);
+		if (!postCache[postid] || !postCache[postid].comments) queryPost(postid);
+	} else if (tag) queryBrowse(null, tag);
+	else if (userid) queryBrowse(userid);
+	else queryBrowse();
+	
+	if (ws && ws.readyState == 3) {	setupWebsocket(); }
+}
+
+window.addEventListener('message', function (e) {
+	if (e.data.height > 0) {
+		let h = e.data.height;
+		if (h > 4096) h = 4096;		
+		Array.from(document.getElementsByTagName('iframe')).filter(iframe => {
+			return iframe.contentWindow === event.source;
+		})[0].style.height = h + "px";
+	}
+});
+
+window.addEventListener('copy', function(e) { 
+	if (document.activeElement.tagName.toLowerCase() == 'input') 
+		clipboardText = document.activeElement.value.substring(document.activeElement.selectionStart, document.activeElement.selectionEnd);
+	else if (document.getSelection().toString()) {
+		clipboardText = document.getSelection().toString();	
+		navigator.clipboard.writeText(clipboardText);
+	}
+});
+
+window.addEventListener('keydown', function(evt) {
+	if (document.activeElement.tagName.toLowerCase() != 'input' && document.activeElement.tagName.toLowerCase() != 'textarea') {
+		if (evt.keyCode == 8) {
+			if (backList.length) {
+				evt.preventDefault();
+				loadPanel(backList.pop(), false, true);
+			}
+		} 
+		
+		if (evt.keyCode == 27) {
+			evt.preventDefault();
+			loadPanel('browse', false, true);
+			backList = [];
+		}
+	}
+	if (evt.altKey) {
+		if (evt.keyCode == 49) loadPanel('browse', true);
+		else if (evt.keyCode == 50) loadPanel('read', true);
+		else if (evt.keyCode == 51) loadPanel('post', true);		
+		else if (evt.keyCode == 81) {
+			if (active('readButton') && readPostid && postCache[readPostid].userid == XNO.address) fillEdit();
+			else if (active('postButton') && D('postEditor').style.display == "none") showEditor();
+			if (active('postButton') && document.activeElement.tagName.toLowerCase() != 'input' && document.activeElement.tagName.toLowerCase() != 'textarea') {
+				D('postEditor').firstElementChild.firstElementChild.focus();
+			}
+		} else if (evt.keyCode == 87) {
+			if (active('postButton') && D('postPreview').style.display == "none") {
+				event.preventDefault();
+				showPreview();
+			}
+		}
+	}
+});
+
+// UI helper library ///////////////////////////////////////////////////////////////////////
+
+function funName(userid, generated) {
+	if (displayNameCache[userid] && !generated) return displayNameCache[userid];
+	return adj[parseInt(XNO.pubFromAddr(userid).substring(0, 10), 16) % adj.length] + " " + animals[parseInt(XNO.pubFromAddr(userid).substring(0, 10), 16) % animals.length];
+}
+
+function funColor(userid, generated, raw) {
+	let genColor = parseInt(XNO.pubFromAddr(userid).substring(0, 10), 16) % 360;
+	if (colorCache[userid] && !generated) genColor = colorCache[userid];
+	if (raw) return genColor;
+	return "hsl(" + genColor + ", 100%, 27%)";
+}
+
+function D(string) { 
+if (!string) console.error("Empty dom string");
+return document.getElementById(string); 
+}
+
+function toggleSubAccordion(but) {
+	let obj = but.parentNode.lastElementChild;
+	if (obj.style.maxHeight == "0px") openSubAccordion(but.parentNode);
+	else closeAccordion(obj); 
+}
+
+function openSubAccordion(but) {
+	let obj = but.lastElementChild;	
+	if (obj.style.maxHeight == "0px") {
+		showAccordion(obj);	
+		setTimeout(function() { if (obj.style.maxHeight != "0px") obj.style.maxHeight = ""; }, 100);
+	}
+}
+
+function closeAccordion(obj) {
+	if (obj.style.maxHeight != "0px") showAccordion(obj);
+	setTimeout(function() { 
+		obj.style.maxHeight = "0px";
+		obj.style.marginTop = "0px";
+		obj.style.marginBottom = "0px";
+	}, 1);
+}
+
+function showAccordion(obj) { obj.style.maxHeight = obj.scrollHeight + "px"; }
+
+function flash(elt, str) {
+	if (elt) {
+		if (str != undefined) elt.textContent = str;
+		elt.style.backgroundColor = 'hsl(var(--hue), var(--butsat), 93%)';	
+		setTimeout(function() {	elt.style.backgroundColor = "";}, 500);
+	} else console.log("Element disappeared before display.");
+}
+
+function inputEvent(obj, value) {
+	obj.value = value;
+	obj.dispatchEvent(new Event('input', {bubbles:true}));
+	if (value) flash(obj);
+}
+
+function closeCopy(obj) {
+	if (obj.value.length > 0) inputEvent(obj, "");
+	else if (navigator.clipboard.readText) {
+		navigator.clipboard.readText()
+			.then(function(text) { inputEvent(obj, text); })
+			.catch(function() { if (clipboardText) inputEvent(obj, clipboardText); });
+	}
+	else if (clipboardText) inputEvent(obj, clipboardText);
+}
+
+function clickCopy(elt, str) {
+	if (str.length > 1) {
+		/* Copy the text inside the text field */
+		navigator.clipboard.writeText(str);
+		clipboardText = str;
+		showMsg("Copied to clipboard.");
+	}
+	flash(elt);
+}
+
+var msgTimer;
+function showMsg(str, bold, hold) {
+	let e = new Date();
+	D('msg').style.display = "";
+	D('msg').style.transition = "";
+	if (msgTimer) clearTimeout(msgTimer);
+	D('msg').style.filter = "opacity(0.9)";
+	// flash(D('msg'), e.toLocaleTimeString() + ": " + str);
+	flash(D('msg'), str);
+	if (bold) D('msg').style.backgroundColor = "#F00";
+	if (!hold) msgTimer = setTimeout(function() {
+		D('msg').style.transition = "filter 2s linear 0s";
+		D('msg').style.filter = "opacity(0)";
+	}, 5000);
+}
+
+function unixToDate(time) {
+	let str = new Date(time);
+	let format = str.toLocaleDateString(undefined,{year: 'numeric', month: 'short', day: 'numeric' });
+	//if (str.getYear() == (new Date(Date.now())).getYear()) return format.slice(0, -6); 
+	//else 
+	return format;
+}
+
+function remove(elt) { elt.parentNode.removeChild(elt); }
+function clearDOM(myNode) {	while (myNode.firstChild) { myNode.removeChild(myNode.lastChild); } }
+
+function make(string, text) { 
+	let myObj = document.createElement(string);
+	if (text) myObj.textContent = text;
+	return myObj;
+}
+
+function toggle(div) {
+	if (div.classList.contains('active')) div.classList.remove('active');
+	else div.classList.add('active');
+}
+
+function timeSince(date) {
+	if (typeof date !== 'object') date = new Date(date);
+
+	var seconds = Math.floor((new Date() - date) / 1000);
+	var intervalType;
+
+	var interval = Math.floor(seconds / 31536000);
+	if (interval >= 1) intervalType = 'y';
+	else {
+		interval = Math.floor(seconds / 2592000);
+		if (interval >= 1) intervalType = 'mo';
+		else {
+			interval = Math.floor(seconds / 86400);
+			if (interval >= 1) intervalType = 'd';
+			else {
+				interval = Math.floor(seconds / 3600);
+				if (interval >= 1) intervalType = "h";
+				else {
+					interval = Math.floor(seconds / 60);
+					if (interval >= 1) intervalType = "m";
+					else {
+						interval = seconds;
+						intervalType = "s";
+					}
+				}
+			}
+		}
+	}
+
+	//  if (interval > 1 || interval === 0) intervalType += 's';
+	return interval + intervalType;
+}
+
+function addTabbing(elt) {
+    elt.onkeydown = function(evt) {
+        let text = elt.value;
+        let sel = elt.selectionStart;
+		let selEnd = elt.selectionEnd;
+        switch (evt.key) {
+            case "Escape":
+                evt.preventDefault();
+				evt.stopPropagation();
+				if (elt.parentNode.nextElementSibling) elt.parentNode.nextElementSibling.focus();
+				else elt.parentNode.focus();
+				break;
+            case "Enter":
+                if (sel == selEnd) {
+                    // find start of the current line
+                    while (sel > 0 && text[sel-1] != '\n') sel--;
+
+                    let lineStart = sel;
+                    while (text[sel] == ' ' || text[sel]=='\t') sel++;
+
+                    if (sel > lineStart) {
+                        evt.preventDefault();
+                        // Insert carriage return and indented text
+                        document.execCommand('insertText', false, "\n" + text.substr(lineStart, sel-lineStart));
+
+                        // Scroll caret visible
+                        elt.blur();
+                        elt.focus();
+                    }
+                }
+				break;
+            case "Tab":
+                evt.preventDefault();
+                // selection?
+                if (sel == selEnd) { // These operations are undoable
+                    if (!evt.shiftKey) document.execCommand('insertText', false, "\t");
+                    else if (elt.selectionStart > 0 && text[elt.selectionStart-1]=='\t') document.execCommand('delete');
+                } else { // Block indent/unindent trashes undo stack.
+                    // Select whole lines
+                    while (sel > 0 && text[sel-1] != '\n') sel--;
+                    while (selEnd > 0 && text[selEnd-1]!='\n' && selEnd < text.length) selEnd++;
+
+                    // Get selected text
+                    let lines = text.substr(sel, selEnd - sel).split('\n');
+
+                    // Insert tabs
+                    for (var i=0; i<lines.length; i++) {
+                        // Don't indent last line if cursor at start of line
+                        if (i==lines.length-1 && lines[i].length==0) continue;
+
+                        // Tab or Shift+Tab?
+                        if (evt.shiftKey) {
+                            if (lines[i].startsWith('\t')) lines[i] = lines[i].substr(1);
+                            else if (lines[i].startsWith("    ")) lines[i] = lines[i].substr(4);
+                        } else lines[i] = "\t" + lines[i];
+                    }
+                    let output = lines.join('\n');
+
+                    // Update the text area
+                    elt.value = text.substr(0, sel) + output + text.substr(selEnd);
+                    elt.selectionStart = sel;
+                    elt.selectionEnd = sel + output.length; 
+                }
+        }
+    } 
+}
+
+function active(elt) {
+	if (typeof elt === 'string' || elt instanceof String) elt = D(elt);
+	return elt.classList.contains('active');
+}
+
+
+function networkFailMsg(error) {
+	if (!error || error.message == "Network Error") showMsg("Unable to connect to XNO network.");
+	else showMsg("Transfer seems to have failed or is delayed.");
+	return false;
+}
+
+function color(elt) {
+	let theColor = elt.value;
+	if (theColor == 0) theColor = funColor(XNO.address, true, true);
+	elt.previousElementSibling.style.color = 'hsl(' + theColor + ', 100%, 27%)';
+	setCSS('--hue', theColor);
+	
+	D('firstDiv').style.backgroundColor = "hsl(" + theColor + ", 55%, 80%)";
+}
+
+function setCSS(variable, value) { document.documentElement.style.setProperty(variable, value);}
+
+function fileSize(url) {
+    return new Promise((resolve, reject) => {
+        let xhttp = new XMLHttpRequest();
+        xhttp.timeout = 10*1000; // 10 seconds
+        xhttp.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				console.log("File size: " + xhttp.getResponseHeader("Content-Length"));
+				resolve(xhttp.getResponseHeader("Content-Length"));
+			}
+        };
+		xhttp.open("HEAD", url, true); // Notice "HEAD" instead of "GET",  to get only the header
+        xhttp.send();
+    });
+}
+
+function D(string) { return document.getElementById(string); }
+
+</script>
+
+</body>
+</html>
