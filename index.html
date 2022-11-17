@@ -1278,7 +1278,7 @@ function fillBrowseList(data) {
 		for (let i = 0; i < data.length; i++) {	
 			cachePost(data[i]);				
 			let mediaBox;
-			if (typeof postCache[data[i].postid].content !== "string") {
+			if (typeof postCache[data[i].postid].content !== "string" && postCache[data[i].postid].content) {
 				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
 					let content = postCache[data[i].postid].content[j];
 					if (content.type == "image" || content.type == "media") {
