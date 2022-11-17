@@ -2132,6 +2132,7 @@ function clearSeed() {
 function queueDOMdisplayName(userid, elt, black) {
 	elt.title = userid;
 	elt.textContent = funName(userid);
+	elt.style.fontWeight = "600";
 	if (!black) elt.style.color = funColor(userid);	
 	if (!DOMdisplayNameQueue[userid]) DOMdisplayNameQueue[userid] = [elt];
 	else DOMdisplayNameQueue[userid].push(elt);
