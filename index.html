@@ -1911,7 +1911,7 @@ function addComment(commentData) {
 	
 	let userid = commentData.commentid.split("-")[0];	
 	let theLabel = make('div');
-	theLabel.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis";
+	theLabel.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px";
 	theLabel.appendChild(authorLabel(userid));
 	
 	let dateDiv = timeLabel(parseInt(commentData.commentid.split("-")[1]), commentData.modifiedts);
