@@ -1447,7 +1447,6 @@ function fullLabel(postid, library, mediaBox) {
 }
 
 function fillPost(postid, suppressPanel) {
-	if (!suppressPanel) loadPanel('read');		
 	if (readPostid != postid) {
 		if (D('commentContent').value.length && !confirm("Clear comment?")) return false;
 		D('readTitle').style.cursor = "pointer";
@@ -1537,8 +1536,10 @@ function fillPost(postid, suppressPanel) {
 	}
 	
 	readPostid = postid;
-	if (!suppressPanel) ws.emit("queryPostChain", {userid, createdts});
-	else if (new URLSearchParams(window.location.search).get('postid') == readPostid) {
+	if (!suppressPanel) {
+		loadPanel('read');
+		ws.emit("queryPostChain", {userid, createdts});
+	} else if (new URLSearchParams(window.location.search).get('postid') == readPostid) {
 		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
 		else document.title = "Read - Brewri";
 	}
