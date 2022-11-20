@@ -75,7 +75,7 @@
 				<span id="loadingMsg" style="margin-left:10px; font-style:italic; display:none">Loading...</span>
 			</div>
 			<div style="display:flex">
-				<div style="flex-basis:1px; flex-grow:5; margin-right:50px;">
+				<div style="flex-basis:1px; flex-grow:5; margin-right:30px;">
 					<ul id="discovery"></ul>
 				</div>
 				
@@ -84,10 +84,10 @@
 						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:40px"></div>
 						
 						<div style="display:flex; justify-content:right;">
-							<button id="info" onclick="openBio()" style="font-size:0.85em">Edit Profile</button>
+							<button id="profileBut" onclick="openBio()" style="font-size:0.85em">Update Profile</button>
 							<div id="bioLine" style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>						
 							<button id="subscribe" onclick="subscribeHandler()" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>
-							&nbsp;<button id="sponsor" onclick="sponsorHandler(this)" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>	
+							&nbsp;<button id="sponsor" onclick="sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>	
 						</div>
 				
 						<div id="bioSponsor" style="margin-top:30px; display:none;">
@@ -183,9 +183,12 @@
 				
 				
 				<textarea id="commentContent" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
-				<div style="display:flex; justify-content:right;">
-					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>
-					<button id="comment" style="font-size:0.85em" onclick="comment()" autocomplete="off" disabled>Comment</button>
+				<div style="display:flex; justify-content:right;">				
+					<button id="edit2" onclick=" fillEdit(); queryPost();" style="font-size:0.85em; display:none">Update</button>
+					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>										
+					<button id="subscribe2" onclick="subscribeHandler(D('author').title)" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>				
+					&nbsp;<button id="sponsor2" onclick="queryBrowse(D('author').title); sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>
+					&nbsp;<button id="comment" onclick="comment()" autocomplete="off" style="font-size:0.85em" disabled>Comment</button>
 				</div>
 				
 				<ul id="readComments" style="white-space:pre-wrap; margin-top:10px"><ul>
@@ -755,8 +758,6 @@ function setupWebsocket(fresh) {
 			}
 		}		
 		receiveDOMdisplayName(data);
-		D('displayName').style.color = "";
-		D('browseHeading').style.color = "";
 		
 		clearDOM(D('library'));
 		data.library.sort(function(x, y) { return x.pushedts - y.pushedts; });
@@ -786,11 +787,7 @@ function setupWebsocket(fresh) {
 	});
 	
 	ws.on('queryUsersResponse', function(data) { 
-		for (let i = 0; i < data.length; i++) {
-			receiveDOMdisplayName(data[i]);
-		}
-		D('displayName').style.color = "";
-		D('browseHeading').style.color = "";
+		for (let i = 0; i < data.length; i++) receiveDOMdisplayName(data[i]);
 	});
 	
 	ws.on('queryPostsRecentResponse', function(data) { fillBrowseList(data); });	
@@ -849,12 +846,11 @@ function setupWebsocket(fresh) {
 
 function queryBrowse(userid, tag, suppressPanel) {
 	closeBio();
-	D('info').style.display = "none";
+	D('profileBut').style.display = "none";
 		
-	D('sponsor').disabled = true;	
-	D('subscribe').disabled = true;	
+	D('sponsor').disabled = true;
 	D('sendButton').disabled = true;
-	D('bioPreview').style.display = "none";
+	D('bioPreview').style.display = "";
 	
 	D('theirFunName').style.color = "";	
 	D('theirFunName').textContent = "\xa0-\xa0";
@@ -868,23 +864,17 @@ function queryBrowse(userid, tag, suppressPanel) {
 	}
 	
 	if (userid) {		
-		D('bioPreview').style.display = "";
 		D('sponsor').disabled = false;
-		if (XNO.address) {
-			D('subscribe').disabled = false;
-			if (userid != XNO.address) D('sendButton').disabled = false;
-		}		
-		if (userid == XNO.address) D('info').style.display = "";
+		if (XNO.address) if (userid != XNO.address) D('sendButton').disabled = false;
+		if (userid == XNO.address) D('profileBut').style.display = "";
 		queueDOMdisplayName(userid, D('theirFunName'));
-		D('theirAddress').textContent = userid;		
+		D('theirAddress').textContent = userid;
 		if (D(userid)) activeBar(D(userid));
 		
 		queueDOMdisplayName(userid, D('browseHeading'), true);
 		fillBio(userid);
 		browseURL = {userid};
-	} else if (tag) {	
-		D('bioPreview').style.display = "";
-		if (XNO.address) D('subscribe').disabled = false;			
+	} else if (tag) {			
 		if (D("tag-" + tag)) activeBar(D("tag-" + tag));
 		
 		D('browseHeading').title = tag;
@@ -892,6 +882,7 @@ function queryBrowse(userid, tag, suppressPanel) {
 		D('bio').textContent = "An unmoderated tag."
 		browseURL = {tag};
 	} else {	
+		D('bioPreview').style.display = "none";
 		D('browseHeading').title = "Recent";
 		D('browseHeading').textContent = "Recent";
 		D('bio').textContent = "The trickle of recent posts."
@@ -899,7 +890,7 @@ function queryBrowse(userid, tag, suppressPanel) {
 	}
 	
 	D('browseHeading').onclick = function() { queryBrowse(userid, tag); };
-	if (active('sponsor')) sponsorHandler(D('sponsor'));
+	if (active('sponsor')) sponsorHandler();
 	
 	if (browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
 	else D('discovery').style.opacity = "0.5";
@@ -915,8 +906,40 @@ function queryBrowse(userid, tag, suppressPanel) {
 	if (!suppressPanel) loadPanel('browse');
 }
 
-function sponsorHandler(elt) {
-	if (active(elt)) {
+function fillBrowseList(data) {
+	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
+	D('loadingMsg').style.display = "none";
+	clearDOM(D('discovery'));
+	D('discovery').style.opacity = "";
+	
+	if (data) {
+		data.sort(function(x, y) { return y.createdts - x.createdts; });
+		for (let i = 0; i < data.length; i++) {	
+			cachePost(data[i]);				
+			let mediaBox;
+			if (typeof postCache[data[i].postid].content !== "string" && postCache[data[i].postid].content) {
+				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
+					let content = postCache[data[i].postid].content[j];
+					if (content.type == "image" || content.type == "media") {
+						mediaBox = fillMediaBox(content.content.trim().split(" "), true);					
+						break;
+					}		
+				}
+			}
+			
+			let postli = make('li');
+			postli.id = data[i].postid + "-disc";
+			postli.style.marginBottom = "10px";			
+			postli.appendChild(fullLabel(data[i].postid, false, mediaBox));			
+			if (readPostid == data[i].postid) activeBar(postli);
+			D('discovery').appendChild(postli);
+		}
+	}	
+	requestNames();
+}
+
+function sponsorHandler() {
+	if (active(D('sponsor'))) {
 		D('bioSponsor').style.display = "none";
 		D('sponsorInput').value = "";
 	} else {
@@ -924,18 +947,20 @@ function sponsorHandler(elt) {
 		D('sponsorInput').focus();
 		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"end"});
 	}
-	toggle(elt);
+	toggle(D('sponsor'));
 }
 
-function subscribeHandler() {
-	if (D("tag-" + D('browseHeading').title)) flash(D("tag-" + D('browseHeading').title));
-	else if (D(D('browseHeading').title)) flash(D(D('browseHeading').title));
+function subscribeHandler(subscribee) {
+	if (!subscribee) subscribee = D('browseHeading').title;
+	
+	if (D("tag-" + subscribee)) flash(D("tag-" + subscribee));
+	else if (D(subscribee)) flash(D(subscribee));
 	else {
-		makeSubLi(D('browseHeading').title);
-		if (ws) ws.emit("subscribe", {userid: D('browseHeading').title});
+		makeSubLi(subscribee);
+		if (ws) ws.emit("subscribe", {userid: subscribee});
 	}	
-	if (D(D('browseHeading').title)) D(D('browseHeading').title).scrollIntoView({behavior: "smooth", block:"nearest"});
-	else D("tag-" + D('browseHeading').title).scrollIntoView({behavior: "smooth", block:"nearest"});
+	if (D(subscribee)) D(subscribee).scrollIntoView({behavior: "smooth", block:"nearest"});
+	else D("tag-" + subscribee).scrollIntoView({behavior: "smooth", block:"nearest"});
 }
 
 function addTag() {
@@ -982,9 +1007,11 @@ function checkTitle(elt) {
 	let prev = "";
 	try { prev = new URLSearchParams((new URL(elt.value)).search).get('postid');} 
 	catch { prev = "" };
-	let titleElt = elt.parentNode.previousElementSibling.firstElementChild;
 	let buttonElt = elt.parentNode.lastElementChild;
+	buttonElt.classList.remove('active');
+	buttonElt.disabled = true;
 	
+	let titleElt = elt.parentNode.previousElementSibling.firstElementChild;
 	if (prev) {
 		if (postCache[prev]) titleElt.textContent = postCache[prev].title;
 		else titleElt.textContent = "(unknown post)";
@@ -992,53 +1019,26 @@ function checkTitle(elt) {
 		if (prev.split("-")[0] == XNO.address) {
 			buttonElt.classList.add('active');
 			buttonElt.disabled = false;
-		} else {
-			buttonElt.classList.remove('active');
-			buttonElt.disabled = true;		
-		}		
-	} else {
-		titleElt.textContent = "(none)"; 
-		buttonElt.classList.remove('active');
-		buttonElt.disabled = true;
-	}
-}
-
-function commentKeypress() {
-	if (event.keyCode == 27 && (!D('commentContent').value.length || confirm("Delete comment?"))) {
-		D('commentContent').value = "";
-		D('commentContent').style.display = "none";
-		D("comment").textContent = "Comment";
-		event.stopPropagation();
-	} else if (D('commentContent').value) D("comment").textContent = "Comment";
-	else D("comment").textContent = "Cancel";
-}
-
-function comment() {
-	if (D('commentContent').style.display) {
-		D('commentContent').style.display = "";
-		D("comment").textContent = "Cancel";
-		D('commentContent').focus();
-	} else {
-		D('commentContent').style.display = "none";
-		D("comment").textContent = "Comment";
-		ws.emit('updateComment', {content:D('commentContent').value, postid: D('author').title + "-" + D('creation').title});
-		D('commentContent').value = "";
-	}
+		}
+	} else titleElt.textContent = "(none)";
 }
 
 function showEditor() {
 	clearDOM(D('postPreview'));
+	D('postPreview').style.display = "none";
+	D('postEditor').style.display = "";
+	
 	D('editButton').classList.add('active');
 	D('previewButton').classList.remove('active');
-	D('postEditor').style.display = "";
-	D('postPreview').style.display = "none";
 }
 
-function hasDraft() {
-	for (let i = 0; i < D('postEditor').children.length; i++) {
-		if (D('postEditor').children[i].firstChild.value) return true;
-	}
-	return false;
+function showPreview(elt) {
+	fillContent(D('postPreview'), parseEditorContent(D('postEditor')), parseEditorWall(), XNO.address);	
+	D('postEditor').style.display = "none";
+	D('postPreview').style.display = "";
+	
+	D('previewButton').classList.add('active');
+	D('editButton').classList.remove('active');
 }
 
 function parseEditorWall() {
@@ -1061,12 +1061,11 @@ function parseEditorContent(elt) {
 	return content;
 }
 
-function showPreview(elt) {
-	fillContent(D('postPreview'), parseEditorContent(D('postEditor')), parseEditorWall(), XNO.address);	
-	D('previewButton').classList.add('active');
-	D('editButton').classList.remove('active');
-	D('postEditor').style.display = "none";
-	D('postPreview').style.display = "";
+function hasDraft() {
+	for (let i = 0; i < D('postEditor').children.length; i++) {
+		if (D('postEditor').children[i].firstChild.value) return true;
+	}
+	return false;
 }
 
 function loadPanel(type, manual, holdHistory) {
@@ -1100,12 +1099,14 @@ function loadPanel(type, manual, holdHistory) {
 	}
 	
 	let params = new URLSearchParams(window.location.search);
+	let theHeight = postHeight;
 	if (type == "read") {
 		url.search = new URLSearchParams({postid:readPostid});
 		
 		if (readPostid && params.get('postid') != readPostid) changeHistory();
 		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
 		else document.title = "Read - Brewri";
+		theHeight = readHeight;
 	} else if (type == "browse") {
 		let newTitle = "Brewri";
 		if (browseURL.userid) {		
@@ -1118,21 +1119,18 @@ function loadPanel(type, manual, holdHistory) {
 		
 		if (browseURL && (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid'))) changeHistory();
 		document.title = newTitle;
+		theHeight = browseHeight;
 	}
 
-	if (type != "browse" && active('sponsor')) sponsorHandler(D('sponsor'));
+	if (type != "browse" && active('sponsor')) sponsorHandler();
 		
 	D('post').style.display = 'none';
 	D('read').style.display = 'none';
 	D('browse').style.display = 'none';
-	D(type).style.display = "flex";
 	
-	if (type == "read") D('secondDiv').scrollTo(0, readHeight);
-	if (type == "post") D('secondDiv').scrollTo(0, postHeight);	
-	if (type == "browse") {
-		D(type).style.display = "";
-		D('secondDiv').scrollTo(0, browseHeight);	
-	}
+	D(type).style.display = "flex";
+	if (type == "browse") D(type).style.display = "";
+	D('secondDiv').scrollTo(0, theHeight);
 	
 	D('postButton').classList.remove('active');
 	D('readButton').classList.remove('active');
@@ -1197,8 +1195,6 @@ function fillBio(userid, block) {
 			else D('bio').textContent = "Full of possibilities."
 		}
 		receiveDOMdisplayName(data);
-		D('displayName').style.color = "";
-		D('browseHeading').style.color = "";
 	}
 }
 
@@ -1206,8 +1202,7 @@ function fillEditorContent(data, elt) {
 	clearDOM(elt);	
 	if (data && data.length) {
 		for (let i = 0; i < data.length; i++) {
-			let block = appendBlock(data[i].type, null, elt);
-			inputEvent(block.firstChild, data[i].content);
+			inputEvent(appendBlock(data[i].type, null, elt).firstChild, data[i].content);
 		}
 	} else appendBlock("text", null, elt);
 }
@@ -1254,49 +1249,18 @@ function receiveDOMdisplayName(data) {
 	if (DOMdisplayNameQueue[userid]) {
 		for (let j = 0; j < DOMdisplayNameQueue[userid].length; j++) {
 			DOMdisplayNameQueue[userid][j].textContent = funName(userid);
-			DOMdisplayNameQueue[userid][j].style.color = funColor(userid);
+			if (DOMdisplayNameQueue[userid][j] != D('displayName') && DOMdisplayNameQueue[userid][j] != D('browseHeading')) 
+				DOMdisplayNameQueue[userid][j].style.color = funColor(userid);
 		}
 	}
 	delete DOMdisplayNameQueue[userid];	
 	
 	if (new URLSearchParams(window.location.search).get('userid') == userid) document.title = funName(userid) + " - Brewri";
 	
-	if (userid == XNO.address) {
+	if (userid == XNO.address && D('bioEditor').style.display == "none") {
 		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
 		setCSS('--hue', funColor(XNO.address, false, true));
 	}
-}
-
-function fillBrowseList(data) {
-	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
-	D('loadingMsg').style.display = "none";
-	clearDOM(D('discovery'));
-	D('discovery').style.opacity = "";
-	
-	if (data) {
-		data.sort(function(x, y) { return y.createdts - x.createdts; });
-		for (let i = 0; i < data.length; i++) {	
-			cachePost(data[i]);				
-			let mediaBox;
-			if (typeof postCache[data[i].postid].content !== "string" && postCache[data[i].postid].content) {
-				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
-					let content = postCache[data[i].postid].content[j];
-					if (content.type == "image" || content.type == "media") {
-						mediaBox = fillMediaBox(content.content.trim().split(" "), true);					
-						break;
-					}		
-				}
-			}
-			
-			let postli = make('li');
-			postli.id = data[i].postid + "-disc";
-			postli.style.marginBottom = "10px";			
-			postli.appendChild(fullLabel(data[i].postid, false, mediaBox));			
-			if (readPostid == data[i].postid) activeBar(postli);
-			D('discovery').appendChild(postli);
-		}
-	}	
-	requestNames();
 }
 						
 function fillMediaBox(mediaURL, preview) {
@@ -1485,7 +1449,7 @@ function fullLabel(postid, library, mediaBox) {
 function fillPost(postid, suppressPanel) {
 	D('commentContent').style.display = 'none';
 	D('commentContent').value = "";
-	D('comment').textContent = "Comment";
+	D("comment").textContent = "Comment";
 	
 	// handle left bars
 	if (readPostid && D(readPostid)) removeActiveBar(D(readPostid));
@@ -1508,14 +1472,23 @@ function fillPost(postid, suppressPanel) {
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
-	if (userid == XNO.address) D('edit').style.display = "";
-	else D('edit').style.display = "none";
+	if (userid == XNO.address) {
+		D('edit').style.display = "";
+		D('edit2').style.display = "";
+	} else {
+		D('edit').style.display = "none";
+		D('edit2').style.display = "none";
+	}
 	
 	if (readPostid != postid) {
 		D('readTitle').textContent = "Loading...";
 		D('readContent').innerHTML = "<i>Loading...</i>";	
 	}	
-	if (XNO.address) D("comment").disabled = false;
+	if (XNO.address) {
+		D("subscribe2").disabled = false;
+		D("sponsor2").disabled = false;
+		D("comment").disabled = false;
+	}
 	clearDOM(D('readComments'));
 	clearDOM(D('mapul'));
 	
@@ -1585,11 +1558,11 @@ function fillContent(elt, content, wall, userid) {
 			jsbox.style = "text-align:center; margin:20px 0px; padding:30px 10px; font-style:italic";			
 			jsbox.appendChild(make('span', wording + " available to "));
 			let athlabel = authorLabel(userid);
-			athlabel.onclick = function() {			
+			athlabel.onclick = function() {	
 				event.preventDefault();
 				event.stopPropagation();
 				queryBrowse(userid);
-				if (!active('sponsor')) sponsorHandler(D('sponsor'));
+				sponsorHandler();
 			}
 			jsbox.appendChild(athlabel);
 			jsbox.appendChild(make('span', "'s sponsors -"));
@@ -1771,7 +1744,7 @@ function appendBlock(type, previous, parent) {
 	mediaBut.classList.add("right");
 	mediaBut.onclick = function() {
 		textbox.title = "media";
-		textbox.placeholder = "Image, audio, or video link [optional caption]...\n\nSupports: most images; mp3, wav; mp4, ogg, webm, Youtube URL";
+		textbox.placeholder = "Image, audio, or video link [optional caption]...\n\nSupport: most images; mp3, wav; mp4, ogg, webm, Youtube URL";
 		textbox.spellcheck = false;
 		textbox.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		if (textbox.value == "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>") textbox.value = "";		
@@ -1906,6 +1879,29 @@ function timeLabel(createdts, modifiedts) {
 		dateDiv.appendChild(postModified);
 	}
 	return dateDiv;
+}
+
+function commentKeypress() {
+	if (event.keyCode == 27 && (!D('commentContent').value.length || confirm("Delete comment?"))) {
+		D('commentContent').value = "";
+		D('commentContent').style.display = "none";
+		D("comment").textContent = "Comment";
+		event.stopPropagation();
+	} else if (D('commentContent').value) D("comment").textContent = "Comment";
+	else D("comment").textContent = "Cancel";
+}
+
+function comment() {
+	if (D('commentContent').style.display) {
+		D('commentContent').style.display = "";
+		D("comment").textContent = "Cancel";
+		D('commentContent').focus();
+	} else {
+		D('commentContent').style.display = "none";
+		D("comment").textContent = "Comment";
+		ws.emit('updateComment', {content:D('commentContent').value, postid: D('author').title + "-" + D('creation').title});
+		D('commentContent').value = "";
+	}
 }
 
 function addComment(commentData) {
@@ -2069,14 +2065,14 @@ function importSeed() {
 			localStorage.setItem("localSeed", XNO.seed);
 			
 			makeSubLi(XNO.address);
+			D('subscribe').disabled = false;
 			if (D('browseHeading').title != "Recent") {
-				D('subscribe').disabled = false;
 				if (D('browseHeading').title != XNO.address) {
 					if (D('browseHeading').title.substring(0, 5) == "nano_") {
 						D('sponsor').disabled = false;
 						D('sendButton').disabled = false;
 					}
-				} else D('info').style.display = "";
+				} else D('profileBut').style.display = "";
 			}
 			
 			if (ws && ws.readyState == 1) {
@@ -2109,6 +2105,9 @@ function clickClearSeed() {
 	D("subPanel").style.display = "none";	
 	localStorage.removeItem("localSeed");
 	
+	D('subscribe').disabled = true;
+	D('subscribe2').disabled = true;
+	D('sponsor2').disabled = true;
 	D("comment").disabled = true;
 	inputEvent(D("seed"), "");
 	
@@ -2122,14 +2121,13 @@ function clearSeed() {
 	clearDOM(D('library'));
 	D('libraryPlaceholder').style.display = "";	
 	if (D('creationEdit').title) cancelPost(true);
-	D('subscribe').disabled = true;
 	D('sendButton').disabled = true;
-	if (active('sponsor')) sponsorHandler(D('sponsor'));
+	if (active('sponsor')) sponsorHandler();
 	closeAccordion(D('editPanel'));
 	D('balance').textContent = "0.00";
 	
 	closeBio();
-	D('info').style.display = "none";
+	D('profileBut').style.display = "none";
 }
 
 function queueDOMdisplayName(userid, elt, black) {
@@ -2213,7 +2211,7 @@ function makeSubLi(userid, data) {
 				event.stopPropagation();
 				if (!tag) queryBrowse(userid);
 				else queryBrowse(null, userid);
-				if (!active('sponsor')) sponsorHandler(D('sponsor'));
+				sponsorHandler();
 				flash(subli.parentNode);
 			}
 			
