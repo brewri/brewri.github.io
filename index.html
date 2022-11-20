@@ -1447,23 +1447,30 @@ function fullLabel(postid, library, mediaBox) {
 }
 
 function fillPost(postid, suppressPanel) {
-	D('commentContent').style.display = 'none';
-	D('commentContent').value = "";
-	D("comment").textContent = "Comment";
+	if (!suppressPanel) loadPanel('read');		
+	if (readPostid != postid) {
+		if (D('commentContent').value.length && !confirm("Clear comment?")) return false;
+		D('readTitle').style.cursor = "pointer";
+		D('readTitle').onclick = function() {
+			queryPost(postid);
+		}
+		D('readTitle').textContent = "Loading...";
+		D('readContent').innerHTML = "<i>Loading...</i>";	
 	
-	// handle left bars
-	if (readPostid && D(readPostid)) removeActiveBar(D(readPostid));
-	if (readPostid && D(readPostid + "-disc")) removeActiveBar(D(readPostid + "-disc"));
-	if (D(postid)) activeBar(D(postid));
-	if (D(postid + "-disc")) activeBar(D(postid + "-disc"));
+		// handle left bars
+		if (readPostid && D(readPostid)) removeActiveBar(D(readPostid));
+		if (readPostid && D(readPostid + "-disc")) removeActiveBar(D(readPostid + "-disc"));
+		if (D(postid)) activeBar(D(postid));
+		if (D(postid + "-disc")) activeBar(D(postid + "-disc"));
+		
+		D('commentContent').style.display = 'none';
+		D('commentContent').value = "";
+		D("comment").textContent = "Comment";
+	}
 	
 	let userid = postid.split("-")[0];
 	let createdts = parseInt(postid.split("-")[1]);
 	
-	D('readTitle').style.cursor = "pointer";
-	D('readTitle').onclick = function() {
-		queryPost(postid);
-	}
 	queueDOMdisplayName(userid, D('author'));
 	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
 	
@@ -1472,6 +1479,12 @@ function fillPost(postid, suppressPanel) {
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
+	
+	if (XNO.address) {
+		D("subscribe2").disabled = false;
+		D("sponsor2").disabled = false;
+		D("comment").disabled = false;
+	}
 	if (userid == XNO.address) {
 		D('edit').style.display = "";
 		D('edit2').style.display = "";
@@ -1480,29 +1493,16 @@ function fillPost(postid, suppressPanel) {
 		D('edit2').style.display = "none";
 	}
 	
-	if (readPostid != postid) {
-		D('readTitle').textContent = "Loading...";
-		D('readContent').innerHTML = "<i>Loading...</i>";	
-	}	
-	if (XNO.address) {
-		D("subscribe2").disabled = false;
-		D("sponsor2").disabled = false;
-		D("comment").disabled = false;
-	}
 	clearDOM(D('readComments'));
-	clearDOM(D('mapul'));
-	
+	clearDOM(D('mapul'));	
 	let metaData = postCache[postid];
 	if (metaData) {
-		// Title and label
-		D('readTitle').textContent = metaData.title;
-		
+		D('readTitle').textContent = metaData.title;		
 		if (metaData.tags) {
 			for (let i = 0; i < metaData.tags.length; i++) {
 				D('tags').appendChild(tagLabel(metaData.tags[i]));
 			}
-		}
-		
+		}		
 		if (metaData.modifiedts && unixToDate(metaData.modifiedts) != unixToDate(createdts)) {
 			D('modification').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
 			D('modification').title = metaData.modifiedts;
@@ -1537,10 +1537,8 @@ function fillPost(postid, suppressPanel) {
 	}
 	
 	readPostid = postid;
-	if (!suppressPanel) {
-		loadPanel('read');
-		ws.emit("queryPostChain", {userid, createdts});
-	} else if (new URLSearchParams(window.location.search).get('postid') == readPostid) {
+	if (!suppressPanel) ws.emit("queryPostChain", {userid, createdts});
+	else if (new URLSearchParams(window.location.search).get('postid') == readPostid) {
 		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
 		else document.title = "Read - Brewri";
 	}
