@@ -1448,7 +1448,7 @@ function fullLabel(postid, library, mediaBox) {
 
 function fillPost(postid, suppressPanel) {
 	if (readPostid != postid) {
-		if (D('commentContent').value.length && !confirm("Clear comment?")) return false;
+		if (D('commentContent').value.length && !confirm("Clear draft comment?")) return false;
 		D('readTitle').style.cursor = "pointer";
 		D('readTitle').onclick = function() {
 			queryPost(postid);
