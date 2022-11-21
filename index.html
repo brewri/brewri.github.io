@@ -810,6 +810,7 @@ function setupWebsocket(fresh) {
 	
 	ws.on('queryPostResponse', function(data) {
 		cachePost(data);
+		fillPost(data.postid);
 		if (editPostid == data.postid && editPostPending) fillEdit(data.postid, true); 
 	});
 	
@@ -945,6 +946,7 @@ function sponsorHandler() {
 	} else {
 		D('bioSponsor').style.display = "";
 		D('sponsorInput').focus();
+		flash(D('sponsorInput'));
 		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"end"});
 	}
 	toggle(D('sponsor'));
@@ -1171,7 +1173,7 @@ function cachePost(metaData, chain) {
 	if (metaData.wall) cacheData.wall = metaData.wall;	
 	if (chain) cacheData.chain = chain;
 	
-	if (readPostid == metaData.postid) fillPost(metaData.postid, true);
+	//if (readPostid == metaData.postid) fillPost(metaData.postid, true);
 }
 
 function activeBar(elt) {
@@ -1446,13 +1448,11 @@ function fullLabel(postid, library, mediaBox) {
 	return label;
 }
 
-function fillPost(postid, suppressPanel) {
+function fillPost(postid) {
 	if (readPostid != postid) {
-		if (D('commentContent').value.length && !confirm("Clear draft comment?")) return false;
+		if (D('commentContent').value.length && !confirm("Clear comment draft?")) return false;
 		D('readTitle').style.cursor = "pointer";
-		D('readTitle').onclick = function() {
-			queryPost(postid);
-		}
+		D('readTitle').onclick = function() { queryPost(postid); }
 		D('readTitle').textContent = "Loading...";
 		D('readContent').innerHTML = "<i>Loading...</i>";	
 	
@@ -1478,19 +1478,6 @@ function fillPost(postid, suppressPanel) {
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
-	
-	if (XNO.address) {
-		D("subscribe2").disabled = false;
-		D("sponsor2").disabled = false;
-		D("comment").disabled = false;
-	}
-	if (userid == XNO.address) {
-		D('edit').style.display = "";
-		D('edit2').style.display = "";
-	} else {
-		D('edit').style.display = "none";
-		D('edit2').style.display = "none";
-	}
 	
 	clearDOM(D('readComments'));
 	clearDOM(D('mapul'));	
@@ -1536,13 +1523,8 @@ function fillPost(postid, suppressPanel) {
 	}
 	
 	readPostid = postid;
-	if (!suppressPanel) {
-		loadPanel('read');
-		ws.emit("queryPostChain", {userid, createdts});
-	} else if (new URLSearchParams(window.location.search).get('postid') == readPostid) {
-		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
-		else document.title = "Read - Brewri";
-	}
+	loadPanel('read');
+	ws.emit("queryPostChain", {userid, createdts});
 }
 
 function fillContent(elt, content, wall, userid) {
@@ -2063,8 +2045,12 @@ function importSeed() {
 			D("subPanel").style.display = "flex";
 			localStorage.setItem("localSeed", XNO.seed);
 			
-			makeSubLi(XNO.address);
 			D('subscribe').disabled = false;
+			D("subscribe2").disabled = false;
+			D("sponsor2").disabled = false;
+			D("comment").disabled = false;
+			
+			makeSubLi(XNO.address);
 			if (D('browseHeading').title != "Recent") {
 				if (D('browseHeading').title != XNO.address) {
 					if (D('browseHeading').title.substring(0, 5) == "nano_") {
@@ -2079,7 +2065,17 @@ function importSeed() {
 				ws.emit('authenticateUser', {userid: XNO.address, ts, signature:XNO.sign(ts, XNO.address)});			
 			}
 			if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
-			if (readPostid) fillPost(readPostid, true);
+			
+			if (readPostid) {	
+				if (userid == XNO.address) {
+					D('edit').style.display = "";
+					D('edit2').style.display = "";
+				} else {
+					D('edit').style.display = "none";
+					D('edit2').style.display = "none";
+				}
+			}
+			
 			refreshData("XNO");
 		}
 		D("seed").value = "";
@@ -2111,7 +2107,9 @@ function clickClearSeed() {
 	inputEvent(D("seed"), "");
 	
 	if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
-	if (readPostid) fillPost(readPostid, true);
+	
+	D('edit').style.display = "none";
+	D('edit2').style.display = "none";
 }
 
 function clearSeed() {
