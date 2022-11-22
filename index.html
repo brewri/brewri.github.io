@@ -823,7 +823,6 @@ function setupWebsocket(fresh) {
 	ws.on('updateCommentResponse', function(data) {	addComment(data); });
 	
 	ws.on('queryPostChainResponse', function(data) { 
-		clearDOM(D('mapul'));
 		let chain = [];
 		for (let x in data) {
 			chain.push(data[x].userid + "-" + data[x].createdts.toString());
@@ -831,6 +830,7 @@ function setupWebsocket(fresh) {
 		for (let x in data) {
 			cachePost(data[x], chain);
 		}
+		fillPost(readPostid);
 		requestNames();
 	});
 	
