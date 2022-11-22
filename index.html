@@ -184,7 +184,7 @@
 				
 				<textarea id="commentContent" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
 				<div style="display:flex; justify-content:right;">				
-					<button id="edit2" onclick=" fillEdit(); queryPost();" style="font-size:0.85em; display:none">Update</button>
+					<button id="edit2" onclick=" fillEdit();" style="font-size:0.85em; display:none">Update</button>
 					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>										
 					<button id="subscribe2" onclick="subscribeHandler(D('author').title)" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>				
 					&nbsp;<button id="sponsor2" onclick="queryBrowse(D('author').title); sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>
@@ -207,7 +207,7 @@
 				
 					<div style="margin-top:3px">
 						<span id="creation">Date published</span><span id="modification"> (date updated)</span>
-						<a id="edit" onclick="event.preventDefault(); fillEdit(); queryPost();" style="cursor:pointer; display:none"> • Update</a>
+						<a id="edit" onclick="event.preventDefault(); fillEdit();" style="cursor:pointer; display:none"> • Update</a>
 					</div>
 				</div>
 				
@@ -830,7 +830,6 @@ function setupWebsocket(fresh) {
 		for (let x in data) {
 			cachePost(data[x], chain);
 		}
-		fillPost(readPostid);
 		requestNames();
 	});
 	
@@ -1478,6 +1477,13 @@ function fillPost(postid) {
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
+	if (readPostid && userid == XNO.address) {
+		D('edit').style.display = "";
+		D('edit2').style.display = "";
+	} else {
+		D('edit').style.display = "none";
+		D('edit2').style.display = "none";
+	}
 	
 	clearDOM(D('readComments'));
 	clearDOM(D('mapul'));	
@@ -1603,13 +1609,11 @@ function fillContent(elt, content, wall, userid) {
 	}
 }
 
-function fillEdit(postid, officialData) {
-	editPostPending = !officialData;	
+function fillEdit(postid, dataConfirmation) {	
+	loadPanel('post');
 	if (!postid) postid = readPostid;
-	if (editPostPending) {
-		loadPanel('post');
-		queryPost(postid);
-	}
+	editPostPending = !dataConfirmation;
+	if (editPostPending) queryPost(postid);
 	
 	let theNewContent = "";
 	let metaData = postCache[postid];
@@ -2066,14 +2070,12 @@ function importSeed() {
 			}
 			if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
 			
-			if (readPostid) {	
-				if (userid == XNO.address) {
-					D('edit').style.display = "";
-					D('edit2').style.display = "";
-				} else {
-					D('edit').style.display = "none";
-					D('edit2').style.display = "none";
-				}
+			if (readPostid && userid == XNO.address) {
+				D('edit').style.display = "";
+				D('edit2').style.display = "";
+			} else {
+				D('edit').style.display = "none";
+				D('edit2').style.display = "none";
 			}
 			
 			refreshData("XNO");
@@ -2143,7 +2145,6 @@ function requestNames() {
 }
 
 function queryPost(postid) {
-	if (!postid) postid = readPostid;
 	let split = postid.split("-");
 	ws.emit('queryPost', { userid: split[0], createdts: parseInt(split[1]) });	
 }
