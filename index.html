@@ -80,7 +80,7 @@
 				</div>
 				
 				<div style="flex-basis:1px; flex-grow:4; margin-right:20px; overflow:hidden">					
-					<div id="bioPreview" style="overflow:hidden">
+					<div id="bioPreview" style="overflow:hidden; display:none">
 						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:40px"></div>
 						
 						<div style="display:flex; justify-content:right;">
@@ -803,15 +803,22 @@ function setupWebsocket(fresh) {
 		}
 	});
 	
+	ws.on('queryPostChainResponse', function(data) { 
+		let chain = [];
+		let hasEditPost = false;
+		for (let x in data) {
+			cachePost(data[x], chain);
+			chain.push(data[x].postid);
+			if (editPostid == data[x].postid) hasEditPost = true;
+		}
+		fillPost(readPostid);
+		if (hasEditPost && editPostPending) fillEdit(editPostid, true); 
+		requestNames();
+	});
+	
 	ws.on('updateUserResponse', function (data) {
 		userCache[data.userid] = data;
 		fillBio(data.userid);		
-	});
-	
-	ws.on('queryPostResponse', function(data) {
-		cachePost(data);
-		fillPost(data.postid);
-		if (editPostid == data.postid && editPostPending) fillEdit(data.postid, true); 
 	});
 	
 	ws.on('updatePostResponse', function(data) { 
@@ -822,20 +829,9 @@ function setupWebsocket(fresh) {
 	
 	ws.on('updateCommentResponse', function(data) {	addComment(data); });
 	
-	ws.on('queryPostChainResponse', function(data) { 
-		let chain = [];
-		for (let x in data) {
-			chain.push(data[x].userid + "-" + data[x].createdts.toString());
-		}
-		for (let x in data) {
-			cachePost(data[x], chain);
-		}
-		requestNames();
-	});
-	
 	ws.on('subscribeResponse', function(data) {	console.log(data); });
 	
-	ws.on('sponsorResponse', function(data) { 
+	ws.on('sponsorResponse', function(data) {
 		console.log(data);
 		makeSubLi(data.userid2, data); 
 	});
@@ -1530,7 +1526,7 @@ function fillPost(postid) {
 	
 	readPostid = postid;
 	loadPanel('read');
-	ws.emit("queryPostChain", {userid, createdts});
+	// ws.emit("queryPostChain", {userid, createdts});
 }
 
 function fillContent(elt, content, wall, userid) {
@@ -2146,7 +2142,7 @@ function requestNames() {
 
 function queryPost(postid) {
 	let split = postid.split("-");
-	ws.emit('queryPost', { userid: split[0], createdts: parseInt(split[1]) });	
+	ws.emit('queryPostChain', { userid: split[0], createdts: parseInt(split[1]) });	
 }
 
 function makeSubLi(userid, data) {
