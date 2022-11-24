@@ -57,6 +57,18 @@ body {
 	word-break: break-word;
 }
 
+.controlbar {
+	margin-top:25px; 
+	padding-top:15px; 
+	padding-bottom:10px; 
+	margin-bottom:40px; 
+}
+
+.sidebar {
+	flex-basis:1px; 
+	overflow:hidden;
+}
+
 .accordion {
 	overflow:hidden;
 	transition-property: max-height, padding, margin;
@@ -154,26 +166,6 @@ option {
 }
 input:placeholder-shown ~ .close-icon:after {
 	content: "📋";
-}
-
-select {
-	outline: none;
-	padding: 5px 10px;
-    font-family: Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif;   
-	color: #333;
-	border-radius: 15px;
-	border: 0px solid #fff;
-	background-color:#fff;
-	font-size:1em;
-	-webkit-appearance:none;
-}
-
-select:hover {
-	cursor:pointer;
-}
-
-select:disabled:hover {	
-	background-color: #fff;
 }
 
 button {
@@ -398,8 +390,15 @@ li {
   scrollbar-width: none;  /* Firefox */
 } 
 
+
+@media screen and (max-width: 1120px) {
+	.sidebar {
+		display:none;
+	}
+}
+
 @media only screen 
-  and (max-device-width: 450px), (max-device-height: 450px) { 
+  and (max-device-width: 900px), (max-device-height: 900px) { 
 	html {
 		overflow:auto;
 	}
@@ -417,10 +416,6 @@ li {
 	
 	input[type=number]:disabled, input[type=text]:disabled, input[type=password]:disabled {	
 		text-overflow: ellipsis;
-	}
-
-	select {
-		padding: 8px 10px;		
 	}
 	
 	button {
@@ -467,10 +462,15 @@ li {
 	}
 	
 	.secondDiv {
-		padding:15px;
+		padding:0px 15px 15px 15px;
 		flex-basis:100px;
 		flex-grow:1;
 		scroll-snap-align:end;
+	}
+	
+	.controlbar {
+		margin-top:15px;
+		margin-bottom:20px; 
 	}
 	   
 	::-webkit-scrollbar {
