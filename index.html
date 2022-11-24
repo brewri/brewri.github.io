@@ -63,7 +63,7 @@
 	
 	<div id="secondDiv" class="secondDiv">
 	
-		<div style="margin-top:25px; padding-top:15px; padding-bottom:10px; margin-bottom:40px; display:flex; position:sticky; top:-1px; background-color:white; opacity:0.93; z-index:2" >
+		<div class="controlbar" style="display:flex; position:sticky; top:-1px; background-color:white; opacity:0.93; z-index:2" >
 			<button id="browseButton" style="min-width:fit-content" class="left active" onclick="loadPanel('browse', true)" title="Alt + 1">Browse</button><button id="readButton" style="min-width:fit-content" class="center" onclick="loadPanel('read', true)" autocomplete="off" title="Alt + 2">Read</button><button id="postButton" style="min-width:fit-content" class="right" onclick="loadPanel('post', true)" autocomplete="off" title="Alt + 3">Write</button>
 		
 			<div id="popularTags" class="hideScroll" style="margin-left:40px; overflow:auto; display:flex; align-items:center; font-size:0.85em"></div>
@@ -75,11 +75,11 @@
 				<span id="loadingMsg" style="margin-left:10px; font-style:italic; display:none">Loading...</span>
 			</div>
 			<div style="display:flex">
-				<div style="flex-basis:1px; flex-grow:5; margin-right:30px;">
+				<div style="flex-basis:1px; flex-grow:5;">
 					<ul id="discovery"></ul>
 				</div>
 				
-				<div style="flex-basis:1px; flex-grow:4; margin-right:20px; overflow:hidden">					
+				<div class="sidebar" style="flex-grow:4; margin-left:30px; margin-right:20px;">					
 					<div id="bioPreview" style="overflow:hidden; display:none">
 						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:40px"></div>
 						
@@ -123,7 +123,7 @@
 
 		<div id="post" style="display:none; margin-bottom:80px; max-width:1200px;">
 		
-			<div style="flex-basis:1px; flex-grow:2; margin-right:50px; position:relative; margin-top:10px;">
+			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:10px;">
 			
 				<div style="display:flex; justify-content:center; position:absolute; right:0px; top:-20px;">
 					<button id="editButton" class="left active" onclick="showEditor()" title="Alt + Q">Editor</button><button id="previewButton" class="right" style="margin-left:4px" onclick="showPreview()" title="Alt + W">Preview</button>
@@ -134,7 +134,7 @@
 				
 			</div>
 			
-			<div style="flex-basis:1px; flex-grow:1; max-width:360px; overflow:hidden">
+			<div class="sidebar" style="flex-grow:1; max-width:360px; margin-left:50px;">
 				<input id="postTitle" style="font-weight:bold; font-size:1.1em; width:100%; margin-bottom:10px;" autocomplete="off" placeholder="Title (required)..." type="text" onkeyup="if (event.keyCode == 27) this.value = '';">
 				<div id="editid" style="font-size:0.85em; margin-left:10px; display:none">
 					<span id="creationEdit"></span><span id="modificationEdit"></span>
@@ -177,7 +177,7 @@
 		</div>
 		
 		<div id="read" style="display:none; margin-bottom:80px; max-width:1200px;">
-			<div style="flex-basis:1px; flex-grow:2; margin-right:50px;">
+			<div style="flex-basis:1px; flex-grow:2;">
 				
 				<div id="readContent" style="white-space:pre-wrap; margin-bottom:40px; margin-top:40px">Browse for something interesting!</div>
 				
@@ -195,7 +195,7 @@
 			</div>
 			
 	
-			<div style="flex-basis:1px; flex-grow:1; max-width:360px; overflow:hidden">
+			<div class="sidebar" style="flex-grow:1; max-width:360px; margin-left:50px;">
 			
 				<div id="readTitle" style="font-weight:bold; font-size:1.1em; margin-bottom:3px;">Title</div>	
 				
@@ -792,7 +792,6 @@ function setupWebsocket(fresh) {
 	
 	ws.on('queryPostsRecentResponse', function(data) { fillBrowseList(data); });	
 	ws.on('queryTagResponse', function (data) { fillBrowseList(data); });	
-	
 	ws.on('queryPostsFromUser', function (data) {
 		let update = (!userCache[data.user.userid] || JSON.stringify(userCache[data.user.userid].content) != JSON.stringify(data.user.content));
 		fillBrowseList(data.posts);
