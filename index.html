@@ -79,7 +79,7 @@
 				<span id="loadingMsg" style="margin-left:10px; font-style:italic; display:none">Loading...</span>
 			</div>
 			<div style="display:flex">			
-				<button id="browseToggle" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:50px; right:12px; font-weight:bold; z-index:10">. . .</button>
+				<button id="toggleBrowse" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:50px; right:12px; font-weight:bold; z-index:10">. . .</button>
 				<div style="flex-basis:1px; flex-grow:5;">
 					<ul id="discovery"></ul>
 				</div>
@@ -95,7 +95,7 @@
 							&nbsp;<button id="sponsor" onclick="sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>	
 						</div>
 				
-						<div id="bioSponsor" style="margin-top:30px; display:none;">
+						<div id="bioSponsor" style="margin-top:1em; display:none;">
 							<div id="theirFunName" style="margin-bottom:10px; font-weight:600"> - </div>					
 							<div style="font-size:0.85em; color:#888">Unique public address</div>
 							<div class='address' id="theirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
@@ -127,7 +127,7 @@
 		</div>
 
 		<div id="post" style="display:none; margin-bottom:80px; max-width:1200px;">		
-			<button class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:50px; right:12px; font-weight:bold; z-index:10">. . .</button>
+			<button id="toggleEdit" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:50px; right:12px; font-weight:bold; z-index:10">. . .</button>
 		
 			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:10px;">
 			
@@ -183,7 +183,7 @@
 		</div>
 		
 		<div id="read" style="display:none; margin-bottom:80px; max-width:1200px;">
-			<button class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:50px; right:12px; font-weight:bold; z-index:10">. . .</button>
+			<button id="toggleRead" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:50px; right:12px; font-weight:bold; z-index:10">. . .</button>
 			<div style="flex-basis:1px; flex-grow:2;">				
 				<div id="readContent" style="white-space:pre-wrap; margin-bottom:40px; margin-top:40px">Browse for something interesting!</div>
 				
@@ -197,7 +197,7 @@
 					&nbsp;<button id="comment" onclick="comment()" autocomplete="off" style="font-size:0.85em" disabled>Comment</button>
 				</div>
 				
-				<ul id="readComments" style="white-space:pre-wrap; margin-top:10px"><ul>
+				<ul id="readComments" style="white-space:pre-wrap; margin-top:1em"><ul>
 			</div>
 			
 			<div class="sidebar desktop" style="flex-grow:1; max-width:360px; margin-left:50px;">			
@@ -846,7 +846,7 @@ function setupWebsocket(fresh) {
 function queryBrowse(userid, tag, suppressPanel) {
 	closeBio();
 	D('profileBut').style.display = "none";
-	D('browseToggle').style.display = "";
+	D('toggleBrowse').style.display = "";
 		
 	D('sponsor').disabled = true;
 	D('sendButton').disabled = true;
@@ -883,8 +883,8 @@ function queryBrowse(userid, tag, suppressPanel) {
 		browseURL = {tag};
 	} else {	
 		D('bioPreview').style.display = "none";
-		if (active(D('browseToggle'))) D('browseToggle').click();
-		D('browseToggle').style.display = "none";
+		if (active('toggleBrowse')) D('toggleBrowse').click();
+		D('toggleBrowse').style.display = "none";
 		
 		D('browseHeading').title = "Recent";
 		D('browseHeading').textContent = "Recent";
@@ -942,13 +942,13 @@ function fillBrowseList(data) {
 }
 
 function sponsorHandler() {
-	if (active(D('sponsor'))) {
+	if (active('sponsor')) {
 		D('bioSponsor').style.display = "none";
 		D('sponsorInput').value = "";
 	} else {
-		if (D('browseToggle').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('browseToggle').click();
+		if (D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('toggleBrowse').click();
 		D('bioSponsor').style.display = "";
-		D('sponsorInput').focus();
+		// D('sponsorInput').focus();
 		flash(D('sponsorInput'));
 		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"end"});
 	}
@@ -1233,7 +1233,7 @@ function openBio() {
 	if (data.sponsor_price) D('inputPrice').value = data.sponsor_price;
 	else D('inputPrice').textContent = "1.00";
 	
-	D('bio-name').focus();
+	// D('bio-name').focus();
 }
 
 function closeBio() {
@@ -1545,6 +1545,7 @@ function fillPost(postid) {
 		D("comment").disabled = false;
 	}
 	loadPanel('read');
+	if (active('toggleRead')) D('toggleRead').click();
 	// ws.emit("queryPostChain", {userid, createdts});
 }
 
@@ -1842,6 +1843,8 @@ function cancelPost(override) {
 	
 	D('submitButton').textContent = "Publish";
 	D('clearButton').textContent = "Clear";
+	
+	if (active('toggleEdit')) D('toggleEdit').click();
 	return true;
 }
 
