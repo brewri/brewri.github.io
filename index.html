@@ -1539,9 +1539,11 @@ function fillPost(postid) {
 	}
 	
 	readPostid = postid;	
-	D("subscribe2").disabled = false;
-	D("sponsor2").disabled = false;
-	D("comment").disabled = false;
+	if (XNO.address) {
+		D("subscribe2").disabled = false;
+		D("sponsor2").disabled = false;
+		D("comment").disabled = false;
+	}
 	loadPanel('read');
 	// ws.emit("queryPostChain", {userid, createdts});
 }
