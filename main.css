@@ -48,13 +48,21 @@ body {
 }
 
 .secondDiv {
-	position:relative;
-	padding:0px 30px 30px 30px;
-	padding-left:50px;
-	overflow:auto; 
+	position:relative; 
 	flex-grow:1;
 	overflow-wrap: break-word;  
 	word-break: break-word;
+	display:flex;
+	flex-direction:column;
+	min-width:0px;
+}
+
+.secondDivInner {		
+	padding:0px 30px 30px 30px;	
+	padding-left:50px;
+	display:flex; 
+	flex-direction:column; 
+	overflow:auto;
 }
 
 .controlbar {
@@ -62,6 +70,12 @@ body {
 	padding-top:15px; 
 	padding-bottom:10px; 
 	margin-bottom:40px; 
+	display:flex; 
+	position:sticky; 
+	top:-1px; 
+	background-color:white; 
+	opacity:0.93; 
+	z-index:2;
 }
 
 .sidebar {
@@ -390,15 +404,29 @@ li {
   scrollbar-width: none;  /* Firefox */
 } 
 
-
-@media screen and (max-width: 1120px) {
-	.sidebar {
-		display:none;
-	}
+.mobile {
+	display:none;
 }
 
-@media only screen 
-  and (max-device-width: 900px), (max-device-height: 900px) { 
+.controlpanel {
+	margin-right:40px;
+}
+
+@media screen and (max-width: 800px) {
+	.sidebar {
+		margin-left:0px !important;
+	}
+	
+	.mobile {
+		display:initial;
+	}
+	
+	.desktop {
+		display:none !important;
+	}
+	
+	
+	
 	html {
 		overflow:auto;
 	}
@@ -462,18 +490,46 @@ li {
 	}
 	
 	.secondDiv {
-		padding:0px 15px 15px 15px;
 		flex-basis:100px;
 		flex-grow:1;
 		scroll-snap-align:end;
 	}
 	
+	.secondDivInner {		
+		padding:0px 15px 15px 15px;
+	}
+	
 	.controlbar {
-		margin-top:15px;
-		margin-bottom:20px; 
+		margin-top:20px;
+		margin-bottom:15px; 
+		padding:0px;
+		position:initial;
+	}
+	
+	.controlpanel {
+		margin-right:0px;
+		position: absolute;
+		bottom: 0px;
+		left:0px;
+		width:100%;
+		display:flex;
+	}
+	
+	.controlpanel button {
+		flex-grow:1;
+		flex-basis:1px;
+		border-radius:0px;
+		margin:0px;
+		font-weight:bold;
+		padding-top:10px;
+		padding-bottom:10px;
 	}
 	   
 	::-webkit-scrollbar {
 		display:none;
-	}	  
+	}	 
+}
+
+@media only screen 
+  and (max-device-width: 900px), (max-device-height: 900px) {  
 }
