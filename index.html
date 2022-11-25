@@ -102,7 +102,7 @@
 							<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
 							<span id="theirThreshold" style="margin:5px 0px 15px 10px;">&nbsp;-&nbsp;</span>&nbsp;XNO or more
 							<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
-							<input id="sponsorInput" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
+							<input id="sponsorInput" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
 							<button id="sendButton" onclick="sendMoney(this)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
 							</div>
 						</div>
@@ -946,7 +946,7 @@ function sponsorHandler() {
 		D('bioSponsor').style.display = "none";
 		D('sponsorInput').value = "";
 	} else {
-		if (D('browseToggle').nextElementSibling.nextElementSibling.style.display) D('browseToggle').click();
+		if (D('browseToggle').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('browseToggle').click();
 		D('bioSponsor').style.display = "";
 		D('sponsorInput').focus();
 		flash(D('sponsorInput'));
