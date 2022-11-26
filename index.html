@@ -61,7 +61,7 @@
 	</div>
 	
 	<div id="secondDiv" class="secondDiv">
-	<div class="secondDivInner">
+	<div id="secondDivInner" class="secondDivInner">
 	
 		<div class="controlbar">
 			<div class="controlpanel">
@@ -1076,17 +1076,17 @@ function hasDraft() {
 function loadPanel(type, manual, holdHistory) {
 	let prevType = "browse";
 	if (D('browse').style.display != 'none') {
-		browseHeight = Math.ceil(D('secondDiv').scrollTop);
+		browseHeight = Math.ceil(D('secondDivInner').scrollTop);
 		if (type == prevType) browseHeight = 0;
 	}
 	if (D('read').style.display != 'none') {
 		prevType = "read";
-		readHeight = Math.ceil(D('secondDiv').scrollTop);
+		readHeight = Math.ceil(D('secondDivInner').scrollTop);
 		if (type == prevType) readHeight = 0;
 	}
 	if (D('post').style.display != 'none') {
 		prevType = "post";
-		postHeight = Math.ceil(D('secondDiv').scrollTop);
+		postHeight = Math.ceil(D('secondDivInner').scrollTop);
 		if (type == prevType) postHeight = 0;
 	}
 	
@@ -1139,7 +1139,7 @@ function loadPanel(type, manual, holdHistory) {
 		D(type).style.display = "";
 		popularTags.classList.remove("desktop");
 	}
-	D('secondDiv').scrollTo(0, theHeight);
+	D('secondDivInner').scrollTo(0, theHeight);
 	
 	D('postButton').classList.remove('active');
 	D('readButton').classList.remove('active');
