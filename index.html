@@ -902,7 +902,7 @@ function queryBrowse(userid, tag, suppressPanel) {
 		else if (tag) ws.emit("queryTag", {tag});
 		else ws.emit('queryPostsRecent');
 		
-		if ((!userid && !tag) || !D('popularTags').children.length) ws.emit('queryTagCounts');
+		if ((!userid && !tag) || D('popularTags').children.length < 2) ws.emit('queryTagCounts');
 	}
 	
 	if (!suppressPanel) loadPanel('browse');
