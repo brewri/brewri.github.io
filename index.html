@@ -883,7 +883,6 @@ function queryBrowse(userid, tag, suppressPanel) {
 		browseURL = {tag};
 	} else {	
 		D('bioPreview').style.display = "none";
-		if (active('toggleBrowse')) D('toggleBrowse').click();
 		D('toggleBrowse').style.display = "none";
 		
 		D('browseHeading').title = "Recent";
@@ -907,6 +906,7 @@ function queryBrowse(userid, tag, suppressPanel) {
 	}
 	
 	if (!suppressPanel) loadPanel('browse');
+	if (active('toggleBrowse')) D('toggleBrowse').click();
 }
 
 function fillBrowseList(data) {
