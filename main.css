@@ -412,7 +412,15 @@ li {
 	margin-right:40px;
 }
 
+.scrollMargin {
+	scroll-margin:60px;
+}
+
 @media screen and (max-width: 800px) {
+	.scrollMargin {
+		scroll-margin:20px;
+	}
+
 	.sidebar {
 		margin-left:0px !important;
 	}
