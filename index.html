@@ -1694,6 +1694,7 @@ function appendBlock(type, previous, parent) {
 	block.tabIndex = "-1";
 	let textbox = make('textarea');
 	textbox.style = "height:150px; width:100%; tab-size:4";	
+	textbox.onfocus = function() { scrollPanel(textbox); };
 	block.appendChild(textbox);	
 	
 	let sponsBut = make('button', "Premium");
@@ -2660,7 +2661,7 @@ var currentElt;
 function scrollPanel(elt) {
 	if (screen.width <= 600 || screen.height <= 600) {
 		currentElt = elt;
-		setTimeout(function() {currentElt = null;}, 1000);
+		setTimeout(function() {currentElt = null;}, 2000);
 	}
 }
 
