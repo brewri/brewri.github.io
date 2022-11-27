@@ -157,7 +157,7 @@
 				</div>
 				
 				<div style="margin-top:5px; display:flex; justify-content:space-between; flex-grow:1">
-					<input onfocus="scrollPanel(this)" placeHolder="Previous post link..." id="set-prev" autocomplete="off"
+					<input placeHolder="Previous post link..." id="set-prev" autocomplete="off"
 						   style="padding-right:30px; flex-grow:1; width:1px" type="text" autocapitalize="off" onkeyup="if (event.keyCode == 27) this.value = ''; checkTitle(this);" oninput="checkTitle(this);">
 					<button tabindex="-1" class="close-icon" onclick="closeCopy(this.previousElementSibling)"></button>
 					<button id="recip-prev" onclick="toggle(this)" tabindex="-1" style="font-size:0.85em; min-width:fit-content; margin-left:10px" disabled>Reciprocate</button>
@@ -1818,6 +1818,7 @@ function appendBlock(type, previous, parent) {
 		buttonPanel.children[i].tabIndex = -1;
 	}
 	// textbox.focus();
+	flash(textbox);
 	return block;
 }
 
