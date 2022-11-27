@@ -115,7 +115,7 @@ input[type=number], input[type=text], input[type=password] {
 	border-bottom: solid 2px #e4e7e7;
 	text-overflow: ellipsis;
 	overflow: hidden;	 
-	scroll-margin:20px;
+	scroll-margin:30px;
 }
 
 textarea {
