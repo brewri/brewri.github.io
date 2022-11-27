@@ -1817,7 +1817,7 @@ function appendBlock(type, previous, parent) {
 	for (let i = 0; i < buttonPanel.children.length; i++) {
 		buttonPanel.children[i].tabIndex = -1;
 	}
-	textbox.focus();
+	// textbox.focus();
 	return block;
 }
 
@@ -2659,7 +2659,7 @@ var currentElt;
 function scrollPanel(elt) {
 	if (screen.width <= 600 || screen.height <= 600) {
 		currentElt = elt;
-		setTimeout(function() {currentElt = null;}, 2000);
+		setTimeout(function() {if (currentElt == elt) currentElt = null;}, 2000);
 	}
 }
 
