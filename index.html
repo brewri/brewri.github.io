@@ -188,7 +188,7 @@
 				<div id="readContent" style="white-space:pre-wrap; margin-bottom:40px; margin-top:40px">Browse for something interesting!</div>
 				
 				
-				<textarea id="commentContent" class="scrollMargin" onfocus="scrollIntoView({behavior:'smooth', block:'start'});" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
+				<textarea id="commentContent" class="scrollMargin" onfocus="scrollPanel(this)" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
 				<div style="display:flex; justify-content:right;">				
 					<button id="edit2" onclick=" fillEdit();" style="font-size:0.85em; display:none">Update</button>
 					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>										
@@ -1940,9 +1940,7 @@ function addComment(commentData) {
 		
 		editPanel.placeholder = "Reply...";
 		editPanel.classList.add("scrollMargin");
-		editPanel.onfocus = function() {
-			this.scrollIntoView({behavior:'smooth', block:'start'});
-		};
+		editPanel.onfocus = function() { scrollPanel(this);	};
 		editPanel.style = "height:80px; margin-bottom:5px; margin-top:10px; width:100%; display:none; font-size:0.9em";	
 		editPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		editPanel.oninput = function() {
@@ -1988,9 +1986,7 @@ function addComment(commentData) {
 		let repBut = make('button', "Reply");
 		
 		repPanel.classList.add("scrollMargin");
-		repPanel.onfocus = function() {
-			this.scrollIntoView({behavior:'smooth', block:'start'});
-		};
+		repPanel.onfocus = function() { scrollPanel(this); };
 		repPanel.style = "height:80px; display:none; margin-left:20px; margin-bottom:15px; margin-top:20px; width:calc(100% - 20px); font-size:0.9em";		
 		repPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		repPanel.placeholder = "Reply...";
@@ -2658,6 +2654,19 @@ function fileSize(url) {
 }
 
 function D(string) { return document.getElementById(string); }
+
+var currentElt;
+
+function scrollPanel(elt) {
+	if (screen.width <= 600 || screen.height <= 600) {
+		currentElt = elt;
+		setTimeout(function() {currentElt = null;}, 1000);
+	}
+}
+
+window.addEventListener("resize", function() {
+	if (currentElt) currentElt.scrollIntoView({block:'start', behavior:'smooth'});	
+});
 
 </script>
 
