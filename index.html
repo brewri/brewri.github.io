@@ -102,7 +102,7 @@
 							<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
 							<span id="theirThreshold" style="margin:5px 0px 15px 10px;">&nbsp;-&nbsp;</span>&nbsp;XNO or more
 							<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
-							<input id="sponsorInput" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
+							<input id="sponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
 							<button id="sendButton" onclick="sendMoney(this)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
 							</div>
 						</div>
@@ -1940,7 +1940,7 @@ function addComment(commentData) {
 		
 		editPanel.placeholder = "Reply...";
 		editPanel.classList.add("scrollMargin");
-		editPanel.onfocus = function() { scrollPanel(this);	};
+		editPanel.onfocus = function() { scrollPanel(editPanel); };
 		editPanel.style = "height:80px; margin-bottom:5px; margin-top:10px; width:100%; display:none; font-size:0.9em";	
 		editPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		editPanel.oninput = function() {
@@ -1986,7 +1986,7 @@ function addComment(commentData) {
 		let repBut = make('button', "Reply");
 		
 		repPanel.classList.add("scrollMargin");
-		repPanel.onfocus = function() { scrollPanel(this); };
+		repPanel.onfocus = function() { scrollPanel(repPanel); };
 		repPanel.style = "height:80px; display:none; margin-left:20px; margin-bottom:15px; margin-top:20px; width:calc(100% - 20px); font-size:0.9em";		
 		repPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		repPanel.placeholder = "Reply...";
