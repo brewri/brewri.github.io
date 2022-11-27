@@ -1441,7 +1441,7 @@ function fullLabel(postid, library, mediaBox) {
 	}
 	label.appendChild(actions);
 	
-	label.onmouseenter = function() { actions.style.display = ""; };
+	label.onmouseenter = function() { if (screen.width > 600 && screen.height > 600) actions.style.display = ""; };
 	label.onmouseleave = function() { actions.style.display = "none"; };
 	label.onclick = function() {
 		event.preventDefault();
