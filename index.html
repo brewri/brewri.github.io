@@ -841,7 +841,89 @@ function setupWebsocket(fresh) {
 }
 
 
-// Main panel UI interaction handlers ///////////////////////////////////////////////////////////////////////
+// Data reception ///////////////////////////////////////////////////////////////////////
+
+function cachePost(metaData, chain) {
+	if (!metaData.postid) metaData.postid = metaData.userid + "-" + metaData.createdts.toString();	
+	if (!metaData.userid) {
+		let split = metaData.postid.split("-");
+		metaData.userid = split[0];
+		metaData.createdts = parseInt(split[1]);
+	}
+	
+	if (!postCache[metaData.postid]) postCache[metaData.postid] = {};
+	let cacheData = postCache[metaData.postid];
+
+	cacheData.title = metaData.title;
+	cacheData.userid = metaData.userid;
+	cacheData.createdts = metaData.createdts;
+	cacheData.postid = metaData.postid;
+
+	if (metaData.modifiedts) cacheData.modifiedts = metaData.modifiedts;
+	if (metaData.content) {	
+		if (!cacheData.content || typeof metaData.content === "string" || typeof metaData.content === "string") cacheData.content = metaData.content;
+		else if (cacheData.content.length != cacheData.content.length) cacheData.content = metaData.content;
+		else {
+			for (let i = 0; i < metaData.content.length; i++) {
+				if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
+			}
+		}
+	}
+	if (metaData.tags) cacheData.tags = metaData.tags;
+	if (metaData.comments) cacheData.comments = metaData.comments;
+	if (metaData.prev_) cacheData.prev_ = metaData.prev_;
+	if (metaData.next_) cacheData.next_ = metaData.next_;
+	if (metaData.wall) cacheData.wall = metaData.wall;	
+	if (chain) cacheData.chain = chain;
+	
+	//if (readPostid == metaData.postid) fillPost(metaData.postid, true);
+}
+
+function receiveDOMdisplayName(data) {
+	let {userid, displayname, color} = data;
+	if (displayname) displayNameCache[userid] = displayname;
+	else delete displayNameCache[userid];	
+	if (color) colorCache[userid] = color;
+	else delete colorCache[userid];
+	
+	if (DOMdisplayNameQueue[userid]) {
+		for (let j = 0; j < DOMdisplayNameQueue[userid].length; j++) {
+			DOMdisplayNameQueue[userid][j].textContent = funName(userid);
+			if (DOMdisplayNameQueue[userid][j] != D('displayName') && DOMdisplayNameQueue[userid][j] != D('browseHeading')) 
+				DOMdisplayNameQueue[userid][j].style.color = funColor(userid);
+		}
+	}
+	delete DOMdisplayNameQueue[userid];	
+	
+	if (new URLSearchParams(window.location.search).get('userid') == userid) document.title = funName(userid) + " - Brewri";
+	
+	if (userid == XNO.address && D('bioEditor').style.display == "none") {
+		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+		setCSS('--hue', funColor(XNO.address, false, true));
+	}
+}
+
+function queueDOMdisplayName(userid, elt, black) {
+	elt.title = userid;
+	elt.textContent = funName(userid);
+	elt.style.fontWeight = "600";
+	if (!black) elt.style.color = funColor(userid);	
+	if (!DOMdisplayNameQueue[userid]) DOMdisplayNameQueue[userid] = [elt];
+	else DOMdisplayNameQueue[userid].push(elt);
+}
+
+function requestNames() {
+	let userids = [];	
+	for (let name in DOMdisplayNameQueue) {	userids.push(name);	}
+	if (ws && userids.length) ws.emit('queryUsers', {userids});
+}
+
+function queryPost(postid) {
+	let split = postid.split("-");
+	ws.emit('queryPostChain', { userid: split[0], createdts: parseInt(split[1]) });	
+}
+
+// Main panel fill routines ///////////////////////////////////////////////////////////////////////
 
 function queryBrowse(userid, tag, suppressPanel) {
 	closeBio();
@@ -907,554 +989,6 @@ function queryBrowse(userid, tag, suppressPanel) {
 	
 	if (!suppressPanel) loadPanel('browse');
 	if (active('toggleBrowse')) D('toggleBrowse').click();
-}
-
-function fillBrowseList(data) {
-	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
-	D('loadingMsg').style.display = "none";
-	clearDOM(D('discovery'));
-	D('discovery').style.opacity = "";
-	
-	if (data) {
-		data.sort(function(x, y) { return y.createdts - x.createdts; });
-		for (let i = 0; i < data.length; i++) {	
-			cachePost(data[i]);				
-			let mediaBox;
-			if (typeof postCache[data[i].postid].content !== "string" && postCache[data[i].postid].content) {
-				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
-					let content = postCache[data[i].postid].content[j];
-					if (content.type == "image" || content.type == "media") {
-						mediaBox = fillMediaBox(content.content.trim().split(" "), true);					
-						break;
-					}		
-				}
-			}
-			
-			let postli = make('li');
-			postli.id = data[i].postid + "-disc";
-			postli.style.marginBottom = "10px";			
-			postli.appendChild(fullLabel(data[i].postid, false, mediaBox));			
-			if (readPostid == data[i].postid) activeBar(postli);
-			D('discovery').appendChild(postli);
-		}
-	}	
-	requestNames();
-}
-
-function sponsorHandler() {
-	if (active('sponsor')) {
-		D('bioSponsor').style.display = "none";
-		D('sponsorInput').value = "";
-	} else {
-		if (D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('toggleBrowse').click();
-		D('bioSponsor').style.display = "";
-		// D('sponsorInput').focus();
-		flash(D('sponsorInput'));
-		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"start"});
-	}
-	toggle(D('sponsor'));
-}
-
-function subscribeHandler(subscribee) {
-	if (!subscribee) subscribee = D('browseHeading').title;
-	
-	if (D("tag-" + subscribee)) flash(D("tag-" + subscribee));
-	else if (D(subscribee)) flash(D(subscribee));
-	else {
-		makeSubLi(subscribee);
-		if (ws) ws.emit("subscribe", {userid: subscribee});
-	}	
-	if (D(subscribee)) D(subscribee).scrollIntoView({behavior: "smooth", block:"nearest"});
-	else D("tag-" + subscribee).scrollIntoView({behavior: "smooth", block:"nearest"});
-}
-
-function addTag() {
-	let newTagFlag = D('set-tag').value.toLowerCase().trim();
-	D('set-tag').value = "";
-	D('set-tag').select();
-	if (!newTagFlag) return true;
-	for (let i = 0; i < D('editTags').children.length; i++) {
-		if (D('editTags').children[i].textContent == newTagFlag) {
-			flash(D('editTags').children[i]);
-			return true;
-		}
-	}
-	let newTag = make('span', newTagFlag);
-	newTag.onclick = function() { remove(newTag); }
-	newTag.style = "cursor:pointer; margin:5px 10px 0px 10px; padding:3px 5px 3px 5px; border-radius:5px; display:inline-block";
-	D('editTags').appendChild(newTag);
-	flash(newTag);
-}
-
-function publish() {
-	if (!D('postTitle').value.trim()) {
-		alert("Title required.");
-		return false;
-	}
-	let prev = "";
-	try { prev = new URLSearchParams((new URL(D('set-prev').value)).search).get('postid');} 
-	catch { prev = "" };
-	let next = "";	
-	try { next = new URLSearchParams((new URL(D('set-next').value)).search).get('postid');} 
-	catch { next = "" };
-	
-	let tags = [];
-	for (let i = 0; i < D('editTags').children.length; i++) {	
-		tags.push(D('editTags').children[i].textContent);
-	}
-	let postData = {wall:parseEditorWall(), content:parseEditorContent(D('postEditor')), title:D('postTitle').value.trim(), tags,
-							prev_: prev, next_: next, recip_prev: active('recip-prev'), recip_next: active('recip-next'), createdts: parseInt(D('creationEdit').title)};
-	console.log(postData);
-	ws.emit('updatePost', postData);
-}
-
-function checkTitle(elt) {
-	let prev = "";
-	try { prev = new URLSearchParams((new URL(elt.value)).search).get('postid');} 
-	catch { prev = "" };
-	let buttonElt = elt.parentNode.lastElementChild;
-	buttonElt.classList.remove('active');
-	buttonElt.disabled = true;
-	
-	let titleElt = elt.parentNode.previousElementSibling.firstElementChild;
-	if (prev) {
-		if (postCache[prev]) titleElt.textContent = postCache[prev].title;
-		else titleElt.textContent = "(unknown post)";
-		
-		if (prev.split("-")[0] == XNO.address) {
-			buttonElt.classList.add('active');
-			buttonElt.disabled = false;
-		}
-	} else titleElt.textContent = "(none)";
-}
-
-function showEditor() {
-	clearDOM(D('postPreview'));
-	D('postPreview').style.display = "none";
-	D('postEditor').style.display = "";
-	
-	D('editButton').classList.add('active');
-	D('previewButton').classList.remove('active');
-}
-
-function showPreview(elt) {
-	fillContent(D('postPreview'), parseEditorContent(D('postEditor')), parseEditorWall(), XNO.address);	
-	D('postEditor').style.display = "none";
-	D('postPreview').style.display = "";
-	
-	D('previewButton').classList.add('active');
-	D('editButton').classList.remove('active');
-}
-
-function parseEditorWall() {
-	let wall = [];
-	let k = 0;
-	for (let i = 0; i < D('postEditor').children.length; i++) {
-		if (D('postEditor').children[i].firstChild.value) {
-			if (active(D('postEditor').children[i].children[1].firstChild)) wall.push(k);
-			k++;
-		}
-	}
-	return wall;
-}
-
-function parseEditorContent(elt) {
-	let content = [];
-	for (let i = 0; i < elt.children.length; i++) {
-		if (elt.children[i].firstChild.value) content.push({content:elt.children[i].firstChild.value, type:elt.children[i].firstChild.title});
-	}	
-	return content;
-}
-
-function hasDraft() {
-	for (let i = 0; i < D('postEditor').children.length; i++) {
-		if (D('postEditor').children[i].firstChild.value) return true;
-	}
-	return false;
-}
-
-function loadPanel(type, manual, holdHistory) {
-	let prevType = "browse";
-	if (D('browse').style.display != 'none') {
-		browseHeight = Math.ceil(D('secondDivInner').scrollTop);
-		if (type == prevType) browseHeight = 0;
-	}
-	if (D('read').style.display != 'none') {
-		prevType = "read";
-		readHeight = Math.ceil(D('secondDivInner').scrollTop);
-		if (type == prevType) readHeight = 0;
-	}
-	if (D('post').style.display != 'none') {
-		prevType = "post";
-		postHeight = Math.ceil(D('secondDivInner').scrollTop);
-		if (type == prevType) postHeight = 0;
-	}
-	
-	let newManual = (manual && type != prevType);
-	if (newManual) backList.push(prevType);	
-	function changeHistory() {
-		if (!holdHistory) {
-			if (newManual && floatState) window.history.replaceState(null, "", url);
-			else {
-				window.history.pushState(null, "", url);
-				backList = [];
-				floatState = newManual;
-			}
-		}
-	}
-	
-	let params = new URLSearchParams(window.location.search);
-	let theHeight = postHeight;
-	if (type == "read") {
-		url.search = new URLSearchParams({postid:readPostid});
-		
-		if (readPostid && params.get('postid') != readPostid) changeHistory();
-		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
-		else document.title = "Read - Brewri";
-		theHeight = readHeight;
-	} else if (type == "browse") {
-		let newTitle = "Brewri";
-		if (browseURL.userid) {		
-			url.search = new URLSearchParams({userid:browseURL.userid});
-			newTitle = funName(browseURL.userid) + " - Brewri";
-		} else if (browseURL.tag) {
-			url.search = new URLSearchParams({tag:browseURL.tag});
-			newTitle = browseURL.tag + " - Brewri";
-		} else url.search = new URLSearchParams();
-		
-		if (browseURL && (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid'))) changeHistory();
-		document.title = newTitle;
-		theHeight = browseHeight;
-	}
-
-	if (type != "browse" && active('sponsor')) sponsorHandler();
-		
-	D('post').style.display = 'none';
-	D('read').style.display = 'none';
-	D('browse').style.display = 'none';
-	
-	D(type).style.display = "flex";
-	popularTags.classList.add("desktop");
-	if (type == "browse") {
-		D(type).style.display = "";
-		popularTags.classList.remove("desktop");
-	}
-	D('secondDivInner').scrollTo(0, theHeight);
-	
-	D('postButton').classList.remove('active');
-	D('readButton').classList.remove('active');
-	D('browseButton').classList.remove('active');	
-	D(type + "Button").classList.add('active');
-	
-	D('secondDiv').scrollIntoView({behavior: "smooth", block:"nearest"});
-}
-
-function cachePost(metaData, chain) {
-	if (!metaData.postid) metaData.postid = metaData.userid + "-" + metaData.createdts.toString();	
-	if (!metaData.userid) {
-		let split = metaData.postid.split("-");
-		metaData.userid = split[0];
-		metaData.createdts = parseInt(split[1]);
-	}
-	
-	if (!postCache[metaData.postid]) postCache[metaData.postid] = {};
-	let cacheData = postCache[metaData.postid];
-
-	cacheData.title = metaData.title;
-	cacheData.userid = metaData.userid;
-	cacheData.createdts = metaData.createdts;
-	cacheData.postid = metaData.postid;
-
-	if (metaData.modifiedts) cacheData.modifiedts = metaData.modifiedts;
-	if (metaData.content) {	
-		if (!cacheData.content || typeof metaData.content === "string" || typeof metaData.content === "string") cacheData.content = metaData.content;
-		else if (cacheData.content.length != cacheData.content.length) cacheData.content = metaData.content;
-		else {
-			for (let i = 0; i < metaData.content.length; i++) {
-				if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
-			}
-		}
-	}
-	if (metaData.tags) cacheData.tags = metaData.tags;
-	if (metaData.comments) cacheData.comments = metaData.comments;
-	if (metaData.prev_) cacheData.prev_ = metaData.prev_;
-	if (metaData.next_) cacheData.next_ = metaData.next_;
-	if (metaData.wall) cacheData.wall = metaData.wall;	
-	if (chain) cacheData.chain = chain;
-	
-	//if (readPostid == metaData.postid) fillPost(metaData.postid, true);
-}
-
-function activeBar(elt) {
-	elt.firstElementChild.style.borderLeft = "solid 2px hsl(var(--hue), var(--butsat), 80%)";		
-	elt.firstElementChild.style.paddingLeft = "10px";
-}
-
-function removeActiveBar(elt) {
-	elt.firstElementChild.style.borderLeft = "";	
-	elt.firstElementChild.style.paddingLeft = "5px";
-}
-
-function fillBio(userid, block) {
-	let data = userCache[userid];
-	if (!data) D('bio').textContent = "Full of possibilities.";
-	else {
-		if (data.sponsor_price) D('theirThreshold').textContent = data.sponsor_price;
-		else D('theirThreshold').textContent = "1.00";
-		if (!block) {
-			if (data.bio && data.bio.length) fillContent(D('bio'), data.bio);
-			else D('bio').textContent = "Full of possibilities."
-		}
-		receiveDOMdisplayName(data);
-	}
-}
-
-function fillEditorContent(data, elt) {
-	clearDOM(elt);	
-	if (data && data.length) {
-		for (let i = 0; i < data.length; i++) {
-			inputEvent(appendBlock(data[i].type, null, elt).firstChild, data[i].content);
-		}
-	} else appendBlock("text", null, elt);
-}
-
-function openBio() {
-	D('bioPreview').style.display = "none";
-	D('bioEditor').style.display = "";
-	
-	if (displayNameCache[XNO.address]) D('bio-name').value = funName(XNO.address);
-	D('bio-name').placeholder = funName(XNO.address, true) + "...";
-	if (colorCache[XNO.address]) inputEvent(D('colorslider'), funColor(XNO.address, false, true));
-	else inputEvent(D('colorslider'), 0);
-	
-	let data = userCache[XNO.address];
-	if (!data) data = {};	
-	fillEditorContent(data.bio, D('bioBlocks'));	
-	if (data.sponsor_price) D('inputPrice').value = data.sponsor_price;
-	else D('inputPrice').textContent = "1.00";
-	
-	// D('bio-name').focus();
-}
-
-function closeBio() {
-	D('bioEditor').style.display = "none";
-	if (D('browseHeading').title != "Recent") D('bioPreview').style.display = "";
-	clearDOM(D('bioBlocks'));
-	
-	D('bio-name').value = "";
-	D('bio-name').placeholder = "Public display name...";
-	
-	if (XNO.address) {
-		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
-		setCSS('--hue', funColor(XNO.address, false, true));
-	}
-}
-
-function receiveDOMdisplayName(data) {
-	let {userid, displayname, color} = data;
-	if (displayname) displayNameCache[userid] = displayname;
-	else delete displayNameCache[userid];	
-	if (color) colorCache[userid] = color;
-	else delete colorCache[userid];
-	
-	if (DOMdisplayNameQueue[userid]) {
-		for (let j = 0; j < DOMdisplayNameQueue[userid].length; j++) {
-			DOMdisplayNameQueue[userid][j].textContent = funName(userid);
-			if (DOMdisplayNameQueue[userid][j] != D('displayName') && DOMdisplayNameQueue[userid][j] != D('browseHeading')) 
-				DOMdisplayNameQueue[userid][j].style.color = funColor(userid);
-		}
-	}
-	delete DOMdisplayNameQueue[userid];	
-	
-	if (new URLSearchParams(window.location.search).get('userid') == userid) document.title = funName(userid) + " - Brewri";
-	
-	if (userid == XNO.address && D('bioEditor').style.display == "none") {
-		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
-		setCSS('--hue', funColor(XNO.address, false, true));
-	}
-}
-						
-function fillMediaBox(mediaURL, preview) {
-	let mediaBox;
-	if (mediaURL.length) mediaURL = mediaURL[0].split("[");
-	if (mediaURL.length) mediaURL = mediaURL[0].trim();
-	else mediaURL = "";			
-	let match = mediaURL.match(/^.*(youtu\.be\/|vi?\/|u\/\w\/|embed\/|\?vi?=|\&vi?=)([^#\&\?]*).*/);			
-	let ext = mediaURL.slice(-4).toLowerCase();	
-	
-	if (match && match[2].length == 11) {
-		mediaBox = make('div');		
-		mediaBox.style = "position:relative";
-		
-		let frame = make('div');
-		frame.style = "padding-bottom:56%";	
-		mediaBox.appendChild(frame);	
-		
-		let youtube = make("iframe");
-		youtube.style = "border:0px; background-color:black; position:absolute; height:100%; width:100%; top:0px; left:0px;";
-		youtube.src = "https://www.youtube.com/embed/" + match[2] + "?modestbranding=1"							
-		mediaBox.appendChild(youtube);
-	} else if (ext == ".mp4" || ext == ".ogg" || ext == "webm") {
-		mediaBox = make("video");
-		mediaBox.controls = true;
-		mediaBox.src = mediaURL;
-		fileSize(mediaURL);
-	} else if (ext == ".mp3" || ext == ".wav") {
-		mediaBox = make("audio");
-		mediaBox.style = "margin:auto";
-		mediaBox.controls = true;
-		mediaBox.src = mediaURL;
-		fileSize(mediaURL);
-	} else {
-		mediaBox = make('picture');
-		mediaBox.style = "display:flex; justify-content:center";
-		
-		let imagediv = make("img");
-		imagediv.style = "font-style:italic; height:fit-content; margin:auto; max-width:100%; max-height:100%";
-		imagediv.alt = "loading image...";
-		mediaBox.appendChild(imagediv);
-		fileSize(mediaURL).then(function(size) {
-			if (!preview || size < 262144) {
-				imagediv.alt = "- missing image -";
-				imagediv.src = mediaURL;
-			} else if (size > 0) imagediv.alt = "- large image -";
-			else imagediv.alt = "- missing image -";
-		}).catch(function() { imagediv.alt = "- missing image -"; });
-	}						
-	mediaBox.style.width = "100%";	
-	return mediaBox;
-}	
-
-function fullLabel(postid, library, mediaBox) {
-	let data = postCache[postid];
-	let postTitle = make('div', data.title);
-	postTitle.title = data.title;
-	postTitle.style = "overflow:hidden; text-overflow:ellipsis;"
-			
-	// author and tags
-	let tags = make('div');
-	tags.style = "font-size:0.85em; overflow: hidden; text-overflow:ellipsis;"
-	if (mediaBox) {
-		tags.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
-		postTitle.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
-		postTitle.style.marginBottom = "3px";
-	}
-	tags.appendChild(authorLabel(data.userid));	
-	if (data.tags) {
-		for (let i = 0; i < data.tags.length; i++) {			
-			tags.appendChild(tagLabel(data.tags[i]));
-		}
-	}
-	
-	// Meta: dates, edit
-	let postMeta = make('div');
-	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis";		
-	postMeta.appendChild(timeLabel(data.createdts, data.modifiedts));
-	
-	if (data.wall && data.wall.length) {	
-		let premium = make('span', " • Premium");
-		postMeta.appendChild(premium);			
-		premium.style.opacity = "0.5";		
-		premium.style.fontStyle = "italic";
-		let colorIn = true;
-		for (let i = 0; i < data.wall.length; i++) {
-			if (!data.content[data.wall[i]].content) colorIn = false;
-		}
-		if (colorIn || data.userid == XNO.address) {
-			premium.style.fontStyle = "";
-			premium.style.transitionProperty = "opacity";
-			premium.style.transitionDuration = "1s";
-			premium.style.transitionTimingFunction = "";
-			setTimeout(function() {	premium.style.opacity = ""; }, 0);
-		}
-	}
-	
-	if (data.userid == XNO.address) {
-		let editBut = make('a', " • Update");			
-		editBut.onclick = function() {
-			event.stopPropagation();
-			event.preventDefault();
-			fillEdit(postid);
-		}
-		postMeta.appendChild(editBut);		
-	}
-	
-	// Hover buttons	
-	let postLink = make('button', "Link");
-	postLink.classList.add("left");
-	postLink.style.marginRight = "4px";
-	postLink.onclick = function() {
-		event.stopPropagation();
-		event.preventDefault();
-		url.search = new URLSearchParams({postid});
-		clickCopy(this, url.href);
-	};
-	
-	let addBut = make('button', "＋");
-	addBut.classList.add("right");	
-	if (library) {
-		addBut.textContent = "✕";
-		addBut.onclick = function() {
-			event.stopPropagation();
-			event.preventDefault();
-			remove(label.parentNode);
-			if (ws) ws.emit('deleteLibrary', {postid:label.parentNode.id});
-			if (!D('library').firstElementChild) D('libraryPlaceholder').style.display = "";
-		};	
-	} else addBut.onclick = function() {
-		event.stopPropagation();
-		event.preventDefault();
-		if (!D(postid)) {
-			makeLibLi(postid);
-			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:Date.now() }] });
-		}
-		flash(D(postid));
-		D(postid).scrollIntoView({behavior: "smooth", block:"nearest"});
-	}
-	
-	let actions = make('div');
-	actions.style = "position:absolute; top:0px; right:0px; display:none; opacity:0.93";
-	actions.appendChild(postLink);
-	actions.appendChild(addBut);
-	
-	let label = make('a');
-	label.style = "display:flex; overflow:hidden; padding:5px; position:relative; color:#333";
-	
-	url.search = new URLSearchParams({postid});
-	label.href = url;
-	let sbdiv = make('div');
-	sbdiv.style = "text-overflow:ellipsis; overflow:hidden";
-	sbdiv.appendChild(postTitle);
-	sbdiv.appendChild(tags);
-	sbdiv.appendChild(postMeta);
-	label.appendChild(sbdiv);
-	if (mediaBox) {
-		sbdiv.style.flexBasis = "1px";
-		sbdiv.style.flexGrow = 1;	
-		
-		let sbdiv2 = make('button');
-		label.classList.add("parentbutton");
-		sbdiv2.classList.add("childbutton");
-		sbdiv2.style = "display:flex; flex-basis:1px; flex-grow:1; margin-left:10px; height:169px; border-radius:5px; overflow:hidden; padding:0px";
-		sbdiv2.appendChild(mediaBox);		
-		label.appendChild(sbdiv2);
-	}
-	label.appendChild(actions);
-	
-	label.onmouseenter = function() { if (screen.width > 600 && screen.height > 600) actions.style.display = ""; };
-	label.onmouseleave = function() { actions.style.display = "none"; };
-	label.onclick = function() {
-		event.preventDefault();
-		fillPost(postid);
-		queryPost(postid);
-		if (!D(postid)) {
-			let ts = Date.now();
-			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
-			makeLibLi(postid, ts);
-		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
-		flash(this.parentNode);
-	}
-	return label;
 }
 
 function fillPost(postid) {
@@ -1544,9 +1078,201 @@ function fillPost(postid) {
 		D("sponsor2").disabled = false;
 		D("comment").disabled = false;
 	}
+	readHeight = 0;
 	loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();
 	// ws.emit("queryPostChain", {userid, createdts});
+}
+
+function fillEdit(postid, dataConfirmation) {	
+	if (!postid) postid = readPostid;
+	editPostPending = !dataConfirmation;
+	if (editPostPending) {
+		queryPost(postid);
+		postHeight = 0;
+	}
+	loadPanel('post');
+	
+	let theNewContent = "";
+	let metaData = postCache[postid];
+	if (metaData) {	
+		theNewContent = JSON.stringify(metaData.content);
+		if (postid == editPostid && theNewContent == editPostContent) return false;	
+	}
+	if (!cancelPost()) return false;
+	
+	editPostid = postid;
+	editPostContent = theNewContent;
+	D('submitButton').textContent = "Publish Update";
+	D('clearButton').textContent = "Cancel";
+	
+	if (!metaData) return false;
+	
+	D('editid').style.display = "";
+	D('creationEdit').textContent = unixToDate(metaData.createdts);
+	D('creationEdit').title = metaData.createdts;
+	if (metaData.modifiedts && unixToDate(metaData.createdts) != unixToDate(metaData.modifiedts)) {
+		D('modificationEdit').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
+		D('modificationEdit').title = metaData.modifiedts;
+	}	
+	
+	if (typeof metaData.content === "string") {	
+		clearDOM(D('postEditor'));	
+		let block = appendBlock();
+		block.firstChild.value = metaData.content;
+	} else if (metaData.content) {	
+		fillEditorContent(metaData.content, D('postEditor'));		
+		if (metaData.wall) {
+			for (let i = 0; i < metaData.wall.length; i++) {
+				toggle(D('postEditor').children[metaData.wall[i]].children[1].firstElementChild);
+			}
+		}
+	} 
+	
+	D('postTitle').value = metaData.title;
+	
+	url.search = new URLSearchParams({postid: metaData.prev_});
+	if (metaData.prev_) {
+		inputEvent(D('set-prev'), url.href);
+		D("recip-prev").classList.remove('active');
+	}
+	url.search = new URLSearchParams({postid: metaData.next_});	
+	if (metaData.next_) {
+		inputEvent(D('set-next'), url.href);
+		D("recip-next").classList.remove('active');
+	}
+	
+	if (metaData.tags) {
+		for (let i = 0; i < metaData.tags.length; i++) {
+			D('set-tag').value = metaData.tags[i];
+			addTag();
+		}
+	}
+}
+
+function loadPanel(type, manual, holdHistory) {
+	let prevType = "browse";
+	if (D('browse').style.display != 'none') {
+		browseHeight = Math.ceil(D('secondDivInner').scrollTop);
+		if (type == prevType) browseHeight = 0;
+	}
+	if (D('read').style.display != 'none') {
+		prevType = "read";
+		readHeight = Math.ceil(D('secondDivInner').scrollTop);
+		if (type == prevType) readHeight = 0;
+	}
+	if (D('post').style.display != 'none') {
+		prevType = "post";
+		postHeight = Math.ceil(D('secondDivInner').scrollTop);
+		if (type == prevType) postHeight = 0;
+	}
+	
+	let newManual = (manual && type != prevType);
+	if (newManual) backList.push(prevType);	
+	function changeHistory() {
+		if (!holdHistory) {
+			if (newManual && floatState) window.history.replaceState(null, "", url);
+			else {
+				window.history.pushState(null, "", url);
+				backList = [];
+				floatState = newManual;
+			}
+		}
+	}
+	
+	let params = new URLSearchParams(window.location.search);
+	let theHeight = postHeight;
+	if (type == "read") {
+		url.search = new URLSearchParams({postid:readPostid});
+		
+		if (readPostid && params.get('postid') != readPostid) changeHistory();
+		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
+		else document.title = "Read - Brewri";
+		theHeight = readHeight;
+	} else if (type == "browse") {
+		let newTitle = "Brewri";
+		if (browseURL.userid) {		
+			url.search = new URLSearchParams({userid:browseURL.userid});
+			newTitle = funName(browseURL.userid) + " - Brewri";
+		} else if (browseURL.tag) {
+			url.search = new URLSearchParams({tag:browseURL.tag});
+			newTitle = browseURL.tag + " - Brewri";
+		} else url.search = new URLSearchParams();
+		
+		if (browseURL && (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid'))) changeHistory();
+		document.title = newTitle;
+		theHeight = browseHeight;
+	}
+
+	if (type != "browse" && active('sponsor')) sponsorHandler();
+		
+	D('post').style.display = 'none';
+	D('read').style.display = 'none';
+	D('browse').style.display = 'none';
+	
+	D(type).style.display = "flex";
+	popularTags.classList.add("desktop");
+	if (type == "browse") {
+		D(type).style.display = "";
+		popularTags.classList.remove("desktop");
+	}
+	D('secondDivInner').scrollTo(0, theHeight);
+	
+	D('postButton').classList.remove('active');
+	D('readButton').classList.remove('active');
+	D('browseButton').classList.remove('active');	
+	D(type + "Button").classList.add('active');
+	
+	D('secondDiv').scrollIntoView({behavior: "smooth", block:"nearest"});
+}
+
+// Fill helpers ///////////////////////////////////////////////////////////////////////
+
+function fillBrowseList(data) {
+	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
+	D('loadingMsg').style.display = "none";
+	clearDOM(D('discovery'));
+	D('discovery').style.opacity = "";
+	
+	if (data) {
+		data.sort(function(x, y) { return y.createdts - x.createdts; });
+		for (let i = 0; i < data.length; i++) {	
+			cachePost(data[i]);				
+			let mediaBox;
+			if (typeof postCache[data[i].postid].content !== "string" && postCache[data[i].postid].content) {
+				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
+					let content = postCache[data[i].postid].content[j];
+					if (content.type == "image" || content.type == "media") {
+						mediaBox = fillMediaBox(content.content.trim().split(" "), true);					
+						break;
+					}		
+				}
+			}
+			
+			let postli = make('li');
+			postli.id = data[i].postid + "-disc";
+			postli.style.marginBottom = "10px";			
+			postli.appendChild(fullLabel(data[i].postid, false, mediaBox));			
+			if (readPostid == data[i].postid) activeBar(postli);
+			D('discovery').appendChild(postli);
+		}
+	}	
+	requestNames();
+	browseHeight = 0;
+}
+
+function fillBio(userid, block) {
+	let data = userCache[userid];
+	if (!data) D('bio').textContent = "Full of possibilities.";
+	else {
+		if (data.sponsor_price) D('theirThreshold').textContent = data.sponsor_price;
+		else D('theirThreshold').textContent = "1.00";
+		if (!block) {
+			if (data.bio && data.bio.length) fillContent(D('bio'), data.bio);
+			else D('bio').textContent = "Full of possibilities."
+		}
+		receiveDOMdisplayName(data);
+	}
 }
 
 function fillContent(elt, content, wall, userid) {
@@ -1625,66 +1351,189 @@ function fillContent(elt, content, wall, userid) {
 	}
 }
 
-function fillEdit(postid, dataConfirmation) {	
-	loadPanel('post');
-	if (!postid) postid = readPostid;
-	editPostPending = !dataConfirmation;
-	if (editPostPending) queryPost(postid);
+function fillEditorContent(data, elt) {
+	clearDOM(elt);	
+	if (data && data.length) {
+		for (let i = 0; i < data.length; i++) {
+			inputEvent(appendBlock(data[i].type, null, elt).firstChild, data[i].content);
+		}
+	} else appendBlock("text", null, elt);
+}
+					
+function fillMediaBox(mediaURL, preview) {
+	let mediaBox;
+	if (mediaURL.length) mediaURL = mediaURL[0].split("[");
+	if (mediaURL.length) mediaURL = mediaURL[0].trim();
+	else mediaURL = "";			
+	let match = mediaURL.match(/^.*(youtu\.be\/|vi?\/|u\/\w\/|embed\/|\?vi?=|\&vi?=)([^#\&\?]*).*/);			
+	let ext = mediaURL.slice(-4).toLowerCase();	
 	
-	let theNewContent = "";
-	let metaData = postCache[postid];
-	if (metaData) {	
-		theNewContent = JSON.stringify(metaData.content);
-		if (postid == editPostid && theNewContent == editPostContent) return false;	
-	}
-	if (!cancelPost()) return false;
-	
-	editPostid = postid;
-	editPostContent = theNewContent;
-	D('submitButton').textContent = "Publish Update";
-	D('clearButton').textContent = "Cancel";
-	
-	if (!metaData) return false;
-	
-	D('editid').style.display = "";
-	D('creationEdit').textContent = unixToDate(metaData.createdts);
-	D('creationEdit').title = metaData.createdts;
-	if (metaData.modifiedts && unixToDate(metaData.createdts) != unixToDate(metaData.modifiedts)) {
-		D('modificationEdit').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
-		D('modificationEdit').title = metaData.modifiedts;
+	if (match && match[2].length == 11) {
+		mediaBox = make('div');		
+		mediaBox.style = "position:relative";
+		
+		let frame = make('div');
+		frame.style = "padding-bottom:56%";	
+		mediaBox.appendChild(frame);	
+		
+		let youtube = make("iframe");
+		youtube.style = "border:0px; background-color:black; position:absolute; height:100%; width:100%; top:0px; left:0px;";
+		youtube.src = "https://www.youtube.com/embed/" + match[2] + "?modestbranding=1"							
+		mediaBox.appendChild(youtube);
+	} else if (ext == ".mp4" || ext == ".ogg" || ext == "webm") {
+		mediaBox = make("video");
+		mediaBox.controls = true;
+		mediaBox.src = mediaURL;
+		fileSize(mediaURL);
+	} else if (ext == ".mp3" || ext == ".wav") {
+		mediaBox = make("audio");
+		mediaBox.style = "margin:auto";
+		mediaBox.controls = true;
+		mediaBox.src = mediaURL;
+		fileSize(mediaURL);
+	} else {
+		mediaBox = make('picture');
+		mediaBox.style = "display:flex; justify-content:center";
+		
+		let imagediv = make("img");
+		imagediv.style = "font-style:italic; height:fit-content; margin:auto; max-width:100%; max-height:100%";
+		imagediv.alt = "loading image...";
+		mediaBox.appendChild(imagediv);
+		fileSize(mediaURL).then(function(size) {
+			if (!preview || size < 262144) {
+				imagediv.alt = "- missing image -";
+				imagediv.src = mediaURL;
+			} else if (size > 0) imagediv.alt = "- large image -";
+			else imagediv.alt = "- missing image -";
+		}).catch(function() { imagediv.alt = "- missing image -"; });
+	}						
+	mediaBox.style.width = "100%";	
+	return mediaBox;
+}	
+
+function addComment(commentData) {
+	if (D(commentData.commentid)) {
+		D(commentData.commentid).textContent = commentData.content;
+		return false;
 	}	
 	
-	if (typeof metaData.content === "string") {	
-		clearDOM(D('postEditor'));	
-		let block = appendBlock();
-		block.firstChild.value = metaData.content;
-	} else if (metaData.content) {	
-		fillEditorContent(metaData.content, D('postEditor'));		
-		if (metaData.wall) {
-			for (let i = 0; i < metaData.wall.length; i++) {
-				toggle(D('postEditor').children[metaData.wall[i]].children[1].firstElementChild);
+	let userid = commentData.commentid.split("-")[0];	
+	let theLabel = make('div');
+	theLabel.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px";
+	theLabel.appendChild(authorLabel(userid));
+	
+	let dateDiv = timeLabel(parseInt(commentData.commentid.split("-")[1]), commentData.modifiedts);
+	dateDiv.style.color = "#888";
+	dateDiv.style.marginLeft = "5px";
+	theLabel.appendChild(dateDiv);
+
+	// reply editor
+	let editPanel = make('textarea');
+	
+	if (XNO.address == userid) {
+		let editBut = make('a', " • Edit");	
+		editBut.style.cursor = "pointer";
+		
+		editPanel.placeholder = "Reply...";
+		editPanel.onfocus = function() { scrollPanel(editPanel); };
+		editPanel.style = "height:80px; margin-bottom:5px; margin-top:10px; width:100%; display:none; font-size:0.9em";	
+		editPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
+		editPanel.oninput = function() {
+			if (editPanel.value) editBut.textContent = " • Publish Edit";
+			else editBut.textContent = " • Cancel";
+		};
+		editPanel.onkeyup = function() {
+			if (event.keyCode == 27) {
+				editPanel.value = "";
+				editPanel.style.display = "none";
+				editBut.textContent = " • Edit";
+				event.stopPropagation();
 			}
 		}
-	} 
+		
+		// editBut.style = "padding:2px 8px; margin:2px; margin-left:10px;";				
+		editBut.onclick = function() {
+			if (editPanel.style.display) {
+				editPanel.style.display = "";
+				editPanel.value = D(commentData.commentid).textContent;
+				this.textContent = " • Cancel";
+				editPanel.focus();
+			} else {
+				editPanel.style.display = "none";
+				if (editPanel.value && editPanel.value != D(commentData.commentid).textContent)
+					ws.emit('updateComment', {content:editPanel.value, postid: commentData.postid, parentid: commentData.parentid, commentid: commentData.commentid });
+				this.textContent = " • Edit";
+			}
+		};
+		theLabel.appendChild(editBut);
+	}	
+			
+	let theComment = make('li', commentData.content);
+	theComment.id = commentData.commentid;
+	theComment.style = "margin-bottom:10px; font-size:0.9em";
 	
-	D('postTitle').value = metaData.title;
-	
-	url.search = new URLSearchParams({postid: metaData.prev_});
-	if (metaData.prev_) {
-		inputEvent(D('set-prev'), url.href);
-		D("recip-prev").classList.remove('active');
-	}
-	url.search = new URLSearchParams({postid: metaData.next_});	
-	if (metaData.next_) {
-		inputEvent(D('set-next'), url.href);
-		D("recip-next").classList.remove('active');
-	}
-	
-	if (metaData.tags) {
-		for (let i = 0; i < metaData.tags.length; i++) {
-			D('set-tag').value = metaData.tags[i];
-			addTag();
-		}
+	if (commentData.parentid) {
+		D(commentData.parentid + "-ul").appendChild(theLabel);	
+		if (XNO.address == userid) D(commentData.parentid + "-ul").appendChild(editPanel);	
+		D(commentData.parentid + "-ul").appendChild(theComment);
+	} else {
+		let repPanel = make('textarea');
+		let repBut = make('button', "Reply");
+		
+		repPanel.onfocus = function() { scrollPanel(repPanel); };
+		repPanel.style = "height:80px; display:none; margin-left:20px; margin-bottom:15px; margin-top:20px; width:calc(100% - 20px); font-size:0.9em";		
+		repPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
+		repPanel.placeholder = "Reply...";
+		repPanel.oninput = function() {
+			if (repPanel.value) repBut.textContent = "Reply";
+			else repBut.textContent = "Cancel";
+		};
+		repPanel.onkeyup = function() {
+			if (event.keyCode == 27 && (!repPanel.value.length || confirm("Delete reply?"))) {
+				repPanel.value = "";
+				repPanel.style.display = "none";
+				repBut.textContent = "Reply";
+				event.stopPropagation();
+			}
+		}					
+		
+		// reply button
+		repBut.style = "font-size:0.85em;";
+		repBut.title = commentData.commentid;
+		if (!XNO.address) repBut.disabled = true;		
+		repBut.onclick = function() {
+			if (repPanel.style.display == "none") {
+				repPanel.style.display = "block";
+				this.textContent = "Cancel";
+				repPanel.focus();
+			} else {
+				repPanel.style.display = "none";
+				this.textContent = "Reply";
+				if (repPanel.value) ws.emit('updateComment', {content:repPanel.value, postid: commentData.postid, parentid: commentData.commentid });
+				repPanel.value = "";
+			}
+		};
+		
+		// future replies
+		let ulcomment = make('ul');
+		ulcomment.style = "margin-left:20px";
+		ulcomment.id = commentData.commentid + "-ul";
+		
+		let repButHolder = make('div');
+		repButHolder.style = "display:flex; justify-content:right; margin-bottom:10px;";
+		let repLine = make('div');
+		repLine.style = "background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1";
+		repButHolder.appendChild(repLine);
+		repButHolder.appendChild(repBut);
+		
+		if (D('readComments').children.length) D('readComments').insertBefore(repButHolder, D('readComments').firstElementChild);
+		else D('readComments').appendChild(repButHolder);
+		
+		D('readComments').insertBefore(repPanel, D('readComments').firstElementChild);
+		D('readComments').insertBefore(ulcomment, D('readComments').firstElementChild);
+		D('readComments').insertBefore(theComment, D('readComments').firstElementChild);
+		if (XNO.address == userid) D('readComments').insertBefore(editPanel, D('readComments').firstElementChild);
+		D('readComments').insertBefore(theLabel, D('readComments').firstElementChild);
 	}
 }
 
@@ -1822,32 +1671,139 @@ function appendBlock(type, previous, parent) {
 	return block;
 }
 
-function cancelPost(override) {
-	if (!override && hasDraft() && !confirm("Clear draft?")) return false;
-	showEditor();
-	editPostid = "";
-	editPostContent = "";
-	D('editid').style.display = "none";
-	D('creationEdit').textContent = "";
-	D('creationEdit').title = "";
-	D('modificationEdit').textContent = "";
-	D('modificationEdit').title = "";	
+
+// Label routines ///////////////////////////////////////////////////////////////////////
+
+function fullLabel(postid, library, mediaBox) {
+	let data = postCache[postid];
+	let postTitle = make('div', data.title);
+	postTitle.title = data.title;
+	postTitle.style = "overflow:hidden; text-overflow:ellipsis;"
+			
+	// author and tags
+	let tags = make('div');
+	tags.style = "font-size:0.85em; overflow: hidden; text-overflow:ellipsis;"
+	if (mediaBox) {
+		tags.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
+		postTitle.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
+		postTitle.style.marginBottom = "3px";
+	}
+	tags.appendChild(authorLabel(data.userid));	
+	if (data.tags) {
+		for (let i = 0; i < data.tags.length; i++) {			
+			tags.appendChild(tagLabel(data.tags[i]));
+		}
+	}
 	
-	clearDOM(D('postEditor'));	
-	appendBlock();	
+	// Meta: dates, edit
+	let postMeta = make('div');
+	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis";		
+	postMeta.appendChild(timeLabel(data.createdts, data.modifiedts));
 	
-	D('postTitle').value = "";	
-	inputEvent(D('set-prev'), "");
-	inputEvent(D('set-next'), "");
+	if (data.wall && data.wall.length) {	
+		let premium = make('span', " • Premium");
+		postMeta.appendChild(premium);			
+		premium.style.opacity = "0.5";		
+		premium.style.fontStyle = "italic";
+		let colorIn = true;
+		for (let i = 0; i < data.wall.length; i++) {
+			if (!data.content[data.wall[i]].content) colorIn = false;
+		}
+		if (colorIn || data.userid == XNO.address) {
+			premium.style.fontStyle = "";
+			premium.style.transitionProperty = "opacity";
+			premium.style.transitionDuration = "1s";
+			premium.style.transitionTimingFunction = "";
+			setTimeout(function() {	premium.style.opacity = ""; }, 0);
+		}
+	}
 	
-	clearDOM(D('editTags'));
-	D('set-tag').value = "";
+	if (data.userid == XNO.address) {
+		let editBut = make('a', " • Update");			
+		editBut.onclick = function() {
+			event.stopPropagation();
+			event.preventDefault();
+			fillEdit(postid);
+		}
+		postMeta.appendChild(editBut);		
+	}
 	
-	D('submitButton').textContent = "Publish";
-	D('clearButton').textContent = "Clear";
+	// Hover buttons	
+	let postLink = make('button', "Link");
+	postLink.classList.add("left");
+	postLink.style.marginRight = "4px";
+	postLink.onclick = function() {
+		event.stopPropagation();
+		event.preventDefault();
+		url.search = new URLSearchParams({postid});
+		clickCopy(this, url.href);
+	};
 	
-	if (active('toggleEdit')) D('toggleEdit').click();
-	return true;
+	let addBut = make('button', "＋");
+	addBut.classList.add("right");	
+	if (library) {
+		addBut.textContent = "✕";
+		addBut.onclick = function() {
+			event.stopPropagation();
+			event.preventDefault();
+			remove(label.parentNode);
+			if (ws) ws.emit('deleteLibrary', {postid:label.parentNode.id});
+			if (!D('library').firstElementChild) D('libraryPlaceholder').style.display = "";
+		};	
+	} else addBut.onclick = function() {
+		event.stopPropagation();
+		event.preventDefault();
+		if (!D(postid)) {
+			makeLibLi(postid);
+			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:Date.now() }] });
+		}
+		flash(D(postid));
+		D(postid).scrollIntoView({behavior: "smooth", block:"nearest"});
+	}
+	
+	let actions = make('div');
+	actions.style = "position:absolute; top:0px; right:0px; display:none; opacity:0.93";
+	actions.appendChild(postLink);
+	actions.appendChild(addBut);
+	
+	let label = make('a');
+	label.style = "display:flex; overflow:hidden; padding:5px; position:relative; color:#333";
+	
+	url.search = new URLSearchParams({postid});
+	label.href = url;
+	let sbdiv = make('div');
+	sbdiv.style = "text-overflow:ellipsis; overflow:hidden";
+	sbdiv.appendChild(postTitle);
+	sbdiv.appendChild(tags);
+	sbdiv.appendChild(postMeta);
+	label.appendChild(sbdiv);
+	if (mediaBox) {
+		sbdiv.style.flexBasis = "1px";
+		sbdiv.style.flexGrow = 1;	
+		
+		let sbdiv2 = make('button');
+		label.classList.add("parentbutton");
+		sbdiv2.classList.add("childbutton");
+		sbdiv2.style = "display:flex; flex-basis:1px; flex-grow:1; margin-left:10px; height:169px; border-radius:5px; overflow:hidden; padding:0px";
+		sbdiv2.appendChild(mediaBox);		
+		label.appendChild(sbdiv2);
+	}
+	label.appendChild(actions);
+	
+	label.onmouseenter = function() { if (screen.width > 600 && screen.height > 600) actions.style.display = ""; };
+	label.onmouseleave = function() { actions.style.display = "none"; };
+	label.onclick = function() {
+		event.preventDefault();
+		fillPost(postid);
+		queryPost(postid);
+		if (!D(postid)) {
+			let ts = Date.now();
+			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
+			makeLibLi(postid, ts);
+		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
+		flash(this.parentNode);
+	}
+	return label;
 }
 
 function tagLabel(tagStr) {			
@@ -1894,6 +1850,211 @@ function timeLabel(createdts, modifiedts) {
 	return dateDiv;
 }
 
+// Main panel UI interaction handlers ///////////////////////////////////////////////////////////////////////
+
+function sponsorHandler() {
+	if (active('sponsor')) {
+		D('bioSponsor').style.display = "none";
+		D('sponsorInput').value = "";
+	} else {
+		if (D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('toggleBrowse').click();
+		D('bioSponsor').style.display = "";
+		// D('sponsorInput').focus();
+		flash(D('sponsorInput'));
+		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"start"});
+	}
+	toggle(D('sponsor'));
+}
+
+function subscribeHandler(subscribee) {
+	if (!subscribee) subscribee = D('browseHeading').title;
+	
+	if (D("tag-" + subscribee)) flash(D("tag-" + subscribee));
+	else if (D(subscribee)) flash(D(subscribee));
+	else {
+		makeSubLi(subscribee);
+		if (ws) ws.emit("subscribe", {userid: subscribee});
+	}	
+	if (D(subscribee)) D(subscribee).scrollIntoView({behavior: "smooth", block:"nearest"});
+	else D("tag-" + subscribee).scrollIntoView({behavior: "smooth", block:"nearest"});
+}
+
+function addTag() {
+	let newTagFlag = D('set-tag').value.toLowerCase().trim();
+	D('set-tag').value = "";
+	D('set-tag').select();
+	if (!newTagFlag) return true;
+	for (let i = 0; i < D('editTags').children.length; i++) {
+		if (D('editTags').children[i].textContent == newTagFlag) {
+			flash(D('editTags').children[i]);
+			return true;
+		}
+	}
+	let newTag = make('span', newTagFlag);
+	newTag.onclick = function() { remove(newTag); }
+	newTag.style = "cursor:pointer; margin:5px 10px 0px 10px; padding:3px 5px 3px 5px; border-radius:5px; display:inline-block";
+	D('editTags').appendChild(newTag);
+	flash(newTag);
+}
+
+function checkTitle(elt) {
+	let prev = "";
+	try { prev = new URLSearchParams((new URL(elt.value)).search).get('postid');} 
+	catch { prev = "" };
+	let buttonElt = elt.parentNode.lastElementChild;
+	buttonElt.classList.remove('active');
+	buttonElt.disabled = true;
+	
+	let titleElt = elt.parentNode.previousElementSibling.firstElementChild;
+	if (prev) {
+		if (postCache[prev]) titleElt.textContent = postCache[prev].title;
+		else titleElt.textContent = "(unknown post)";
+		
+		if (prev.split("-")[0] == XNO.address) {
+			buttonElt.classList.add('active');
+			buttonElt.disabled = false;
+		}
+	} else titleElt.textContent = "(none)";
+}
+
+function showEditor() {
+	clearDOM(D('postPreview'));
+	D('postPreview').style.display = "none";
+	D('postEditor').style.display = "";
+	
+	D('editButton').classList.add('active');
+	D('previewButton').classList.remove('active');
+}
+
+function showPreview(elt) {
+	fillContent(D('postPreview'), parseEditorContent(D('postEditor')), parseEditorWall(), XNO.address);	
+	D('postEditor').style.display = "none";
+	D('postPreview').style.display = "";
+	
+	D('previewButton').classList.add('active');
+	D('editButton').classList.remove('active');
+}
+
+function publish() {
+	if (!D('postTitle').value.trim()) {
+		alert("Title required.");
+		return false;
+	}
+	let prev = "";
+	try { prev = new URLSearchParams((new URL(D('set-prev').value)).search).get('postid');} 
+	catch { prev = "" };
+	let next = "";	
+	try { next = new URLSearchParams((new URL(D('set-next').value)).search).get('postid');} 
+	catch { next = "" };
+	
+	let tags = [];
+	for (let i = 0; i < D('editTags').children.length; i++) {	
+		tags.push(D('editTags').children[i].textContent);
+	}
+	let postData = {wall:parseEditorWall(), content:parseEditorContent(D('postEditor')), title:D('postTitle').value.trim(), tags,
+							prev_: prev, next_: next, recip_prev: active('recip-prev'), recip_next: active('recip-next'), createdts: parseInt(D('creationEdit').title)};
+	console.log(postData);
+	ws.emit('updatePost', postData);
+}
+
+function setData() {
+	if (ws && ws.readyState == 1) {		
+		queueDOMdisplayName(XNO.address, D('displayName'), true);
+		queueDOMdisplayName(XNO.address, D('browseHeading'), true);
+		queueDOMdisplayName(XNO.address, D(XNO.address).lastElementChild);
+		
+		ws.emit('updateUser', {displayname:D('bio-name').value, color:parseInt(D('colorslider').value), bio:parseEditorContent(D('bioBlocks')), sponsor_price: D('inputPrice').value });
+		closeBio();
+	}
+}
+
+function parseEditorWall() {
+	let wall = [];
+	let k = 0;
+	for (let i = 0; i < D('postEditor').children.length; i++) {
+		if (D('postEditor').children[i].firstChild.value) {
+			if (active(D('postEditor').children[i].children[1].firstChild)) wall.push(k);
+			k++;
+		}
+	}
+	return wall;
+}
+
+function parseEditorContent(elt) {
+	let content = [];
+	for (let i = 0; i < elt.children.length; i++) {
+		if (elt.children[i].firstChild.value) content.push({content:elt.children[i].firstChild.value, type:elt.children[i].firstChild.title});
+	}	
+	return content;
+}
+
+function openBio() {
+	D('bioPreview').style.display = "none";
+	D('bioEditor').style.display = "";
+	
+	if (displayNameCache[XNO.address]) D('bio-name').value = funName(XNO.address);
+	D('bio-name').placeholder = funName(XNO.address, true) + "...";
+	if (colorCache[XNO.address]) inputEvent(D('colorslider'), funColor(XNO.address, false, true));
+	else inputEvent(D('colorslider'), 0);
+	
+	let data = userCache[XNO.address];
+	if (!data) data = {};	
+	fillEditorContent(data.bio, D('bioBlocks'));	
+	if (data.sponsor_price) D('inputPrice').value = data.sponsor_price;
+	else D('inputPrice').textContent = "1.00";
+	
+	// D('bio-name').focus();
+}
+
+function closeBio() {
+	D('bioEditor').style.display = "none";
+	if (D('browseHeading').title != "Recent") D('bioPreview').style.display = "";
+	clearDOM(D('bioBlocks'));
+	
+	D('bio-name').value = "";
+	D('bio-name').placeholder = "Public display name...";
+	
+	if (XNO.address) {
+		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+		setCSS('--hue', funColor(XNO.address, false, true));
+	}
+}
+
+function cancelPost(override) {
+	if (!override && hasDraft() && !confirm("Clear draft?")) return false;
+	showEditor();
+	editPostid = "";
+	editPostContent = "";
+	D('editid').style.display = "none";
+	D('creationEdit').textContent = "";
+	D('creationEdit').title = "";
+	D('modificationEdit').textContent = "";
+	D('modificationEdit').title = "";	
+	
+	clearDOM(D('postEditor'));	
+	appendBlock();	
+	
+	D('postTitle').value = "";	
+	inputEvent(D('set-prev'), "");
+	inputEvent(D('set-next'), "");
+	
+	clearDOM(D('editTags'));
+	D('set-tag').value = "";
+	
+	D('submitButton').textContent = "Publish";
+	D('clearButton').textContent = "Clear";
+	
+	if (active('toggleEdit')) D('toggleEdit').click();
+	return true;
+}
+
+function hasDraft() {
+	for (let i = 0; i < D('postEditor').children.length; i++) {
+		if (D('postEditor').children[i].firstChild.value) return true;
+	}
+	return false;
+}
+
 function commentKeypress() {
 	if (event.keyCode == 27 && (!D('commentContent').value.length || confirm("Delete comment?"))) {
 		D('commentContent').value = "";
@@ -1916,133 +2077,6 @@ function comment() {
 		D('commentContent').value = "";
 	}
 }
-
-function addComment(commentData) {
-	if (D(commentData.commentid)) {
-		D(commentData.commentid).textContent = commentData.content;
-		return false;
-	}	
-	
-	let userid = commentData.commentid.split("-")[0];	
-	let theLabel = make('div');
-	theLabel.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px";
-	theLabel.appendChild(authorLabel(userid));
-	
-	let dateDiv = timeLabel(parseInt(commentData.commentid.split("-")[1]), commentData.modifiedts);
-	dateDiv.style.color = "#888";
-	dateDiv.style.marginLeft = "5px";
-	theLabel.appendChild(dateDiv);
-
-	// reply editor
-	let editPanel = make('textarea');
-	
-	if (XNO.address == userid) {
-		let editBut = make('a', " • Edit");	
-		editBut.style.cursor = "pointer";
-		
-		editPanel.placeholder = "Reply...";
-		editPanel.onfocus = function() { scrollPanel(editPanel); };
-		editPanel.style = "height:80px; margin-bottom:5px; margin-top:10px; width:100%; display:none; font-size:0.9em";	
-		editPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
-		editPanel.oninput = function() {
-			if (editPanel.value) editBut.textContent = " • Publish Edit";
-			else editBut.textContent = " • Cancel";
-		};
-		editPanel.onkeyup = function() {
-			if (event.keyCode == 27) {
-				editPanel.value = "";
-				editPanel.style.display = "none";
-				editBut.textContent = " • Edit";
-				event.stopPropagation();
-			}
-		}
-		
-		// editBut.style = "padding:2px 8px; margin:2px; margin-left:10px;";				
-		editBut.onclick = function() {
-			if (editPanel.style.display) {
-				editPanel.style.display = "";
-				editPanel.value = D(commentData.commentid).textContent;
-				this.textContent = " • Cancel";
-				editPanel.focus();
-			} else {
-				editPanel.style.display = "none";
-				if (editPanel.value && editPanel.value != D(commentData.commentid).textContent)
-					ws.emit('updateComment', {content:editPanel.value, postid: commentData.postid, parentid: commentData.parentid, commentid: commentData.commentid });
-				this.textContent = " • Edit";
-			}
-		};
-		theLabel.appendChild(editBut);
-	}	
-			
-	let theComment = make('li', commentData.content);
-	theComment.id = commentData.commentid;
-	theComment.style = "margin-bottom:10px; font-size:0.9em";
-	
-	if (commentData.parentid) {
-		D(commentData.parentid + "-ul").appendChild(theLabel);	
-		if (XNO.address == userid) D(commentData.parentid + "-ul").appendChild(editPanel);	
-		D(commentData.parentid + "-ul").appendChild(theComment);
-	} else {
-		let repPanel = make('textarea');
-		let repBut = make('button', "Reply");
-		
-		repPanel.onfocus = function() { scrollPanel(repPanel); };
-		repPanel.style = "height:80px; display:none; margin-left:20px; margin-bottom:15px; margin-top:20px; width:calc(100% - 20px); font-size:0.9em";		
-		repPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
-		repPanel.placeholder = "Reply...";
-		repPanel.oninput = function() {
-			if (repPanel.value) repBut.textContent = "Reply";
-			else repBut.textContent = "Cancel";
-		};
-		repPanel.onkeyup = function() {
-			if (event.keyCode == 27 && (!repPanel.value.length || confirm("Delete reply?"))) {
-				repPanel.value = "";
-				repPanel.style.display = "none";
-				repBut.textContent = "Reply";
-				event.stopPropagation();
-			}
-		}					
-		
-		// reply button
-		repBut.style = "font-size:0.85em;";
-		repBut.title = commentData.commentid;
-		if (!XNO.address) repBut.disabled = true;		
-		repBut.onclick = function() {
-			if (repPanel.style.display == "none") {
-				repPanel.style.display = "block";
-				this.textContent = "Cancel";
-				repPanel.focus();
-			} else {
-				repPanel.style.display = "none";
-				this.textContent = "Reply";
-				if (repPanel.value) ws.emit('updateComment', {content:repPanel.value, postid: commentData.postid, parentid: commentData.commentid });
-				repPanel.value = "";
-			}
-		};
-		
-		// future replies
-		let ulcomment = make('ul');
-		ulcomment.style = "margin-left:20px";
-		ulcomment.id = commentData.commentid + "-ul";
-		
-		let repButHolder = make('div');
-		repButHolder.style = "display:flex; justify-content:right; margin-bottom:10px;";
-		let repLine = make('div');
-		repLine.style = "background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1";
-		repButHolder.appendChild(repLine);
-		repButHolder.appendChild(repBut);
-		
-		if (D('readComments').children.length) D('readComments').insertBefore(repButHolder, D('readComments').firstElementChild);
-		else D('readComments').appendChild(repButHolder);
-		
-		D('readComments').insertBefore(repPanel, D('readComments').firstElementChild);
-		D('readComments').insertBefore(ulcomment, D('readComments').firstElementChild);
-		D('readComments').insertBefore(theComment, D('readComments').firstElementChild);
-		if (XNO.address == userid) D('readComments').insertBefore(editPanel, D('readComments').firstElementChild);
-		D('readComments').insertBefore(theLabel, D('readComments').firstElementChild);
-	}
-}
-
 
 // Sidebar UI interaction handlers ///////////////////////////////////////////////////////////////////////
 
@@ -2162,26 +2196,6 @@ function clearSeed() {
 	D('profileBut').style.display = "none";
 }
 
-function queueDOMdisplayName(userid, elt, black) {
-	elt.title = userid;
-	elt.textContent = funName(userid);
-	elt.style.fontWeight = "600";
-	if (!black) elt.style.color = funColor(userid);	
-	if (!DOMdisplayNameQueue[userid]) DOMdisplayNameQueue[userid] = [elt];
-	else DOMdisplayNameQueue[userid].push(elt);
-}
-
-function requestNames() {
-	let userids = [];	
-	for (let name in DOMdisplayNameQueue) {	userids.push(name);	}
-	if (ws && userids.length) ws.emit('queryUsers', {userids});
-}
-
-function queryPost(postid) {
-	let split = postid.split("-");
-	ws.emit('queryPostChain', { userid: split[0], createdts: parseInt(split[1]) });	
-}
-
 function makeSubLi(userid, data) {
 	let tag = (userid.substring(0, 5) != "nano_");
 	
@@ -2296,17 +2310,6 @@ function toggleVisibility() {
 		D("show").classList.remove('active');
 	}
 }
-	
-function setData() {
-	if (ws && ws.readyState == 1) {		
-		queueDOMdisplayName(XNO.address, D('displayName'), true);
-		queueDOMdisplayName(XNO.address, D('browseHeading'), true);
-		queueDOMdisplayName(XNO.address, D(XNO.address).lastElementChild);
-		
-		ws.emit('updateUser', {displayname:D('bio-name').value, color:parseInt(D('colorslider').value), bio:parseEditorContent(D('bioBlocks')), sponsor_price: D('inputPrice').value });
-		closeBio();
-	}
-}
 
 // Global event listeners ///////////////////////////////////////////////////////////////////////
 
@@ -2323,15 +2326,11 @@ window.addEventListener('popstate', loadURL);
 function loadURL() {
 	let params = new URLSearchParams(window.location.search);
 	let postid = params.get('postid');
-	let userid = params.get('userid');
-	let tag = params.get('tag');
 	if (postid) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse(null, null, true);
 		fillPost(postid);
 		if (!postCache[postid] || !postCache[postid].comments) queryPost(postid);
-	} else if (tag) queryBrowse(null, tag);
-	else if (userid) queryBrowse(userid);
-	else queryBrowse();
+	} else queryBrowse(params.get('userid'), params.get('tag'));
 	
 	if (ws && ws.readyState == 3) {	setupWebsocket(); }
 }
@@ -2388,6 +2387,20 @@ window.addEventListener('keydown', function(evt) {
 		}
 	}
 });
+
+var currentElt;
+
+function scrollPanel(elt) {
+	if (screen.width <= 600 || screen.height <= 600) {
+		currentElt = elt;
+		setTimeout(function() {if (currentElt == elt) currentElt = null;}, 2000);
+	}
+}
+
+window.addEventListener("resize", function() {
+	if (currentElt) currentElt.scrollIntoView({block:'start', behavior:'auto'});	
+});
+
 
 // UI helper library ///////////////////////////////////////////////////////////////////////
 
@@ -2610,6 +2623,16 @@ function active(elt) {
 	return elt.classList.contains('active');
 }
 
+function activeBar(elt) {
+	elt.firstElementChild.style.borderLeft = "solid 2px hsl(var(--hue), var(--butsat), 80%)";		
+	elt.firstElementChild.style.paddingLeft = "10px";
+}
+
+function removeActiveBar(elt) {
+	elt.firstElementChild.style.borderLeft = "";	
+	elt.firstElementChild.style.paddingLeft = "5px";
+}
+
 function toggleSecondDiv(elt) {
 	if (active(elt)) {
 		elt.nextElementSibling.classList.remove("desktop");
@@ -2655,18 +2678,6 @@ function fileSize(url) {
 
 function D(string) { return document.getElementById(string); }
 
-var currentElt;
-
-function scrollPanel(elt) {
-	if (screen.width <= 600 || screen.height <= 600) {
-		currentElt = elt;
-		setTimeout(function() {if (currentElt == elt) currentElt = null;}, 2000);
-	}
-}
-
-window.addEventListener("resize", function() {
-	if (currentElt) currentElt.scrollIntoView({block:'start', behavior:'auto'});	
-});
 
 </script>
 
