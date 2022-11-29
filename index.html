@@ -688,6 +688,8 @@ var browseCache = {};
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
+const imgurl = /src="https:\/\/[a-zA-Z0-9;:=%&/~_:\-\.,\?\(\)\+]+"/;
+const imgurl2 = /src="data:image\/png;base64,[a-zA-Z0-9;:=%&/~_:\-\.,\?\(\)\+]+"/;
 
 let browseHeight = 0;
 let readHeight = 0;
@@ -1566,36 +1568,41 @@ function appendBlock(type, previous, parent) {
 	textbox.addEventListener("drop", function (e) {
 		e.stopPropagation();
 		e.preventDefault();
-		handleFiles(e.dataTransfer.files[0]);
+		
+		if (active(mediaBut)) {
+			let textData = e.dataTransfer.getData("text/html");
+			let obj = imgurl.exec(textData);
+			if (!obj) obj = imgurl2.exec(textData);		
+			if (obj) textbox.value = obj[0].substring(5, obj[0].length - 1);
+			else handleFiles(e.dataTransfer.files[0]);
+		}
 	});
 	
 	function handleFiles(file) {
-		if (active(mediaBut)) {
-			const xhr = new XMLHttpRequest();
-			showMsg("Uploading to Imgur...", null, true);
-						
-			xhr.open("POST", "https://api.imgur.com/3/image");
-			xhr.setRequestHeader("Authorization", "Client-ID ae2fefc03df36fb");			
-			xhr.timeout = 10*1000; // 10 seconds
-			xhr.onreadystatechange = function() {
-				if (this.readyState == 4) {
-					if (this.status == 200) {
-						try { 
-							inputEvent(textbox, JSON.parse(this.responseText).data.link); 
-							showMsg("Uploaded!");
-						} catch(e) {
-							showMsg('Imgur upload failed.');
-							console.error(this.responseText);
-						}
-					} else if (this.status == 400) showMsg('Imgur upload failed.');
-					else showMsg('Unable to connect to Imgur.');
-				}
-			};
-			xhr.send(file);
-			// const reader = new FileReader();
-			// reader.onload = (evt) => { xhr.send(evt.target.result); };			
-			// reader.readAsBinaryString(file);
-		}
+		const xhr = new XMLHttpRequest();
+		showMsg("Uploading to Imgur...", null, true);
+					
+		xhr.open("POST", "https://api.imgur.com/3/image");
+		xhr.setRequestHeader("Authorization", "Client-ID ae2fefc03df36fb");			
+		xhr.timeout = 10*1000; // 10 seconds
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				if (this.status == 200) {
+					try { 
+						inputEvent(textbox, JSON.parse(this.responseText).data.link); 
+						showMsg("Uploaded!");
+					} catch(e) {
+						showMsg('Imgur upload failed.');
+						console.error(this.responseText);
+					}
+				} else if (this.status == 400) showMsg('Imgur upload failed.');
+				else showMsg('Unable to connect to Imgur.');
+			}
+		};
+		xhr.send(file);
+		// const reader = new FileReader();
+		// reader.onload = (evt) => { xhr.send(evt.target.result); };			
+		// reader.readAsBinaryString(file);
 	}
 	
 	let sponsBut = make('button', "Premium");
