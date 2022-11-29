@@ -1569,11 +1569,12 @@ function appendBlock(type, previous, parent) {
 		e.stopPropagation();
 		e.preventDefault();
 		
+		if (!active(mediaBut) && !textbox.value.length) mediaBut.click();
 		if (active(mediaBut)) {
 			let textData = e.dataTransfer.getData("text/html");
 			let obj = imgurl.exec(textData);
 			if (!obj) obj = imgurl2.exec(textData);		
-			if (obj) textbox.value = obj[0].substring(5, obj[0].length - 1);
+			if (obj) inputEvent(textbox, obj[0].substring(5, obj[0].length - 1));
 			else handleFiles(e.dataTransfer.files[0]);
 		}
 	});
