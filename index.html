@@ -816,7 +816,7 @@ function setupWebsocket(fresh) {
 			chain.push(data[x].postid);
 			if (editPostid == data[x].postid) hasEditPost = true;
 		}
-		fillPost(readPostid);
+		if (readPostid) fillPost(readPostid);
 		if (hasEditPost && editPostPending) fillEdit(editPostid, true); 
 		requestNames();
 	});
