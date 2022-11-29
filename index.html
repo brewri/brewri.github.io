@@ -1541,19 +1541,68 @@ function appendBlock(type, previous, parent) {
 	if (!parent) parent = D('postEditor');
 	let block = make('div');
 	block.tabIndex = "-1";
+	block.style.position = "relative";
 	let textbox = make('textarea');
-	textbox.style = "height:150px; width:100%; tab-size:4";	
+	textbox.style = "height:150px; width:100%; tab-size:4; position:relative";	
 	textbox.onfocus = function() { scrollPanel(textbox); };
 	block.appendChild(textbox);	
+	
+	let imgur = make('button', "Imgur upload...");
+	imgur.style = "position:absolute; right:15px; bottom:55px; font-size:0.85em; display:none";	
+	let imgurIn = make('input');
+	imgurIn.type = "file";
+	imgurIn.style.display = "none";	
+	imgurIn.addEventListener("change", function() {	handleFiles(imgurIn.files[0]); });
+	imgur.onclick = function() { imgurIn.click(); };
+	
+	textbox.addEventListener("dragenter", function(e) {
+		e.stopPropagation();
+		e.preventDefault();
+	});	
+	textbox.addEventListener("dragover", function(e) {
+		e.stopPropagation();
+		e.preventDefault();
+	});
+	textbox.addEventListener("drop", function (e) {
+		e.stopPropagation();
+		e.preventDefault();
+		handleFiles(e.dataTransfer.files[0]);
+	});
+	
+	function handleFiles(file) {
+		if (active(mediaBut)) {
+			const xhr = new XMLHttpRequest();
+			showMsg("Uploading to Imgur...", null, true);
+						
+			xhr.open("POST", "https://api.imgur.com/3/image");
+			xhr.setRequestHeader("Authorization", "Client-ID ae2fefc03df36fb");			
+			xhr.timeout = 10*1000; // 10 seconds
+			xhr.onreadystatechange = function() {
+				if (this.readyState == 4) {
+					if (this.status == 200) {
+						try { 
+							inputEvent(textbox, JSON.parse(this.responseText).data.link); 
+							showMsg("Uploaded!");
+						} catch(e) {
+							showMsg('Imgur upload failed.');
+							console.error(this.responseText);
+						}
+					} else if (this.status == 400) showMsg('Imgur upload failed.');
+					else showMsg('Unable to connect to Imgur.');
+				}
+			};
+			xhr.send(file);
+			// const reader = new FileReader();
+			// reader.onload = (evt) => { xhr.send(evt.target.result); };			
+			// reader.readAsBinaryString(file);
+		}
+	}
 	
 	let sponsBut = make('button', "Premium");
 	sponsBut.style.marginRight = "5px";
 	sponsBut.style.fontSize = "0.85em";
 	sponsBut.tabIndex = "-1";
 	sponsBut.onclick = function() { toggle(this); }
-	
-	let buttonPanel = make('div');
-	buttonPanel.style = "display:flex; justify-content:right";
 	
 	let mdBut = make('button', "Text");
 	mdBut.classList.add("left");
@@ -1566,11 +1615,8 @@ function appendBlock(type, previous, parent) {
 		if (textbox.value == "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>") textbox.value = "";
 		textbox.onkeydown = "";
 		textbox.oninput = "";
-		for (let i = 0; i < buttonPanel.children.length; i++) {
-			buttonPanel.children[i].classList.remove("active");
-		}
-		mdBut.classList.add("active");
-		textbox.focus();
+		imgur.style.display = "none";
+		selectType(this);
 	}
 	
 	let jsBut = make('button');
@@ -1592,11 +1638,8 @@ function appendBlock(type, previous, parent) {
 		if (!textbox.value) textbox.value = "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>";
 		addTabbing(textbox);
 		textbox.oninput = "";
-		for (let i = 0; i < buttonPanel.children.length; i++) {
-			buttonPanel.children[i].classList.remove("active");
-		}
-		jsBut.classList.add("active");
-		textbox.focus();
+		imgur.style.display = "none";
+		selectType(this);
 	};
 	
 	let mediaBut = make('button', "Media");
@@ -1614,11 +1657,8 @@ function appendBlock(type, previous, parent) {
 			if (textbox.value) textbox.style.color = "#888";
 			else textbox.style.color = "";
 		}
-		for (let i = 0; i < buttonPanel.children.length; i++) {
-			buttonPanel.children[i].classList.remove("active");
-		}
-		mediaBut.classList.add("active");
-		textbox.focus();
+		imgur.style.display = "";
+		selectType(this);
 	};
 	
 	let delBut = make('button', "✕");
@@ -1627,7 +1667,7 @@ function appendBlock(type, previous, parent) {
 	delBut.onclick = function() { 
 		if (!textbox.value || confirm("Delete element?")) {
 			remove(block);		
-			if (parent.children.length == 1) parent.firstElementChild.lastElementChild.lastElementChild.lastElementChild.previousElementSibling.disabled = true;
+			if (parent.children.length == 1) parent.firstElementChild.children[1].lastElementChild.lastElementChild.previousElementSibling.disabled = true;
 		}
 	};
 	
@@ -1636,24 +1676,34 @@ function appendBlock(type, previous, parent) {
 	addBut.classList.add("right");
 	addBut.onclick = function() { appendBlock("text", block, parent) };
 
+	let buttonPanel = make('div');
+	buttonPanel.style = "display:flex; justify-content:right";
+	function selectType(elt) {	
+		for (let i = 0; i < buttonPanel.children.length; i++) {
+			buttonPanel.children[i].classList.remove("active");
+		}
+		elt.classList.add("active");
+		textbox.focus();	
+	}
 	buttonPanel.appendChild(mdBut);
 	buttonPanel.appendChild(jsBut);
 	buttonPanel.appendChild(mediaBut);
 	buttonPanel.appendChild(delBut);
 	buttonPanel.appendChild(addBut);
 	
+	let buttonParent = make('div');
+	buttonParent.style = "margin-top:10px; margin-bottom:20px; display:flex; justify-content:space-between";
+	if (parent == D('postEditor')) buttonParent.appendChild(sponsBut);
+	else buttonParent.style.justifyContent = "right";
+	buttonParent.appendChild(buttonPanel);	
+	block.appendChild(buttonParent);
+	block.appendChild(imgur);
+	
 	if (!type) type = "text";
 	if (type == "js") jsBut.click();
 	else if (type == "image" || type == "media") mediaBut.click();
 	else mdBut.click();
 	
-	let buttonParent = make('div');
-	buttonParent.style = "margin-top:10px; margin-bottom:20px; display:flex; justify-content:space-between";
-	if (parent == D('postEditor')) buttonParent.appendChild(sponsBut);
-	else buttonParent.style.justifyContent = "right";
-	buttonParent.appendChild(buttonPanel);
-	
-	block.appendChild(buttonParent);
 	if (previous) {
 		if (previous.nextElementSibling) previous.parentNode.insertBefore(block, previous.nextElementSibling);
 		else previous.parentNode.appendChild(block);
@@ -1661,11 +1711,12 @@ function appendBlock(type, previous, parent) {
 	
 	if (parent.children.length == 1) delBut.disabled = true;
 	else for (let i = 0; i < parent.children.length; i++) {
-		parent.children[i].lastElementChild.lastElementChild.lastElementChild.previousElementSibling.disabled = false;
+		parent.children[i].children[1].lastElementChild.lastElementChild.previousElementSibling.disabled = false;
 	}
 	for (let i = 0; i < buttonPanel.children.length; i++) {
 		buttonPanel.children[i].tabIndex = -1;
 	}
+	
 	// textbox.focus();
 	flash(textbox);
 	return block;
