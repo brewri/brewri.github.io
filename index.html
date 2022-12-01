@@ -860,15 +860,12 @@ function cachePost(metaData, chain) {
 	cacheData.userid = metaData.userid;
 	cacheData.createdts = metaData.createdts;
 	cacheData.postid = metaData.postid;
-
 	if (metaData.modifiedts) cacheData.modifiedts = metaData.modifiedts;
+
 	if (metaData.content) {	
-		if (!cacheData.content || typeof metaData.content === "string" || typeof metaData.content === "string") cacheData.content = metaData.content;
-		else if (cacheData.content.length != cacheData.content.length) cacheData.content = metaData.content;
-		else {
-			for (let i = 0; i < metaData.content.length; i++) {
-				if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
-			}
+		if (!cacheData.content || typeof metaData.content === "string" || cacheData.content.length != cacheData.content.length) cacheData.content = metaData.content;
+		else for (let i = 0; i < metaData.content.length; i++) {
+			if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
 		}
 	}
 	if (metaData.tags) cacheData.tags = metaData.tags;
@@ -986,7 +983,7 @@ function queryBrowse(userid, tag, suppressPanel) {
 		else if (tag) ws.emit("queryTag", {tag});
 		else ws.emit('queryPostsRecent');
 		
-		if ((!userid && !tag) || D('popularTags').children.length < 2) ws.emit('queryTagCounts');
+		if (!(userid || tag) || D('popularTags').children.length < 2) ws.emit('queryTagCounts');
 	}
 	
 	if (!suppressPanel) loadPanel('browse');
@@ -1083,7 +1080,6 @@ function fillPost(postid) {
 	readHeight = 0;
 	loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();
-	// ws.emit("queryPostChain", {userid, createdts});
 }
 
 function fillEdit(postid, dataConfirmation) {	
@@ -1120,8 +1116,7 @@ function fillEdit(postid, dataConfirmation) {
 	
 	if (typeof metaData.content === "string") {	
 		clearDOM(D('postEditor'));	
-		let block = appendBlock();
-		block.firstChild.value = metaData.content;
+		appendBlock().firstChild.value = metaData.content;
 	} else if (metaData.content) {	
 		fillEditorContent(metaData.content, D('postEditor'));		
 		if (metaData.wall) {
@@ -1321,10 +1316,7 @@ function fillContent(elt, content, wall, userid) {
 				capbox.style = "text-align:center; font-size:0.9em; margin-top:10px"; 
 				jsbox.appendChild(capbox);
 			}
-		} else {
-			jsbox.innerHTML = DOMPurify.sanitize(marked.parse(content[i].content));
-			jsbox.style.whiteSpace = "initial";
-		}
+		} else jsbox.innerHTML = DOMPurify.sanitize(marked.parse(content[i].content));
 		jsbox.style.marginBottom = "20px";
 		elt.appendChild(jsbox);
 	}
@@ -2415,11 +2407,9 @@ window.addEventListener('copy', function(e) {
 
 window.addEventListener('keydown', function(evt) {
 	if (document.activeElement.tagName.toLowerCase() != 'input' && document.activeElement.tagName.toLowerCase() != 'textarea') {
-		if (evt.keyCode == 8) {
-			if (backList.length) {
-				evt.preventDefault();
-				loadPanel(backList.pop(), false, true);
-			}
+		if (evt.keyCode == 8 && backList.length) {
+			evt.preventDefault();
+			loadPanel(backList.pop(), false, true);
 		} 
 		
 		if (evt.keyCode == 27) {
@@ -2456,9 +2446,7 @@ function scrollPanel(elt) {
 	}
 }
 
-window.addEventListener("resize", function() {
-	if (currentElt) currentElt.scrollIntoView({block:'start', behavior:'auto'});	
-});
+window.addEventListener("resize", function() { if (currentElt) currentElt.scrollIntoView({block:'start', behavior:'auto'});	});
 
 
 // UI helper library ///////////////////////////////////////////////////////////////////////
