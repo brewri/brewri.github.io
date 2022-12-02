@@ -1317,7 +1317,7 @@ function fillContent(elt, content, wall, userid) {
 				jsbox.appendChild(capbox);
 			}
 		} else jsbox.innerHTML = DOMPurify.sanitize(marked.parse(content[i].content));
-
+		
 		jsbox.style.marginBottom = "20px";
 		elt.appendChild(jsbox);
 	}
@@ -1749,7 +1749,7 @@ function fullLabel(postid, library, mediaBox) {
 	
 	// Meta: dates, edit
 	let postMeta = make('div');
-	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis";		
+	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis; margin:2px 0px;";		
 	postMeta.appendChild(timeLabel(data.createdts, data.modifiedts));
 	
 	if (data.wall && data.wall.length) {	
