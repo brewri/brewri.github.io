@@ -1543,9 +1543,10 @@ function appendBlock(type, previous, parent) {
 	block.appendChild(textbox);	
 	
 	let imgur = make('button', "Imgur upload...");
-	imgur.style = "position:absolute; right:15px; bottom:55px; font-size:0.85em; display:none";	
+	imgur.style = "position:absolute; right:15px; bottom:57px; font-size:0.85em; display:none";	
 	let imgurIn = make('input');
 	imgurIn.type = "file";
+	imgurIn.accept = "image/*,video/*";
 	imgurIn.style.display = "none";	
 	imgurIn.addEventListener("change", function() {	handleFiles(imgurIn.files[0]); });
 	imgur.onclick = function() { imgurIn.click(); };
