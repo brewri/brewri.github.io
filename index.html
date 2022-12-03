@@ -1249,7 +1249,7 @@ function fillBrowseList(data) {
 			let postli = make('li');
 			postli.id = data[i].postid + "-disc";
 			postli.style.marginBottom = "10px";			
-			postli.appendChild(fullLabel(data[i].postid, false, mediaBox));			
+			postli.appendChild(fullLabel(data[i].postid, "browse", mediaBox));			
 			if (readPostid == data[i].postid) activeBar(postli);
 			D('discovery').appendChild(postli);
 		}
@@ -1727,11 +1727,12 @@ function appendBlock(type, previous, parent) {
 
 // Label routines ///////////////////////////////////////////////////////////////////////
 
-function fullLabel(postid, library, mediaBox) {
+function fullLabel(postid, type, mediaBox) {
 	let data = postCache[postid];
 	let postTitle = make('div', data.title);
 	postTitle.title = data.title;
 	postTitle.style = "overflow:hidden; text-overflow:ellipsis;"
+	if (type == "browse") postTitle.style.marginBottom = "3px";
 			
 	// author and tags
 	let tags = make('div');
@@ -1739,7 +1740,6 @@ function fullLabel(postid, library, mediaBox) {
 	if (mediaBox) {
 		tags.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
 		postTitle.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
-		postTitle.style.marginBottom = "3px";
 	}
 	tags.appendChild(authorLabel(data.userid));	
 	if (data.tags) {
@@ -1794,7 +1794,7 @@ function fullLabel(postid, library, mediaBox) {
 	
 	let addBut = make('button', "＋");
 	addBut.classList.add("right");	
-	if (library) {
+	if (type == "library") {
 		addBut.textContent = "✕";
 		addBut.onclick = function() {
 			event.stopPropagation();
@@ -2336,7 +2336,7 @@ function makeLibLi(postid, lastaccessedts, pushedts) {
 	let libli = make('li');
 	libli.id = postid;
 	libli.style.whiteSpace = "nowrap";
-	libli.appendChild(fullLabel(postid, true));	
+	libli.appendChild(fullLabel(postid, "library"));	
 	if (!lastaccessedts) libli.firstElementChild.firstElementChild.style.fontWeight = "bold";	
 	//if (pushedts) libli.appendChild(make('span', timeSince(pushedts)));
 	if (postid == readPostid) activeBar(libli);
