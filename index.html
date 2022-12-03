@@ -1862,7 +1862,7 @@ function fullLabel(postid, type, mediaBox) {
 function tagLabel(tagStr) {			
 	let displayStr = tagStr;
 	if (displayStr.length > 32) displayStr = displayStr.substring(0, 32) + "...";
-	let tag = make('a', " • " + displayStr);			
+	let tag = make('a', " •\xa0" + displayStr);			
 	url.search = new URLSearchParams({tag:tagStr});
 	tag.href = url;
 	tag.onclick = function() {			
