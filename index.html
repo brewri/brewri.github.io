@@ -702,7 +702,9 @@ const adj = ["Disillusioned", "Nihilistic", "Disenchanted", "Embittered", "World
 const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedgehog", "Penguin", "Squirrel", "Turtle", "Koala", "Hatchling", "Kit", "Joey", "Fledgling", 
 					"Fawn", "Foal", "Calf", "Cub", "Colt", "Piglet", "Eaglet", "Owlet"];
 
-var url = new URL(window.location);
+var url = new URL(window.location);						
+var possibleOrigins = ["https://brewri.github.io"];
+
 var serverURL = 'wss://brewri-server.fly.dev';
 var ws;
 setupWebsocket(true);
@@ -874,8 +876,6 @@ function cachePost(metaData, chain) {
 	if (metaData.next_) cacheData.next_ = metaData.next_;
 	if (metaData.wall) cacheData.wall = metaData.wall;	
 	if (chain) cacheData.chain = chain;
-	
-	//if (readPostid == metaData.postid) fillPost(metaData.postid, true);
 }
 
 function receiveDOMdisplayName(data) {
@@ -924,7 +924,7 @@ function queryPost(postid) {
 
 // Main panel fill routines ///////////////////////////////////////////////////////////////////////
 
-function queryBrowse(userid, tag, suppressPanel) {
+function queryBrowse(userid, tag, passive) {
 	closeBio();
 	D('profileBut').style.display = "none";
 	D('toggleBrowse').style.display = "";
@@ -986,11 +986,11 @@ function queryBrowse(userid, tag, suppressPanel) {
 		if (!(userid || tag) || D('popularTags').children.length < 2) ws.emit('queryTagCounts');
 	}
 	
-	if (!suppressPanel) loadPanel('browse');
+	if (!passive) loadPanel('browse');
 	if (active('toggleBrowse')) D('toggleBrowse').click();
 }
 
-function fillPost(postid) {
+function fillPost(postid, activeClick) {
 	if (readPostid != postid) {
 		if (D('commentContent').value.length && !confirm("Clear comment draft?")) return false;
 		D('readTitle').style.cursor = "pointer";
@@ -1079,7 +1079,8 @@ function fillPost(postid) {
 	}
 	readHeight = 0;
 	loadPanel('read');
-	if (active('toggleRead')) D('toggleRead').click();
+	if (active('toggleRead')) D('toggleRead').click();	
+	if (!postCache[postid] || activeClick) queryPost(postid);
 }
 
 function fillEdit(postid, dataConfirmation) {	
@@ -1316,7 +1317,29 @@ function fillContent(elt, content, wall, userid) {
 				capbox.style = "text-align:center; font-size:0.9em; margin-top:10px"; 
 				jsbox.appendChild(capbox);
 			}
-		} else jsbox.innerHTML = DOMPurify.sanitize(marked.parse(content[i].content));
+		} else {
+			jsbox.innerHTML = DOMPurify.sanitize(marked.parse(content[i].content));
+			
+			let relativelinks = jsbox.getElementsByTagName("a");
+			for (let i = 0; i < relativelinks.length; i++) {
+				if (relativelinks[i].origin == window.location || possibleOrigins.includes(relativelinks[i].origin)) {
+					theLink = new URL(relativelinks[i].href)
+					console.log(theLink);
+					relativelinks[i].onclick = function() {
+						event.preventDefault();
+						loadURL(theLink);				 
+						let postid = (new URLSearchParams(theLink.search)).get('postid');
+						if (postid) {
+							if (!D(postid)) {
+								let ts = Date.now();
+								if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
+								makeLibLi(postid, ts);
+							} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
+						}
+					}
+				}
+			}
+		}
 		
 		jsbox.style.marginBottom = "20px";
 		elt.appendChild(jsbox);
@@ -1848,8 +1871,7 @@ function fullLabel(postid, type, mediaBox) {
 	label.onmouseleave = function() { actions.style.display = "none"; };
 	label.onclick = function() {
 		event.preventDefault();
-		fillPost(postid);
-		queryPost(postid);
+		fillPost(postid, true);
 		if (!D(postid)) {
 			let ts = Date.now();
 			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
@@ -2377,13 +2399,15 @@ window.addEventListener("beforeunload", function (e) {
 
 window.addEventListener('popstate', loadURL);
 
-function loadURL() {
-	let params = new URLSearchParams(window.location.search);
+function loadURL(link) {
+	let activeClick = false;
+	if (!link) link = window.location;
+	else activeClick = !activeClick;
+	let params = new URLSearchParams(link.search);
 	let postid = params.get('postid');
 	if (postid) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse(null, null, true);
-		fillPost(postid);
-		if (!postCache[postid] || !postCache[postid].comments) queryPost(postid);
+		fillPost(postid, activeClick);
 	} else queryBrowse(params.get('userid'), params.get('tag'));
 	
 	if (ws && ws.readyState == 3) {	setupWebsocket(); }
