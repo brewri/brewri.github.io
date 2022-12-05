@@ -197,7 +197,7 @@
 					&nbsp;<button id="comment" onclick="comment()" autocomplete="off" style="font-size:0.85em" disabled>Comment</button>
 				</div>
 				
-				<ul id="readComments" style="white-space:pre-wrap; margin-top:1em"><ul>
+				<ul id="readComments" style="margin-top:1em"><ul>
 			</div>
 			
 			<div class="sidebar desktop" style="flex-grow:1; max-width:360px; margin-left:50px;">			
@@ -1464,8 +1464,9 @@ function addComment(commentData) {
 	}	
 			
 	let theComment = make('li', commentData.content);
+	theComment.innerHTML = theComment.innerHTML.replace(/([\n]{2,})/g, "<p style='margin:0.9em 0px'></p>");
 	theComment.id = commentData.commentid;
-	theComment.style = "margin-bottom:10px; font-size:0.9em";
+	theComment.style = "margin-bottom:1em; font-size:0.9em";
 	
 	if (commentData.parentid) {
 		D(commentData.parentid + "-ul").appendChild(theLabel);	
