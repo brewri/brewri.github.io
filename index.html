@@ -2383,7 +2383,8 @@ function loadURL() {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse(null, null, true);
 		fillPost(postid);
 		if (!postCache[postid] || !postCache[postid].comments) queryPost(postid);
-	} else queryBrowse(params.get('userid'), params.get('tag'));
+	} else if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse(params.get('userid'), params.get('tag'));
+	else loadPanel('browse');
 	
 	if (ws && ws.readyState == 3) {	setupWebsocket(); }
 }
