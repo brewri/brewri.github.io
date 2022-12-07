@@ -86,16 +86,16 @@
 				
 				<div class="sidebar desktop" style="flex-grow:4; margin-left:30px;">					
 					<div id="bioPreview" style="overflow:hidden; display:none">
-						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:40px"></div>
+						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:2em"></div>
 						
 						<div style="display:flex; justify-content:right;">
 							<button id="profileBut" onclick="openBio()" style="font-size:0.85em">Update Profile</button>
-							<div id="bioLine" style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>						
+							<div id="bioLine" style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 0.85em auto 0.85em; flex-grow:1"></div>						
 							<button id="subscribe" onclick="subscribeHandler()" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>
 							&nbsp;<button id="sponsor" onclick="sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>	
 						</div>
 				
-						<div id="bioSponsor" style="margin-top:1em; display:none;">
+						<div id="bioSponsor" style="margin:1em; margin-top:1.5em; display:none;">
 							<div id="theirFunName" style="margin-bottom:10px; font-weight:600"> - </div>					
 							<div style="font-size:0.85em; color:#888">Unique public address</div>
 							<div class='address' id="theirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
@@ -113,7 +113,7 @@
 
 						<input class="colorslider" id="colorslider" type="range" min="0" max="360" step="1" oninput="color(this)" value="0" autocomplete="off"/>														
 														
-						<div id="bioBlocks" style="margin-top:40px; margin-bottom:40px"></div>
+						<div id="bioBlocks" style="margin-top:2em; margin-bottom:2em"></div>
 						<div style="font-size:0.85em; margin-top:20px; color:#888">Premium sponsorship • 30 days</div>
 						<div style="display:flex; justify-content:right; margin-top:5px; align-items:baseline">
 						<input onfocus="scrollPanel(this)" id="inputPrice" onkeyup="" onkeydown="" autocomplete="off" placeholder="0.00" onblur="prepTwoDigit(this)" style="margin-left:20px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0"><span style="font-size:0.9em">XNO</span>
@@ -129,14 +129,14 @@
 		<div id="post" style="display:none; padding-bottom:80px; max-width:1200px;">		
 			<button id="toggleEdit" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
 		
-			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:10px;">
+			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:0.5em;">
 			
 				<div style="display:flex; justify-content:center; position:absolute; right:0px; top:-20px;">
 					<button id="editButton" class="left active" onclick="showEditor()" title="Alt + Q">Editor</button><button id="previewButton" class="right" style="margin-left:4px" onclick="showPreview()" title="Alt + W">Preview</button>
 				</div>
 				
-				<div id="postEditor" style="margin-bottom:40px; margin-top:30px"></div>
-				<div id="postPreview" style="margin-bottom:40px; margin-top:30px; display:none"></div>
+				<div id="postEditor" style="margin-bottom:2em; margin-top:1.5em"></div>
+				<div id="postPreview" style="margin-bottom:2em; margin-top:1.5em; display:none"></div>
 				
 			</div>
 			
@@ -185,13 +185,13 @@
 		<div id="read" style="display:none; padding-bottom:80px; max-width:1200px;">
 			<button id="toggleRead" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
 			<div style="flex-basis:1px; flex-grow:2;">				
-				<div id="readContent" style="margin-bottom:40px; margin-top:40px">Browse for something interesting!</div>
+				<div id="readContent" style="margin-bottom:2em; margin-top:2em">Browse for something interesting!</div>
 				
 				
 				<textarea id="commentContent" onfocus="scrollPanel(this)" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
 				<div style="display:flex; justify-content:right;">				
 					<button id="edit2" onclick=" fillEdit();" style="font-size:0.85em; display:none">Update</button>
-					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1"></div>										
+					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 0.85em auto 0.85em; flex-grow:1"></div>										
 					<button id="subscribe2" onclick="subscribeHandler(D('author').title)" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>				
 					&nbsp;<button id="sponsor2" onclick="queryBrowse(D('author').title); sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>
 					&nbsp;<button id="comment" onclick="comment()" autocomplete="off" style="font-size:0.85em" disabled>Comment</button>
@@ -1249,7 +1249,7 @@ function fillBrowseList(data) {
 			
 			let postli = make('li');
 			postli.id = data[i].postid + "-disc";
-			postli.style.marginBottom = "10px";			
+			postli.style.marginBottom = "0.85em";			
 			postli.appendChild(fullLabel(data[i].postid, "browse", mediaBox));			
 			if (readPostid == data[i].postid) activeBar(postli);
 			D('discovery').appendChild(postli);
@@ -1314,7 +1314,7 @@ function fillContent(elt, content, wall, userid) {
 			}
 			if (caption && caption.length > 1) {
 				let capbox = make("div", caption[1]);
-				capbox.style = "text-align:center; font-size:0.9em; margin-top:10px"; 
+				capbox.style = "text-align:center; font-size:0.9em; margin-top:1em"; 
 				jsbox.appendChild(capbox);
 			}
 		} else {
@@ -1539,9 +1539,9 @@ function addComment(commentData) {
 		ulcomment.id = commentData.commentid + "-ul";
 		
 		let repButHolder = make('div');
-		repButHolder.style = "display:flex; justify-content:right; margin-bottom:10px;";
+		repButHolder.style = "display:flex; justify-content:right; margin-bottom:0.85em;";
 		let repLine = make('div');
-		repLine.style = "background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 10px auto 10px; flex-grow:1";
+		repLine.style = "background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 0.85em auto 0.85em; flex-grow:1";
 		repButHolder.appendChild(repLine);
 		repButHolder.appendChild(repBut);
 		
@@ -2397,7 +2397,7 @@ window.addEventListener("beforeunload", function (e) {
 	}
 });
 
-window.addEventListener('popstate', loadURL);
+window.addEventListener('popstate', function() { loadURL(); });
 
 function loadURL(link) {
 	let activeClick = false;
