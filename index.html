@@ -2410,7 +2410,23 @@ window.addEventListener("beforeunload", function (e) {
 	}
 });
 
-window.addEventListener('popstate', function() { loadURL(); });
+window.addEventListener('popstate', function() { 
+	if (!closeSidebar()) loadURL(); 
+});
+
+function closeSidebar() {
+	if (D('browse').style.display != 'none' && active('toggleBrowse')) {
+		D('toggleBrowse').click();
+		event.preventDefault();
+	} else if (D('read').style.display != 'none' && active('toggleRead')) {
+		D('toggleRead').click();
+		event.preventDefault();
+	} else if (D('post').style.display != 'none' && active('toggleEdit')) {
+		D('toggleEdit').click();
+		event.preventDefault();
+	} else return false;
+	return true;
+}
 
 function loadURL(link) {
 	let activeClick = false;
@@ -2447,7 +2463,7 @@ window.addEventListener('copy', function(e) {
 
 window.addEventListener('keydown', function(evt) {
 	if (document.activeElement.tagName.toLowerCase() != 'input' && document.activeElement.tagName.toLowerCase() != 'textarea') {
-		if (evt.keyCode == 8 && backList.length) {
+		if (evt.keyCode == 8 && backList.length && !closeSidebar()) {
 			evt.preventDefault();
 			loadPanel(backList.pop(), false, true);
 		} 
