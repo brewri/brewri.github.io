@@ -19,11 +19,11 @@
 	
 	<div class="containerDiv">
 	
-	<div id="firstDiv" class="firstDiv" style="background-color:hsl(0, 0%, 80%)">		
-		<div id="profilePanel" class="objectWrapper" style="margin-bottom:10px; margin-top:30px" onclick="openSubAccordion(this)">
+	<div id="firstDiv" class="firstDiv" style="background-color:hsl(0, 0%, 80%)">	
+	
+		<div id="profilePanel" class="objectWrapper" style="margin-top:30px" onclick="openSubAccordion(this)">
 			<div class="clickFlash" style="display:flex; justify-content:space-between; margin:0px 10px; align-items:baseline" onclick="toggleSubAccordion(this)">
 				<div id="displayName" style="text-overflow:ellipsis; overflow:hidden; font-size:1.1em; white-space:nowrap; font-weight:bold; flex-grow:1" class="flash">Guest</div>
-				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
 			</div>
 
 			<div id="editPanel" class="accordion" style="max-height:0px; margin:0px 10px">
@@ -31,7 +31,7 @@
 					<button tabindex="-1" class="left" onclick="generateSeed()">Generate PIN</button><button id="current" class="center" tabindex="-1" onclick="showCurrent()" autocomplete="off" disabled>Current PIN</button><button id="clear" class="right" onclick="if (confirm('Log out of the current account? (Have you saved your account PIN elsewhere?!)')) clickClearSeed();" autocomplete="off" disabled>Log Out</button>
 				</div>
 				
-				<div style="display:flex; justify-content:space-between; margin-top:15px; margin-bottom:10px">
+				<div style="display:flex; justify-content:space-between; margin-top:15px; margin-bottom:5px">
 					<input id="seed" placeholder="PIN (secret - save securely)..." style="padding-right:30px; flex-grow:1; flex-basis:20px;" type="password" autocomplete="off" onclick="this.select()" oninput="importSeed();">
 					<button  tabindex="-1" class="close-icon" onclick="closeCopy(this.previousElementSibling)"></button>			
 					<button id="show" tabindex="-1" style="font-size:0.85em; margin-left:10px" onclick="toggleVisibility()">Show</button>
@@ -39,22 +39,33 @@
 			</div>	
 		</div>	
 		
+		<div id="notePanel" class="objectWrapper" style="margin-bottom:10px; padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
+			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
+				<div style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Notifications</div>
+				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
+			</div>
+			<div class="accordion" style="max-height:0px">
+				<div id="notificationPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- none -</div>
+				<ul id="notifications" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px;"></ul>
+			</div>
+		</div>
+		
 		<div id="subPanel" class="objectWrapper" style="padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
-			<div class="clickFlash leftRightBase" style="margin-top:0px; margin:0px 10px" onclick="toggleSubAccordion(this)">
+			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
 				<span style="font-size:0.9em; color:#888; margin-left:0px">Subscriptions</span>
 			</div>
 			<div class="accordion">
-				<ul id="subscriptions" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:10px;"></ul>
+				<ul id="subscriptions" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px;"></ul>
 			</div>
 		</div>
 
 		<div class="objectWrapper" style="padding-right:0px; margin-bottom:10px; overflow:hidden; display:flex; flex-direction:column" onclick="openSubAccordion(this)">
-			<div class="clickFlash leftRightBase" style="margin-top:0px; margin:0px 10px" onclick="toggleSubAccordion(this)">
+			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
 				<span style="font-size:0.9em; color:#888; margin-left:0px">Library</span>
 			</div>
 			<div class="accordion">
 				<div id="libraryPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- Reading list (log in above to persist) -</div>
-				<ul id="library" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:10px"></ul>
+				<ul id="library" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px"></ul>
 			</div>
 		</div>
 		
@@ -2188,6 +2199,7 @@ function importSeed() {
 			D("submitButton").disabled = false;
 			D("libraryPlaceholder").textContent = "- Reading list -";
 			D("subPanel").style.display = "flex";
+			D("notePanel").style.display = "flex";
 			localStorage.setItem("localSeed", XNO.seed);
 			
 			D('subscribe').disabled = false;
@@ -2243,6 +2255,7 @@ function clickClearSeed() {
 	D("submitButton").disabled = true;
 	D("libraryPlaceholder").textContent = "- Reading list (log in above to persist) -";
 	D("subPanel").style.display = "none";	
+	D("notePanel").style.display = "none";	
 	localStorage.removeItem("localSeed");
 	
 	D('subscribe').disabled = true;
