@@ -1948,7 +1948,7 @@ function sponsorHandler() {
 		D('bioSponsor').style.display = "";
 		// D('sponsorInput').focus();
 		flash(D('sponsorInput'));
-		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"start"});
+		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"nearest"});
 	}
 	toggle(D('sponsor'));
 }
