@@ -2293,6 +2293,7 @@ function clearSeed() {
 	clearDOM(D('subscriptions'));
 	clearDOM(D('library'));
 	D('libraryPlaceholder').style.display = "";	
+	D('notificationPlaceholder').style.display = "";	
 	if (D('creationEdit').title) cancelPost(true);
 	D('sendButton').disabled = true;
 	if (active('sponsor')) sponsorHandler();
