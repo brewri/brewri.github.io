@@ -785,6 +785,9 @@ function setupWebsocket(fresh) {
 		D('notificationHeading').textContent = "Notifications";
 		noteCount = 0;
 		if (data.notifications) {
+			data.notifications.sort(function(x, y) { 
+				return x.timestamp - y.timestamp; 
+			});
 			for (let i = 0; i < data.notifications.length; i++) {
 				makeNoteLi(data.notifications[i]);
 			}
@@ -2344,9 +2347,13 @@ function makeNoteLi(data) {
 	}
 	theLabel.appendChild(text);
 	
-	if (D('notifications').firstElementChild) theLabel.style.marginTop = "0.85em";
-	else D('notificationPlaceholder').style.display = "none";
-	D('notifications').appendChild(theLabel);
+	if (D('notifications').firstElementChild) {
+		theLabel.style.marginBottom = "0.85em";
+		D('notifications').insertBefore(theLabel, D('notifications').firstElementChild);
+	} else {
+		D('notificationPlaceholder').style.display = "none";
+		D('notifications').appendChild(theLabel);
+	}
 	
 	noteCount++;
 	D('notificationHeading').textContent = "Notifications (" + noteCount + ")";
