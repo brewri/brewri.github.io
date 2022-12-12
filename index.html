@@ -208,7 +208,7 @@
 					&nbsp;<button id="comment" onclick="comment()" autocomplete="off" style="font-size:0.85em" disabled>Comment</button>
 				</div>
 				
-				<ul id="readComments" style="margin-top:1em"><ul>
+				<ul id="readComments" style="margin-top:1.5em"><ul>
 			</div>
 			
 			<div class="sidebar desktop" style="flex-grow:1; max-width:360px; margin-left:50px;">			
@@ -627,7 +627,7 @@ async function withdraw(symbol, elt, amt, destaddr, them) {
 				
 				if (totalAmt >= BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) {
 					showMsg("Sponsored \'" + them + "\' with " + amt + " " + symbol + "! Premium content now available.");
-					if (ws) ws.emit('sponsor', {userid:destaddr, blockid:sendResp });
+					if (ws) ws.emit('sponsor', {userid:destaddr, blockid:sendResp, amt});
 				} else showMsg("Tipped \'" + them + "\' " + amt + " " + symbol + "!");
 				
 				D('sponsorInput').value = "";
@@ -765,6 +765,7 @@ function setupWebsocket(fresh) {
 	// Custom commands ////////////////////////////////////////////////////////
 	
 	ws.on('authenticateUserResponse', function(data) {
+		console.log(data);
 		clearDOM(D('subscriptions'));
 		if (XNO.address) makeSubLi(XNO.address);
 		if (data.edges) {
