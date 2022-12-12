@@ -2329,6 +2329,7 @@ function makeNoteLi(data) {
 	let text = make('div');
 	if (data.ntype == "comment") {
 		text.textContent = "Commented on ";
+		text.style.fontStyle = "italic";
 		let postid = JSON.parse(data.message).postid;
 		let link = make('a');
 		link.textContent = "your post";		
