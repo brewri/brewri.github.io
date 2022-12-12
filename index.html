@@ -688,6 +688,7 @@ var editPostPending = false;
 var floatState = false;
 var backList = [];
 var browseURL = {};
+var currentTitle = "";
 
 var DOMdisplayNameQueue = {};
 
@@ -784,6 +785,7 @@ function setupWebsocket(fresh) {
 		clearDOM(D('notifications'));
 		D('notificationHeading').textContent = "Notifications";
 		noteCount = 0;
+		setTitle(false, true);
 		if (data.notifications) {
 			data.notifications.sort(function(x, y) { 
 				return x.timestamp - y.timestamp; 
@@ -923,7 +925,7 @@ function receiveDOMdisplayName(data) {
 	}
 	delete DOMdisplayNameQueue[userid];	
 	
-	if (new URLSearchParams(window.location.search).get('userid') == userid) document.title = funName(userid) + " - Brewri";
+	if (new URLSearchParams(window.location.search).get('userid') == userid) setTitle(funName(userid));
 	
 	if (userid == XNO.address && D('bioEditor').style.display == "none") {
 		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
@@ -1110,6 +1112,15 @@ function fillPost(postid, activeClick) {
 	loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();	
 	if (!postCache[postid] || activeClick) queryPost(postid);
+	if (activeClick) {
+		if (!D(postid)) {
+			let userid = postid.split("-")[0];
+			let createdts = parseInt(postid.split("-")[1]);
+			let ts = Date.now();
+			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:ts, lastaccessedts:ts }] });
+			makeLibLi(postid, ts);
+		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
+	}
 }
 
 function fillEdit(postid, dataConfirmation) {	
@@ -1177,6 +1188,15 @@ function fillEdit(postid, dataConfirmation) {
 	}
 }
 
+function setTitle(str, reset) {
+	if (reset) str = currentTitle;
+	else currentTitle = str;
+	let prepend = "";
+	if (noteCount) prepend = "(" + noteCount + ") ";
+	if (str) document.title = prepend + str + " - Brewri";
+	else document.title = prepend + " Brewri";
+}
+
 function loadPanel(type, manual, holdHistory) {
 	let prevType = "browse";
 	if (D('browse').style.display != 'none') {
@@ -1213,21 +1233,21 @@ function loadPanel(type, manual, holdHistory) {
 		url.search = new URLSearchParams({postid:readPostid});
 		
 		if (readPostid && params.get('postid') != readPostid) changeHistory();
-		if (postCache[readPostid]) document.title = postCache[readPostid].title + " - Brewri";
-		else document.title = "Read - Brewri";
+		if (postCache[readPostid]) setTitle(postCache[readPostid].title);
+		else setTitle("Read");
 		theHeight = readHeight;
 	} else if (type == "browse") {
-		let newTitle = "Brewri";
+		let newTitle = "";
 		if (browseURL.userid) {		
 			url.search = new URLSearchParams({userid:browseURL.userid});
-			newTitle = funName(browseURL.userid) + " - Brewri";
+			newTitle = funName(browseURL.userid);
 		} else if (browseURL.tag) {
 			url.search = new URLSearchParams({tag:browseURL.tag});
-			newTitle = browseURL.tag + " - Brewri";
+			newTitle = browseURL.tag;
 		} else url.search = new URLSearchParams();
 		
 		if (browseURL && (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid'))) changeHistory();
-		document.title = newTitle;
+		setTitle(newTitle);
 		theHeight = browseHeight;
 	}
 
@@ -1356,15 +1376,7 @@ function fillContent(elt, content, wall, userid) {
 					console.log(theLink);
 					relativelinks[i].onclick = function() {
 						event.preventDefault();
-						loadURL(theLink);				 
-						let postid = (new URLSearchParams(theLink.search)).get('postid');
-						if (postid) {
-							if (!D(postid)) {
-								let ts = Date.now();
-								if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
-								makeLibLi(postid, ts);
-							} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
-						}
+						loadURL(theLink);
 					}
 				}
 			}
@@ -1901,11 +1913,6 @@ function fullLabel(postid, type, mediaBox) {
 	label.onclick = function() {
 		event.preventDefault();
 		fillPost(postid, true);
-		if (!D(postid)) {
-			let ts = Date.now();
-			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
-			makeLibLi(postid, ts);
-		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
 		flash(this.parentNode);
 	}
 	return label;
@@ -2292,6 +2299,10 @@ function clearSeed() {
 	// clearing actions that are needed even if switching accounts	
 	clearDOM(D('subscriptions'));
 	clearDOM(D('library'));
+	clearDOM(D('notifications'));
+	D('notificationHeading').textContent = "Notifications";
+	noteCount = 0;
+	setTitle(false, true);
 	D('libraryPlaceholder').style.display = "";	
 	D('notificationPlaceholder').style.display = "";	
 	if (D('creationEdit').title) cancelPost(true);
@@ -2328,12 +2339,6 @@ function makeNoteLi(data) {
 		link.onclick = function() {
 			event.preventDefault();
 			fillPost(postid, true);
-			if (!D(postid)) {
-				let ts = Date.now();
-				if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
-				makeLibLi(postid, ts);
-			} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
-			flash(this.parentNode);
 		}
 		
 		text.appendChild(link);
@@ -2358,6 +2363,7 @@ function makeNoteLi(data) {
 	
 	noteCount++;
 	D('notificationHeading').textContent = "Notifications (" + noteCount + ")";
+	setTitle(false, true);
 }
 
 function makeSubLi(userid, data) {
