@@ -41,7 +41,7 @@
 		
 		<div id="notePanel" class="objectWrapper" style="margin-bottom:10px; padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
 			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
-				<div style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Notifications</div>
+				<div id="notificationHeading" style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Notifications</div>
 				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
 			</div>
 			<div class="accordion" style="max-height:0px">
@@ -696,6 +696,7 @@ var colorCache = {};
 var postCache = {};
 var userCache = {};
 var browseCache = {};
+var noteCount = 0;
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -780,6 +781,15 @@ function setupWebsocket(fresh) {
 		}		
 		receiveDOMdisplayName(data);
 		
+		clearDOM(D('notifications'));
+		D('notificationHeading').textContent = "Notifications";
+		noteCount = 0;
+		if (data.notifications) {
+			for (let i = 0; i < data.notifications.length; i++) {
+				makeNoteLi(data.notifications[i]);
+			}
+		}
+		
 		clearDOM(D('library'));
 		data.library.sort(function(x, y) { return x.pushedts - y.pushedts; });
 		for (let i = 0; i < data.library.length; i++) {
@@ -787,6 +797,10 @@ function setupWebsocket(fresh) {
 			makeLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
 		}
 		requestNames();
+	});
+	
+	ws.on('updateNotificationResponse', function(data) {	
+		if (data) makeNoteLi(data);
 	});
 	
 	ws.on('queryTagCountsResponse', function(data) {
@@ -2284,6 +2298,38 @@ function clearSeed() {
 	
 	closeBio();
 	D('profileBut').style.display = "none";
+}
+
+function makeNoteLi(data) {	
+	let userid = data.senderid.split("-")[0];	
+	let theLabel = make('div');
+	theLabel.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis;";
+	theLabel.appendChild(authorLabel(userid));
+	
+	let dateDiv = timeLabel(data.timestamp);
+	dateDiv.style.color = "#888";
+	dateDiv.style.marginLeft = "5px";
+	theLabel.appendChild(dateDiv);
+	
+	if (data.ntype == "subscribe") theLabel.appendChild(make("div", "Subscribed!"));
+	if (data.ntype == "comment") {
+		let message = JSON.parse(data.message);
+		let postid = message.postid;
+		if (postCache[postid]) theLabel.appendChild(make("div", "Commented on \"" + postCache[postid].title + "\""));
+		else theLabel.appendChild(make("div", "Commented..."));
+	}
+	if (data.ntype == "sponsor") theLabel.appendChild(make("div", "Sponsored!"));
+	
+	if (D('notifications').firstElementChild) {
+		D('notifications').insertBefore(theLabel, D('notifications').firstElementChild);
+		theLabel.style.marginBottom = "0.85em";
+	} else {
+		D('notifications').appendChild(theLabel);
+		D('notificationPlaceholder').style.display = "none";
+	}
+	
+	noteCount++;
+	D('notificationHeading').textContent = "Notifications (" + noteCount + ")";
 }
 
 function makeSubLi(userid, data) {
