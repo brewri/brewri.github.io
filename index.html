@@ -2311,22 +2311,42 @@ function makeNoteLi(data) {
 	dateDiv.style.marginLeft = "5px";
 	theLabel.appendChild(dateDiv);
 	
-	if (data.ntype == "subscribe") theLabel.appendChild(make("div", "Subscribed!"));
+	let text = make('div');
 	if (data.ntype == "comment") {
-		let message = JSON.parse(data.message);
-		let postid = message.postid;
-		if (postCache[postid]) theLabel.appendChild(make("div", "Commented on \"" + postCache[postid].title + "\""));
-		else theLabel.appendChild(make("div", "Commented..."));
+		text.textContent = "Commented on ";
+		let postid = JSON.parse(data.message).postid;
+		let link = make('a');
+		link.textContent = "your post";		
+		if (postCache[postid]) link.textContent = postCache[postid].title;
+		url.search = new URLSearchParams({postid});
+		link.href = url;
+		
+		link.onclick = function() {
+			event.preventDefault();
+			fillPost(postid, true);
+			if (!D(postid)) {
+				let ts = Date.now();
+				if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:ts, lastaccessedts:ts }] });
+				makeLibLi(postid, ts);
+			} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
+			flash(this.parentNode);
+		}
+		
+		text.appendChild(link);
 	}
-	if (data.ntype == "sponsor") theLabel.appendChild(make("div", "Sponsored!"));
+	if (data.ntype == "subscribe") {
+		text.textContent = "Subscribed!";
+		text.style.fontStyle = "italic";
+	}
+	if (data.ntype == "sponsor") {
+		text.textContent = "Sponsored!";
+		text.style.fontStyle = "italic";
+	}
+	theLabel.appendChild(text);
 	
-	if (D('notifications').firstElementChild) {
-		D('notifications').insertBefore(theLabel, D('notifications').firstElementChild);
-		theLabel.style.marginBottom = "0.85em";
-	} else {
-		D('notifications').appendChild(theLabel);
-		D('notificationPlaceholder').style.display = "none";
-	}
+	if (D('notifications').firstElementChild) theLabel.style.marginTop = "0.85em";
+	else D('notificationPlaceholder').style.display = "none";
+	D('notifications').appendChild(theLabel);
 	
 	noteCount++;
 	D('notificationHeading').textContent = "Notifications (" + noteCount + ")";
