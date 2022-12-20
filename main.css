@@ -17,6 +17,41 @@ body {
   box-sizing: border-box;
 }
 
+.scroll-shadows {
+  overflow: auto;
+
+  background:
+    /* Shadow Cover TOP */
+    linear-gradient(90deg,
+      white 30%,
+      rgba(255, 255, 255, 0)
+    ) left,
+    
+    /* Shadow Cover BOTTOM */
+    linear-gradient(90deg,
+      rgba(255, 255, 255, 0), 
+      white 70%
+    ) right,
+    
+    /* Shadow TOP */
+    radial-gradient(
+      farthest-side at 0 50%,
+      hsl(var(--hue), var(--butsat), 80%),
+      rgba(0, 0, 0, 0)
+    ) center left,
+    
+    /* Shadow BOTTOM */
+    radial-gradient(
+      farthest-side at 100% 50%,
+      hsl(var(--hue), var(--butsat), 80%),
+      rgba(0, 0, 0, 0)
+    ) center right;
+  
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
 .msg {
 	padding:5px; 
 	z-index:4; 
