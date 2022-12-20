@@ -39,9 +39,9 @@
 			</div>	
 		</div>	
 		
-		<div id="notePanel" class="objectWrapper" style="margin-bottom:10px; padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
+		<div id="notePanel" class="objectWrapper" style="padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
 			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
-				<div id="notificationHeading" style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Notifications</div>
+				<div id="notificationHeading" style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Activity</div>
 				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
 			</div>
 			<div class="accordion" style="max-height:0px">
@@ -79,7 +79,7 @@
 			<button id="browseButton" style="min-width:fit-content" class="left active" onclick="loadPanel('browse', true)" title="Alt + 1">Browse</button><button id="readButton" style="min-width:fit-content" class="center" onclick="loadPanel('read', true)" autocomplete="off" title="Alt + 2">Read</button><button id="postButton" style="min-width:fit-content" class="right" onclick="loadPanel('post', true)" autocomplete="off" title="Alt + 3">Write</button>
 			</div>
 		
-			<div id="popularTags" class="hideScroll desktop" style="overflow:auto; display:flex; align-items:center; font-size:0.85em">
+			<div id="popularTags" class="scroll-shadows hideScroll desktop" style="overflow:auto; display:flex; align-items:center; font-size:0.85em">
 				<a onclick="queryBrowse();" style="flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px">Recent</a>
 			</div>
 		</div>
@@ -783,7 +783,7 @@ function setupWebsocket(fresh) {
 		receiveDOMdisplayName(data);
 		
 		clearDOM(D('notifications'));
-		D('notificationHeading').textContent = "Notifications";
+		D('notificationHeading').textContent = "Activity";
 		noteCount = 0;
 		setTitle(false, true);
 		if (data.notifications) {
@@ -2300,7 +2300,7 @@ function clearSeed() {
 	clearDOM(D('subscriptions'));
 	clearDOM(D('library'));
 	clearDOM(D('notifications'));
-	D('notificationHeading').textContent = "Notifications";
+	D('notificationHeading').textContent = "Activity";
 	noteCount = 0;
 	setTitle(false, true);
 	D('libraryPlaceholder').style.display = "";	
@@ -2363,7 +2363,7 @@ function makeNoteLi(data) {
 	}
 	
 	noteCount++;
-	D('notificationHeading').textContent = "Notifications (" + noteCount + ")";
+	D('notificationHeading').textContent = "Activity (" + noteCount + ")";
 	setTitle(false, true);
 }
 
