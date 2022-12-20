@@ -45,7 +45,7 @@
 				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
 			</div>
 			<div class="accordion" style="max-height:0px">
-				<div id="notificationPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- none -</div>
+				<div id="notificationPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- empty -</div>
 				<ul id="notifications" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px;"></ul>
 			</div>
 		</div>
@@ -64,7 +64,7 @@
 				<span style="font-size:0.9em; color:#888; margin-left:0px">Library</span>
 			</div>
 			<div class="accordion">
-				<div id="libraryPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- Reading list (log in above to persist) -</div>
+				<div id="libraryPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- empty (log in to persist) -</div>
 				<ul id="library" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px"></ul>
 			</div>
 		</div>
@@ -2222,7 +2222,7 @@ function importSeed() {
 			D("current").disabled = false;
 			D("clear").disabled = false;
 			D("submitButton").disabled = false;
-			D("libraryPlaceholder").textContent = "- Reading list -";
+			D("libraryPlaceholder").textContent = "- empty -";
 			D("subPanel").style.display = "flex";
 			D("notePanel").style.display = "flex";
 			localStorage.setItem("localSeed", XNO.seed);
@@ -2278,7 +2278,7 @@ function clickClearSeed() {
 	D("current").disabled = true;	
 	D("clear").disabled = true;
 	D("submitButton").disabled = true;
-	D("libraryPlaceholder").textContent = "- Reading list (log in above to persist) -";
+	D("libraryPlaceholder").textContent = "- empty (log in to persist) -";
 	D("subPanel").style.display = "none";	
 	D("notePanel").style.display = "none";	
 	localStorage.removeItem("localSeed");
