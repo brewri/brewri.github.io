@@ -1346,7 +1346,7 @@ function fillContent(elt, content, wall, userid) {
 			jsbox = make("iframe");
 			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px;";
 			jsbox.onmouseenter = function() { jsbox.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)"; }
-			jsbox.onmouseleave = function() { jsbox.style.borderColor = "transparent"; }
+			jsbox.onmouseleave = function() { if (jsbox != document.activeElement) jsbox.style.borderColor = "transparent"; }
 			jsbox.sandbox = "allow-scripts";
 			let str = `<script>window.onload = function() {
 				window.parent.postMessage({height:Math.max( document.body.scrollHeight, document.body.offsetHeight, document.body.clientHeight,
@@ -1950,13 +1950,13 @@ function timeLabel(createdts, modifiedts) {
 	let dateDiv = make('span');
 	
 	let postDate = make('span', timeSince(createdts));	
-	postDate.title = createdts;
+	postDate.title = unixToDate(createdts);
 	dateDiv.appendChild(postDate);	
 	
 	if (modifiedts && timeSince(modifiedts) != timeSince(createdts)) {
 		let postModified = make('span', " (" + timeSince(modifiedts) + ")");
 		// postModified.style.fontStyle = "italic";
-		postModified.title = modifiedts;
+		postModified.title = unixToDate(modifiedts);
 		dateDiv.appendChild(postModified);
 	}
 	return dateDiv;
@@ -2484,6 +2484,20 @@ function toggleVisibility() {
 
 // Global event listeners ///////////////////////////////////////////////////////////////////////
 
+window.addEventListener('blur', function() {
+	let sender = Array.from(document.getElementsByTagName('iframe')).filter(iframe => {
+		return iframe === document.activeElement;
+	});
+	if (sender[0]) sender[0].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+});
+
+window.addEventListener('focus', function() {
+	let sender = document.getElementsByTagName('iframe');
+	for (let i = 0; i < sender.length; i++) {
+		sender[i].style.borderColor = "transparent";
+	}
+});		
+			
 window.addEventListener("beforeunload", function (e) {
     var confirmationMessage = 'It looks like you have been drafting something. If you leave before posting, your changes will be lost.';
 	if (hasDraft() || D('commentContent').value.length > 0) {
@@ -2524,13 +2538,18 @@ function loadURL(link) {
 	if (ws && ws.readyState == 3) {	setupWebsocket(); }
 }
 
-window.addEventListener('message', function (e) {
-	if (e.data.height > 0) {
-		let h = e.data.height;
+window.addEventListener('message', function() {
+	if (event.data.height > 0) {
+		let h = event.data.height;
 		if (h > 4096) h = 4096;		
-		Array.from(document.getElementsByTagName('iframe')).filter(iframe => {
+		let sender = Array.from(document.getElementsByTagName('iframe')).filter(iframe => {
 			return iframe.contentWindow === event.source;
-		})[0].style.height = h + "px";
+		});
+		if (sender.length) {
+			sender[0].style.height = h + "px";
+			console.log(sender[0].clientWidth);
+			event.source.postMessage({width:sender[0].clientWidth}, "*");
+		}
 	}
 });
 
