@@ -1980,10 +1980,10 @@ function sponsorHandler() {
 		D('bioSponsor').style.display = "none";
 		D('sponsorInput').value = "";
 	} else {
-		if (D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('toggleBrowse').click();
 		D('bioSponsor').style.display = "";
 		// D('sponsorInput').focus();
 		flash(D('sponsorInput'));
+		if (window.getComputedStyle(D('toggleBrowse')).display != 'none' && D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('toggleBrowse').click();
 		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"nearest"});
 	}
 	toggle(D('sponsor'));
@@ -2519,6 +2519,7 @@ window.addEventListener("beforeunload", function (e) {
 
 window.addEventListener('popstate', function() { 
 	if (!closeSidebar()) loadURL(); 
+	//else window.history.pushState(null, "", new URL(window.location));
 });
 
 function closeSidebar() {
@@ -2855,6 +2856,7 @@ function toggleSecondDiv(elt) {
 	} else {	
 		elt.nextElementSibling.classList.add("desktop");
 		elt.nextElementSibling.nextElementSibling.classList.remove("desktop");
+		window.history.pushState(null, "", new URL(window.location));
 	}
 	toggle(elt);
 }
