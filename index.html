@@ -859,8 +859,8 @@ function setupWebsocket(fresh) {
 			chain.push(data[x].postid);
 			if (editPostid == data[x].postid) hasEditPost = true;
 		}
-		if (readPostid) fillPost(readPostid);
 		if (hasEditPost && editPostPending) fillEdit(editPostid, true); 
+		else if (readPostid) fillPost(readPostid);
 		requestNames();
 	});
 	
@@ -1134,6 +1134,8 @@ function fillPost(postid, activeClick) {
 }
 
 function fillEdit(postid, dataConfirmation) {	
+	if (!dataConfirmation && !cancelPost()) return false;
+	
 	if (!postid) postid = readPostid;
 	editPostPending = !dataConfirmation;
 	if (editPostPending) {
@@ -1148,7 +1150,6 @@ function fillEdit(postid, dataConfirmation) {
 		theNewContent = JSON.stringify(metaData.content);
 		if (postid == editPostid && theNewContent == editPostContent) return false;	
 	}
-	if (!cancelPost()) return false;
 	
 	editPostid = postid;
 	editPostContent = theNewContent;
@@ -1279,7 +1280,7 @@ function loadPanel(type, manual, holdHistory) {
 	D('readButton').classList.remove('active');
 	D('browseButton').classList.remove('active');	
 	D(type + "Button").classList.add('active');
-	
+	//console.error(type);
 	D('secondDiv').scrollIntoView({behavior: "smooth", block:"nearest"});
 }
 
