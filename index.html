@@ -24,6 +24,7 @@
 		<div id="profilePanel" class="objectWrapper" style="margin-top:30px" onclick="openSubAccordion(this)">
 			<div class="clickFlash" style="display:flex; justify-content:space-between; margin:0px 10px; align-items:baseline" onclick="toggleSubAccordion(this)">
 				<div id="displayName" style="text-overflow:ellipsis; overflow:hidden; font-size:1.1em; white-space:nowrap; font-weight:bold; flex-grow:1" class="flash">Guest</div>
+				<a id="abtLink" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; margin-right:5px; color:#888" href="">- About -</a>
 			</div>
 
 			<div id="editPanel" class="accordion" style="max-height:0px; margin:0px 10px">
@@ -725,6 +726,20 @@ setupWebsocket(true);
 let localSeed = localStorage.getItem("localSeed");
 if (localSeed) inputEvent(D("seed"), localSeed);
 
+url.search = new URLSearchParams({postid:"nano_3iqcmnezofaufndmmgiykhoab6f3q45pqx1t9jqoi7g81n7qmh1tbe5pyfq3-1670977572136"});
+D('abtLink').href = url;
+	
+let relativelinks = document.body.getElementsByTagName("a");
+for (let i = 0; i < relativelinks.length; i++) {
+	if (relativelinks[i].origin == window.location || possibleOrigins.includes(relativelinks[i].origin)) {
+		theLink = new URL(relativelinks[i].href);
+		console.log(theLink);
+		relativelinks[i].onclick = function() {
+			event.preventDefault();
+			loadURL(theLink);
+		}
+	}
+}
 cancelPost();
 loadURL();
 
@@ -1372,7 +1387,7 @@ function fillContent(elt, content, wall, userid) {
 			let relativelinks = jsbox.getElementsByTagName("a");
 			for (let i = 0; i < relativelinks.length; i++) {
 				if (relativelinks[i].origin == window.location || possibleOrigins.includes(relativelinks[i].origin)) {
-					theLink = new URL(relativelinks[i].href)
+					theLink = new URL(relativelinks[i].href);
 					console.log(theLink);
 					relativelinks[i].onclick = function() {
 						event.preventDefault();
