@@ -728,20 +728,13 @@ if (localSeed) inputEvent(D("seed"), localSeed);
 
 url.search = new URLSearchParams({postid:"nano_3iqcmnezofaufndmmgiykhoab6f3q45pqx1t9jqoi7g81n7qmh1tbe5pyfq3-1670977572136"});
 D('abtLink').href = url;
-	
-let relativelinks = document.body.getElementsByTagName("a");
-for (let i = 0; i < relativelinks.length; i++) {
-	if (relativelinks[i].origin == window.location || possibleOrigins.includes(relativelinks[i].origin)) {
-		theLink = new URL(relativelinks[i].href);
-		console.log(theLink);
-		console.log(relativelinks[i]);
-		relativelinks[i].onclick = function() {
-			event.preventDefault();
-			event.stopPropagation();
-			loadURL(theLink);
-		}
-	}
+theLink = new URL(D('abtLink').href);
+D('abtLink').onclick = function() {
+	event.preventDefault();
+	event.stopPropagation();
+	loadURL(theLink);
 }
+
 cancelPost();
 loadURL();
 
