@@ -1962,13 +1962,13 @@ function timeLabel(createdts, modifiedts) {
 	let dateDiv = make('span');
 	
 	let postDate = make('span', timeSince(createdts));	
-	postDate.title = unixToDate(createdts);
+	postDate.title = unixToTime(createdts);
 	dateDiv.appendChild(postDate);	
 	
 	if (modifiedts && timeSince(modifiedts) != timeSince(createdts)) {
 		let postModified = make('span', " (" + timeSince(modifiedts) + ")");
 		// postModified.style.fontStyle = "italic";
-		postModified.title = unixToDate(modifiedts);
+		postModified.title = unixToTime(modifiedts);
 		dateDiv.appendChild(postModified);
 	}
 	return dateDiv;
@@ -2716,6 +2716,14 @@ function showMsg(str, bold, hold) {
 function unixToDate(time) {
 	let str = new Date(time);
 	let format = str.toLocaleDateString(undefined,{year: 'numeric', month: 'short', day: 'numeric' });
+	//if (str.getYear() == (new Date(Date.now())).getYear()) return format.slice(0, -6); 
+	//else 
+	return format;
+}
+
+function unixToTime(time) {
+	let str = new Date(time);
+	let format = str.toLocaleString(undefined,{year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 	//if (str.getYear() == (new Date(Date.now())).getYear()) return format.slice(0, -6); 
 	//else 
 	return format;
