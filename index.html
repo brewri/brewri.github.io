@@ -736,6 +736,7 @@ for (let i = 0; i < relativelinks.length; i++) {
 		console.log(theLink);
 		relativelinks[i].onclick = function() {
 			event.preventDefault();
+			event.stopPropagation();
 			loadURL(theLink);
 		}
 	}
@@ -1391,6 +1392,7 @@ function fillContent(elt, content, wall, userid) {
 					console.log(theLink);
 					relativelinks[i].onclick = function() {
 						event.preventDefault();
+						event.stopPropagation();
 						loadURL(theLink);
 					}
 				}
