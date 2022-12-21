@@ -734,6 +734,7 @@ for (let i = 0; i < relativelinks.length; i++) {
 	if (relativelinks[i].origin == window.location || possibleOrigins.includes(relativelinks[i].origin)) {
 		theLink = new URL(relativelinks[i].href);
 		console.log(theLink);
+		console.log(relativelinks[i]);
 		relativelinks[i].onclick = function() {
 			event.preventDefault();
 			event.stopPropagation();
