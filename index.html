@@ -728,11 +728,10 @@ if (localSeed) inputEvent(D("seed"), localSeed);
 
 url.search = new URLSearchParams({postid:"nano_3iqcmnezofaufndmmgiykhoab6f3q45pqx1t9jqoi7g81n7qmh1tbe5pyfq3-1670977572136"});
 D('abtLink').href = url;
-let theLink = new URL(D('abtLink').href);
 D('abtLink').onclick = function() {
 	event.preventDefault();
 	event.stopPropagation();
-	loadURL(theLink);
+	loadURL(new URL(D('abtLink').href));
 }
 
 cancelPost();
@@ -1383,12 +1382,10 @@ function fillContent(elt, content, wall, userid) {
 			let relativelinks = jsbox.getElementsByTagName("a");
 			for (let i = 0; i < relativelinks.length; i++) {
 				if (relativelinks[i].origin == window.location || possibleOrigins.includes(relativelinks[i].origin)) {
-					theLink = new URL(relativelinks[i].href);
-					console.log(theLink);
 					relativelinks[i].onclick = function() {
 						event.preventDefault();
 						event.stopPropagation();
-						loadURL(theLink);
+						loadURL(new URL(relativelinks[i].href));
 					}
 				}
 			}
@@ -2714,16 +2711,14 @@ function showMsg(str, bold, hold) {
 }
 
 function unixToDate(time) {
-	let str = new Date(time);
-	let format = str.toLocaleDateString(undefined,{year: 'numeric', month: 'short', day: 'numeric' });
+	let format = new Date(time).toLocaleDateString(undefined,{year: 'numeric', month: 'short', day: 'numeric' });
 	//if (str.getYear() == (new Date(Date.now())).getYear()) return format.slice(0, -6); 
 	//else 
 	return format;
 }
 
 function unixToTime(time) {
-	let str = new Date(time);
-	let format = str.toLocaleString(undefined,{year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
+	let format = new Date(time).toLocaleString(undefined,{year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' });
 	//if (str.getYear() == (new Date(Date.now())).getYear()) return format.slice(0, -6); 
 	//else 
 	return format;
