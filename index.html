@@ -2259,7 +2259,7 @@ function importSeed() {
 			}
 			if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
 			
-			if (readPostid && userid == XNO.address) {
+			if (readPostid && readPostid.split("-")[0] == XNO.address) {
 				D('edit').style.display = "";
 				D('edit2').style.display = "";
 			} else {
