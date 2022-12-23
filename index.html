@@ -1299,7 +1299,7 @@ function fillBrowseList(data) {
 			if (typeof postCache[data[i].postid].content !== "string" && postCache[data[i].postid].content) {
 				for (let j = 0; j < postCache[data[i].postid].content.length; j++) {
 					let content = postCache[data[i].postid].content[j];
-					if (content.type == "image" || content.type == "media") {
+					if (content.type == "image" || content.type == "media" && content.content) {
 						mediaBox = fillMediaBox(content.content.trim().split(" "), true);					
 						break;
 					}		
