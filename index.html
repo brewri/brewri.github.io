@@ -147,15 +147,15 @@
 					<button id="editButton" class="left active" onclick="showEditor()" title="Alt + Q">Editor</button><button id="previewButton" class="right" style="margin-left:4px" onclick="showPreview()" title="Alt + W">Preview</button>
 				</div>
 				
-				<div id="postEditor" style="margin-bottom:2em; margin-top:1.5em"></div>
-				<div id="postPreview" style="margin-bottom:2em; margin-top:1.5em; display:none"></div>
+				<div id="postEditor" style="margin-top:1.5em"></div>
+				<div id="postPreview" style="margin-top:1.5em; display:none"></div>
 				
 			</div>
 			
 			<div class="sidebar desktop" style="flex-grow:1; max-width:360px; margin-left:50px;">
 				<input id="postTitle" style="font-weight:bold; font-size:1.1em; width:100%; margin-bottom:10px;" autocomplete="off" placeholder="Title (required)..." type="text" onkeyup="if (event.keyCode == 27) this.value = '';">
 				<div id="editid" style="font-size:0.85em; margin-left:10px; display:none">
-					<span id="creationEdit"></span><span id="modificationEdit"></span>
+					<span id="creationEdit"></span><span id="modificationEdit" style="font-style:italic; opacity:0.5"></span>
 				</div>
 				
 				<div id="editTags" style="font-size:0.85em; margin-top:15px"></div>
@@ -197,7 +197,7 @@
 		<div id="read" style="display:none; padding-bottom:80px; max-width:1200px;">
 			<button id="toggleRead" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
 			<div style="flex-basis:1px; flex-grow:2;">				
-				<div id="readContent" style="margin-bottom:2em; margin-top:2em">Browse for something interesting!</div>
+				<div id="readContent" style="margin-bottom:2.5em; margin-top:2em">Browse for something interesting!</div>
 				
 				
 				<textarea id="commentContent" onfocus="scrollPanel(this)" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
@@ -222,7 +222,7 @@
 					</div>
 				
 					<div style="margin-top:3px">
-						<span id="creation">Date published</span><span id="modification"> (date updated)</span>
+						<span id="creation">Date published</span><span id="modification" style="font-style:italic; opacity:0.5">  •&nbsp;date updated</span>
 						<a id="edit" onclick="event.preventDefault(); fillEdit();" style="cursor:pointer; display:none"> • Update</a>
 					</div>
 				</div>
@@ -1056,7 +1056,7 @@ function fillPost(postid, activeClick) {
 	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
 	
 	D('creation').textContent = unixToDate(createdts);
-	D('creation').title = createdts;	
+	D('creation').title = unixToTime(createdts);	
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
@@ -1079,8 +1079,8 @@ function fillPost(postid, activeClick) {
 			}
 		}		
 		if (metaData.modifiedts && unixToDate(metaData.modifiedts) != unixToDate(createdts)) {
-			D('modification').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
-			D('modification').title = metaData.modifiedts;
+			D('modification').textContent = " •\xa0" + unixToDate(metaData.modifiedts);
+			D('modification').title = unixToTime(metaData.modifiedts);
 			D('modification').style.display = "";
 		}
 		
@@ -1159,10 +1159,10 @@ function fillEdit(postid, dataConfirmation) {
 	
 	D('editid').style.display = "";
 	D('creationEdit').textContent = unixToDate(metaData.createdts);
-	D('creationEdit').title = metaData.createdts;
+	D('creationEdit').title = unixToTime(metaData.createdts);
 	if (metaData.modifiedts && unixToDate(metaData.createdts) != unixToDate(metaData.modifiedts)) {
-		D('modificationEdit').textContent = " (" + unixToDate(metaData.modifiedts) + ")";
-		D('modificationEdit').title = metaData.modifiedts;
+		D('modificationEdit').textContent = " •\xa0" + unixToDate(metaData.modifiedts);
+		D('modificationEdit').title = unixToTime(metaData.modifiedts);
 	}	
 	
 	if (typeof metaData.content === "string") {	
@@ -1391,7 +1391,7 @@ function fillContent(elt, content, wall, userid) {
 			}
 		}
 		
-		jsbox.style.marginBottom = "20px";
+		jsbox.style.marginBottom = "2em";
 		elt.appendChild(jsbox);
 	}
 	
@@ -1963,8 +1963,9 @@ function timeLabel(createdts, modifiedts) {
 	dateDiv.appendChild(postDate);	
 	
 	if (modifiedts && timeSince(modifiedts) != timeSince(createdts)) {
-		let postModified = make('span', " (" + timeSince(modifiedts) + ")");
-		// postModified.style.fontStyle = "italic";
+		let postModified = make('span', " •\xa0" + timeSince(modifiedts));
+		postModified.style.fontStyle = "italic";
+		postModified.style.opacity = "0.5";
 		postModified.title = unixToTime(modifiedts);
 		dateDiv.appendChild(postModified);
 	}
@@ -2895,8 +2896,6 @@ function fileSize(url) {
         xhttp.send();
     });
 }
-
-function D(string) { return document.getElementById(string); }
 
 
 </script>
