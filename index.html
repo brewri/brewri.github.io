@@ -776,7 +776,6 @@ function setupWebsocket(fresh) {
 	// Custom commands ////////////////////////////////////////////////////////
 	
 	ws.on('authenticateUserResponse', function(data) {
-		console.log(data);
 		clearDOM(D('subscriptions'));
 		if (XNO.address) makeSubLi(XNO.address);
 		if (data.edges) {
@@ -796,9 +795,7 @@ function setupWebsocket(fresh) {
 		noteCount = 0;
 		setTitle(false, true);
 		if (data.notifications) {
-			data.notifications.sort(function(x, y) { 
-				return x.timestamp - y.timestamp; 
-			});
+			data.notifications.sort(function(x, y) { return x.timestamp - y.timestamp; });
 			for (let i = 0; i < data.notifications.length; i++) {
 				makeNoteLi(data.notifications[i]);
 			}
@@ -813,8 +810,11 @@ function setupWebsocket(fresh) {
 		requestNames();
 	});
 	
-	ws.on('updateNotificationResponse', function(data) {	
-		if (data) makeNoteLi(data);
+	ws.on('updateNotificationResponse', function(data) { 
+		if (data) {
+			makeNoteLi(data); 			
+			requestNames();
+		}
 	});
 	
 	ws.on('queryTagCountsResponse', function(data) {
@@ -879,7 +879,6 @@ function setupWebsocket(fresh) {
 	ws.on('subscribeResponse', function(data) {	console.log(data); });
 	
 	ws.on('sponsorResponse', function(data) {
-		console.log(data);
 		makeSubLi(data.userid2, data); 
 	});
 }
@@ -957,11 +956,6 @@ function requestNames() {
 	if (ws && userids.length) ws.emit('queryUsers', {userids});
 }
 
-function queryPost(postid) {
-	let split = postid.split("-");
-	ws.emit('queryPostChain', { userid: split[0], createdts: parseInt(split[1]) });	
-}
-
 // Main panel fill routines ///////////////////////////////////////////////////////////////////////
 
 function queryBrowse(userid, tag, passive) {
@@ -1034,7 +1028,7 @@ function fillPost(postid, activeClick) {
 	if (readPostid != postid) {
 		if (D('commentContent').value.length && !confirm("Clear comment draft?")) return false;
 		D('readTitle').style.cursor = "pointer";
-		D('readTitle').onclick = function() { queryPost(postid); }
+		D('readTitle').onclick = function() { ws.emit('queryPostChain', { userid: postid.split("-")[0], createdts: parseInt(postid.split("-")[1]) }); }
 		D('readTitle').textContent = "Loading...";
 		D('readContent').innerHTML = "<i>Loading...</i>";	
 	
@@ -1056,7 +1050,7 @@ function fillPost(postid, activeClick) {
 	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
 	
 	D('creation').textContent = unixToDate(createdts);
-	D('creation').title = createdts;	// important!
+	D('creation').title = unixToTime(createdts);
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
@@ -1117,14 +1111,12 @@ function fillPost(postid, activeClick) {
 		D("sponsor2").disabled = false;
 		D("comment").disabled = false;
 	}
-	readHeight = 0;
+	// readHeight = 0;
 	loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();	
-	if (!postCache[postid] || activeClick) queryPost(postid);
+	if (!postCache[postid] || activeClick) ws.emit('queryPostChain', {userid, createdts});
 	if (activeClick) {
 		if (!D(postid)) {
-			let userid = postid.split("-")[0];
-			let createdts = parseInt(postid.split("-")[1]);
 			let ts = Date.now();
 			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:ts, lastaccessedts:ts }] });
 			makeLibLi(postid, ts);
@@ -1138,7 +1130,7 @@ function fillEdit(postid, dataConfirmation) {
 	if (!postid) postid = readPostid;
 	editPostPending = !dataConfirmation;
 	if (editPostPending) {
-		queryPost(postid);
+		ws.emit('queryPostChain', { userid: postid.split("-")[0], createdts: parseInt(postid.split("-")[1]) });
 		postHeight = 0;
 	}
 	loadPanel('post');
@@ -1159,7 +1151,7 @@ function fillEdit(postid, dataConfirmation) {
 	
 	D('editid').style.display = "";
 	D('creationEdit').textContent = unixToDate(metaData.createdts);
-	D('creationEdit').title = metaData.createdts; // important!
+	D('creationEdit').title = unixToTime(metaData.createdts);
 	if (metaData.modifiedts && unixToDate(metaData.createdts) != unixToDate(metaData.modifiedts)) {
 		D('modificationEdit').textContent = " •\xa0" + unixToDate(metaData.modifiedts);
 		D('modificationEdit').title = unixToTime(metaData.modifiedts);
@@ -1208,6 +1200,10 @@ function setTitle(str, reset) {
 }
 
 function loadPanel(type, manual, holdHistory) {
+	console.log("heights:");
+	console.log(browseHeight);
+	console.log(readHeight);
+	console.log(postHeight);
 	let prevType = "browse";
 	if (D('browse').style.display != 'none') {
 		browseHeight = Math.ceil(D('secondDivInner').scrollTop);
@@ -1237,6 +1233,18 @@ function loadPanel(type, manual, holdHistory) {
 		}
 	}
 	
+	D('post').style.display = 'none';
+	D('read').style.display = 'none';
+	D('browse').style.display = 'none';
+	D('postButton').classList.remove('active');
+	D('readButton').classList.remove('active');
+	D('browseButton').classList.remove('active');
+	
+	D(type).style.display = "flex";
+	D(type + "Button").classList.add('active');
+	popularTags.classList.add("desktop");
+	if (type != "browse" && active('sponsor')) sponsorHandler();
+	
 	let params = new URLSearchParams(window.location.search);
 	let theHeight = postHeight;
 	if (type == "read") {
@@ -1259,27 +1267,12 @@ function loadPanel(type, manual, holdHistory) {
 		if (browseURL && (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid'))) changeHistory();
 		setTitle(newTitle);
 		theHeight = browseHeight;
-	}
-
-	if (type != "browse" && active('sponsor')) sponsorHandler();
 		
-	D('post').style.display = 'none';
-	D('read').style.display = 'none';
-	D('browse').style.display = 'none';
-	
-	D(type).style.display = "flex";
-	popularTags.classList.add("desktop");
-	if (type == "browse") {
 		D(type).style.display = "";
 		popularTags.classList.remove("desktop");
 	}
-	D('secondDivInner').scrollTo(0, theHeight);
-	
-	D('postButton').classList.remove('active');
-	D('readButton').classList.remove('active');
-	D('browseButton').classList.remove('active');	
-	D(type + "Button").classList.add('active');
-	//console.error(type);
+
+	D('secondDivInner').scrollTo(0, theHeight);	
 	D('secondDiv').scrollIntoView({behavior: "smooth", block:"nearest"});
 }
 
@@ -1315,7 +1308,7 @@ function fillBrowseList(data) {
 		}
 	}	
 	requestNames();
-	browseHeight = 0;
+	// browseHeight = 0;
 }
 
 function fillBio(userid, block) {
@@ -1798,7 +1791,6 @@ function appendBlock(type, previous, parent) {
 	return block;
 }
 
-
 // Label routines ///////////////////////////////////////////////////////////////////////
 
 function fullLabel(postid, type, mediaBox) {
@@ -1982,7 +1974,8 @@ function sponsorHandler() {
 		D('bioSponsor').style.display = "";
 		// D('sponsorInput').focus();
 		flash(D('sponsorInput'));
-		if (window.getComputedStyle(D('toggleBrowse')).display != 'none' && D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop")) D('toggleBrowse').click();
+		if (window.getComputedStyle(D('toggleBrowse')).display != 'none' && D('toggleBrowse').nextElementSibling.nextElementSibling.classList.contains("desktop"))
+			D('toggleBrowse').click();
 		D('sponsorInput').scrollIntoView({behavior: "smooth", block:"nearest"});
 	}
 	toggle(D('sponsor'));
@@ -2073,7 +2066,7 @@ function publish() {
 		tags.push(D('editTags').children[i].textContent);
 	}
 	let postData = {wall:parseEditorWall(), content:parseEditorContent(D('postEditor')), title:D('postTitle').value.trim(), tags,
-							prev_: prev, next_: next, recip_prev: active('recip-prev'), recip_next: active('recip-next'), createdts: parseInt(D('creationEdit').title)};
+							prev_: prev, next_: next, recip_prev: active('recip-prev'), recip_next: active('recip-next'), createdts: parseInt(editPostid.split("-")[1]) };
 	console.log(postData);
 	ws.emit('updatePost', postData);
 }
@@ -2194,7 +2187,7 @@ function comment() {
 	} else {
 		D('commentContent').style.display = "none";
 		D("comment").textContent = "Comment";
-		ws.emit('updateComment', {content:D('commentContent').value, postid: D('author').title + "-" + D('creation').title});
+		ws.emit('updateComment', {content:D('commentContent').value, postid: readPostid});
 		D('commentContent').value = "";
 	}
 }
