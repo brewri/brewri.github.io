@@ -446,6 +446,7 @@ li {
 
 .controlpanel {
 	margin-right:40px;
+	white-space:nowrap;
 }
 
 @media screen and (max-width: 800px) {
