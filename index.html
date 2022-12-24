@@ -1056,7 +1056,7 @@ function fillPost(postid, activeClick) {
 	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
 	
 	D('creation').textContent = unixToDate(createdts);
-	D('creation').title = unixToTime(createdts);	
+	D('creation').title = createdts;	// important!
 	D('modification').textContent = "";
 	D('modification').title = "";
 	D('modification').style.display = "none";	
@@ -1159,7 +1159,7 @@ function fillEdit(postid, dataConfirmation) {
 	
 	D('editid').style.display = "";
 	D('creationEdit').textContent = unixToDate(metaData.createdts);
-	D('creationEdit').title = unixToTime(metaData.createdts);
+	D('creationEdit').title = metaData.createdts; // important!
 	if (metaData.modifiedts && unixToDate(metaData.createdts) != unixToDate(metaData.modifiedts)) {
 		D('modificationEdit').textContent = " •\xa0" + unixToDate(metaData.modifiedts);
 		D('modificationEdit').title = unixToTime(metaData.modifiedts);
