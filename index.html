@@ -2530,9 +2530,11 @@ function loadURL(link) {
 	let params = new URLSearchParams(link.search);
 	let postid = params.get('postid');
 	if (postid) {
-		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse(null, true, true);
+		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse({}, true, true);
 		fillPost(postid, activeClick);
-	} else queryBrowse({userid:params.get('userid'), tag:params.get('tag')}, !activeClick);
+	} else if (params.get('userid')) queryBrowse({userid:params.get('userid')}, !activeClick);
+	else if (params.get('tag')) queryBrowse({tag:params.get('tag')}, !activeClick);
+	else queryBrowse({}, !activeClick);
 	
 	if (ws && ws.readyState == 3) {	setupWebsocket(); }
 }
