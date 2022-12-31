@@ -699,6 +699,7 @@ var postCache = {};
 var userCache = {};
 var browseCache = {};
 var noteCount = 0;
+var iframes = [];
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -1350,6 +1351,7 @@ function fillContent(elt, content, wall, userid) {
 			jsbox.appendChild(make('span', "'s sponsors -"));
 		} else if (content[i].type == "js") {
 			jsbox = make("iframe");
+			iframes.push(jsbox);
 			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px; border-color:transparent; opacity:0.6";
 			jsbox.onmouseenter = function() { 
 				if (jsbox.style.borderColor == "transparent") {
@@ -2498,20 +2500,28 @@ function toggleVisibility() {
 // Global event listeners ///////////////////////////////////////////////////////////////////////
 
 window.addEventListener('blur', function() {
-	let sender = document.getElementsByTagName('iframe');	
-	for (let i = 0; i < sender.length; i++) {
-		if (sender[i].style.borderColor && sender[i].style.borderColor != "transparent") sender[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+	let iframesNew = [];
+	for (let i = 0; i < iframes.length; i++) {
+		if (iframes[i].parentNode) {
+			iframesNew.push(iframes[i]);
+			if (iframes[i].style.borderColor != "transparent") iframes[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+		} 
 	}
+	iframes = iframesNew;
 });
 
 window.addEventListener('focus', function() {
-	let sender = document.getElementsByTagName('iframe');
-	for (let i = 0; i < sender.length; i++) {
-		if (sender[i].style.borderColor && sender[i].style.borderColor != "transparent") {
-			sender[i].style.borderColor = "transparent";		
-			sender[i].style.opacity = "0.6";
+	let iframesNew = [];
+	for (let i = 0; i < iframes.length; i++) {
+		if (iframes[i].parentNode) {
+			iframesNew.push(iframes[i]);
+			if (iframes[i].style.borderColor != "transparent") {
+				iframes[i].style.borderColor = "transparent";		
+				iframes[i].style.opacity = "0.6";
+			}
 		}
 	}
+	iframes = iframesNew;
 });		
 			
 window.addEventListener("beforeunload", function (e) {
