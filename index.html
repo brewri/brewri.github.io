@@ -2500,15 +2500,17 @@ function toggleVisibility() {
 window.addEventListener('blur', function() {
 	let sender = document.getElementsByTagName('iframe');	
 	for (let i = 0; i < sender.length; i++) {
-		if (sender[i].style.borderColor != "transparent") sender[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+		if (sender[i].style.borderColor && sender[i].style.borderColor != "transparent") sender[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
 	}
 });
 
 window.addEventListener('focus', function() {
 	let sender = document.getElementsByTagName('iframe');
 	for (let i = 0; i < sender.length; i++) {
-		sender[i].style.borderColor = "transparent";		
-		sender[i].style.opacity = "0.6";
+		if (sender[i].style.borderColor && sender[i].style.borderColor != "transparent") {
+			sender[i].style.borderColor = "transparent";		
+			sender[i].style.opacity = "0.6";
+		}
 	}
 });		
 			
