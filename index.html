@@ -1350,8 +1350,8 @@ function fillContent(elt, content, wall, userid) {
 			jsbox.appendChild(make('span', "'s sponsors -"));
 		} else if (content[i].type == "js") {
 			jsbox = make("iframe");
-			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px;";
-			jsbox.onmouseenter = function() { jsbox.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)"; }
+			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px; border-color:transparent";
+			jsbox.onmouseenter = function() { if (jsbox.style.borderColor == "transparent") jsbox.style.borderColor = "hsl(var(--hue), 0%, 92%)"; }
 			jsbox.onmouseleave = function() { if (jsbox != document.activeElement) jsbox.style.borderColor = "transparent"; }
 			jsbox.sandbox = "allow-scripts";
 			let str = `<script>window.onload = function() {
@@ -2488,10 +2488,10 @@ function toggleVisibility() {
 // Global event listeners ///////////////////////////////////////////////////////////////////////
 
 window.addEventListener('blur', function() {
-	let sender = Array.from(document.getElementsByTagName('iframe')).filter(iframe => {
-		return iframe === document.activeElement;
-	});
-	if (sender[0]) sender[0].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+	let sender = document.getElementsByTagName('iframe');	
+	for (let i = 0; i < sender.length; i++) {
+		if (sender[i].style.borderColor != "transparent") sender[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+	}
 });
 
 window.addEventListener('focus', function() {
