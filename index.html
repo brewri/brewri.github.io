@@ -2577,10 +2577,11 @@ function loadURL(link) {
 	if (link) activeClick = true;
 	else link = window.location;
 	let params = new URLSearchParams(link.search);
-	if (params.get('postid')) {
+	if (params.get('postid') != null) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse({}, true, true);
-		fillPost(params.get('postid'), activeClick);
-	} else if (params.get('editid')) {
+		if (params.get('postid')) fillPost(params.get('postid'), activeClick);
+		else loadPanel("read");
+	} else if (params.get('editid') != null) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse({}, true, true);
 		if (XNO.address == params.get('editid').split("-")[0] && (editPostPending || editPostid != params.get('editid'))) fillEdit(params.get('editid'));
 		else loadPanel("post");
