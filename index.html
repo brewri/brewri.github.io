@@ -683,6 +683,7 @@ function cyclePending(symbol) {
 
 var readPostid = "";
 var readPostContent = "";
+var readPostWall = false;
 var editPostid = "";
 var editPostContent = "";
 var editPostPending = false;
@@ -809,6 +810,11 @@ function setupWebsocket(fresh) {
 			makeLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
 		}
 		requestNames();
+		
+		if (readPostWall) {
+			console.log("Trying to clear a wall");
+			fillPost(readPostid, true);
+		}
 	});
 	
 	ws.on('updateNotificationResponse', function(data) { 
@@ -1331,9 +1337,11 @@ function fillBio(userid, block) {
 
 function fillContent(elt, content, wall, userid) {
 	clearDOM(elt);
+	if (elt == D('readContent')) readPostWall = false;
 	for (let i = 0; i < content.length; i++) {	
 		let jsbox = make("div");
 		if (!content[i].content) {
+			readPostWall = true;
 			let wording = "- Premium content";
 			if (content[i].type == "js") wording = "- An applet";
 			if (content[i].type == "media") wording = "- Media";
