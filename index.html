@@ -1376,7 +1376,7 @@ function fillContent(elt, content, wall, userid) {
 			jsbox.onmouseenter = function() { 
 				if (jsbox.style.borderColor == "transparent") {
 					jsbox.style.borderColor = "hsl(var(--hue), 0%, 90%)"; 
-					jsbox.style.opacity = "";
+					jsbox.style.opacity = "0.75";
 				}
 			}
 			jsbox.onmouseleave = function() { 
@@ -2525,7 +2525,10 @@ window.addEventListener('blur', function() {
 	for (let i = 0; i < iframes.length; i++) {
 		if (iframes[i].parentNode) {
 			iframesNew.push(iframes[i]);
-			if (iframes[i].style.borderColor != "transparent") iframes[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
+			if (iframes[i].style.borderColor != "transparent") {
+				iframes[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";				
+				iframes[i].style.opacity = "";
+			}
 		} 
 	}
 	iframes = iframesNew;
