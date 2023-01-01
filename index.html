@@ -701,6 +701,7 @@ var userCache = {};
 var browseCache = {};
 var noteCount = 0;
 var iframes = [];
+var youtubes = [];
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -1230,6 +1231,17 @@ function loadPanel(type, useRAM, goingBack) {
 		if (type == prevType) postHeight = 0;
 	}
 	
+	if (type != prevType) {
+		let newYoutubes = [];
+		for (let i = 0; i < youtubes.length; i++) {
+			if (youtubes[i].parentNode && youtubes[i].contentWindow) {
+				youtubes[i].contentWindow.postMessage('{"event":"command","func":"' + 'pauseVideo' + '","args":""}', '*');
+				newYoutubes.push(youtubes[i]);
+			}
+		}
+		youtubes = newYoutubes;
+	}
+	
 	D('post').style.display = 'none';
 	D('read').style.display = 'none';
 	D('browse').style.display = 'none';
@@ -1462,8 +1474,9 @@ function fillMediaBox(mediaURL, preview) {
 		
 		let youtube = make("iframe");
 		youtube.style = "border:0px; background-color:black; position:absolute; height:100%; width:100%; top:0px; left:0px;";
-		youtube.src = "https://www.youtube.com/embed/" + match[2] + "?modestbranding=1"							
+		youtube.src = "https://www.youtube.com/embed/" + match[2] + "?modestbranding=1&enablejsapi=1"							
 		mediaBox.appendChild(youtube);
+		youtubes.push(youtube);
 	} else if (ext == ".mp4" || ext == ".ogg" || ext == "webm") {
 		mediaBox = make("video");
 		mediaBox.controls = true;
