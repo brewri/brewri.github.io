@@ -805,10 +805,12 @@ function setupWebsocket(fresh) {
 		}
 		
 		clearDOM(D('library'));
-		data.library.sort(function(x, y) { return x.pushedts - y.pushedts; });
-		for (let i = 0; i < data.library.length; i++) {
-			cachePost(data.library[i]);
-			makeLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
+		if (data.library) {
+			data.library.sort(function(x, y) { return x.pushedts - y.pushedts; });
+			for (let i = 0; i < data.library.length; i++) {
+				cachePost(data.library[i]);
+				makeLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
+			}
 		}
 		requestNames();
 		
@@ -943,7 +945,7 @@ function receiveDOMdisplayName(data) {
 	}
 	delete DOMdisplayNameQueue[userid];	
 	
-	if (new URLSearchParams(window.location.search).get('userid') == userid) setTitle(funName(userid));
+	if (userid && new URLSearchParams(window.location.search).get('userid') == userid) setTitle(funName(userid));
 	
 	if (userid == XNO.address && D('bioEditor').style.display == "none") {
 		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
@@ -1276,7 +1278,7 @@ function loadPanel(type, useRAM, goingBack) {
 		theHeight = readHeight;
 	} else if (type == "browse") {		
 		url.search = new URLSearchParams(browseURL);
-		if (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid') || params.get('editid')) changeHistory();
+		if (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid') != null || params.get('editid') != null) changeHistory();
 		
 		if (browseURL.userid) setTitle(funName(browseURL.userid));
 		else if (browseURL.tag) setTitle(browseURL.tag);
@@ -1564,7 +1566,7 @@ function addComment(commentData) {
 				editPanel.focus();
 			} else {
 				if (editPanel.value && editPanel.value != tempContent)
-					ws.emit('updateComment', {content:editPanel.value, postid: commentData.postid, parentid: commentData.parentid, commentid: commentData.commentid });
+					ws.emit('updateComment', {content:editPanel.value, postid: commentData.postid, parentid: commentData.parentid, commentid: commentData.commentid, previd: commentData.previd });
 					
 				tempContent = editPanel.value;
 				editPanel.style.display = "none";
@@ -1579,7 +1581,8 @@ function addComment(commentData) {
 		if (editPanel) {
 			editPanel.placeholder = "Comment...";
 			D(commentData.parentid + "-ul").appendChild(editPanel);	
-		} D(commentData.parentid + "-ul").appendChild(theComment);
+		}
+		D(commentData.parentid + "-ul").appendChild(theComment);
 	} else {
 		let repPanel = make('textarea');
 		let repBut = make('button', "Reply");
@@ -1613,7 +1616,9 @@ function addComment(commentData) {
 			} else {
 				repPanel.style.display = "none";
 				this.textContent = "Reply";
-				if (repPanel.value) ws.emit('updateComment', {content:repPanel.value, postid: commentData.postid, parentid: commentData.commentid });
+				let previd = "";
+				if (D(commentData.commentid + "-ul").lastElementChild) previd = D(commentData.commentid + "-ul").lastElementChild.id;
+				if (repPanel.value) ws.emit('updateComment', {content:repPanel.value, postid:commentData.postid, parentid:commentData.commentid, previd});
 				repPanel.value = "";
 			}
 		};
