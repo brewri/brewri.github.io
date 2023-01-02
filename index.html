@@ -2401,8 +2401,10 @@ function makeNoteLi(data) {
 		D('notifications').appendChild(theLabel);
 	}
 	
-	if (data.notifCounter) noteCount = data.notifCounter;
-	D('notificationHeading').textContent = "Activity (" + noteCount + ")";
+	if (data.notifCounter) {
+		noteCount = data.notifCounter;
+		D('notificationHeading').textContent = "Activity (" + noteCount + ")";
+	}
 	setTitle(false, true);
 }
 
