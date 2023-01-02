@@ -40,7 +40,7 @@
 			</div>	
 		</div>	
 		
-		<div id="notePanel" class="objectWrapper" style="padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this)">
+		<div id="notePanel" class="objectWrapper" style="padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this); refreshNoteCounter()">
 			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
 				<div id="notificationHeading" style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Activity</div>
 				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
@@ -796,6 +796,7 @@ function setupWebsocket(fresh) {
 		clearDOM(D('notifications'));
 		D('notificationHeading').textContent = "Activity";
 		noteCount = 0;
+		if (data.notifCounter) noteCount = data.notifCounter;
 		setTitle(false, true);
 		if (data.notifications) {
 			data.notifications.sort(function(x, y) { return x.timestamp - y.timestamp; });
@@ -2400,7 +2401,7 @@ function makeNoteLi(data) {
 		D('notifications').appendChild(theLabel);
 	}
 	
-	noteCount++;
+	if (data.notifCounter) noteCount = data.notifCounter;
 	D('notificationHeading').textContent = "Activity (" + noteCount + ")";
 	setTitle(false, true);
 }
@@ -2686,6 +2687,13 @@ function funColor(userid, generated, raw) {
 function D(string) { 
 if (!string) console.error("Empty dom string");
 return document.getElementById(string); 
+}
+
+function refreshNoteCounter() {
+	ws.emit('updateNotifCounter');
+	noteCount = 0;
+	setTitle(false, true);
+	D('notificationHeading').textContent = "Activity";
 }
 
 function toggleSubAccordion(but) {
