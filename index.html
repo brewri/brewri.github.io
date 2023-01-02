@@ -1381,7 +1381,7 @@ function fillContent(elt, content, wall, userid) {
 			jsbox.onmouseenter = function() { 
 				if (jsbox != document.activeElement) {
 					jsbox.style.borderColor = "hsl(var(--hue), 0%, 80%)"; 
-					jsbox.style.opacity = "";
+					jsbox.style.filter = "saturate(0.6)";
 				}
 			}
 			jsbox.onmouseleave = function() { 
@@ -2555,15 +2555,13 @@ window.addEventListener('focus', function() {
 });	
 
 function select(elt) {
-	elt.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";				
-	elt.style.opacity = "";			
+	elt.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";
 	elt.style.filter = "";
 }
 
 function deselect(elt) {
-	elt.style.borderColor = "transparent";		
-	elt.style.opacity = "0.75";		
-	elt.style.filter = "saturate(0.5)";
+	elt.style.borderColor = "transparent";
+	elt.style.filter = "saturate(0.5) opacity(0.75)";
 }	
 			
 window.addEventListener("beforeunload", function (e) {
