@@ -1376,19 +1376,16 @@ function fillContent(elt, content, wall, userid) {
 		} else if (content[i].type == "js") {
 			jsbox = make("iframe");
 			iframes.push(jsbox);
-			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px; border-color:transparent; opacity:0.75; filter:saturate(0)";
+			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px";
+			deselect(jsbox);
 			jsbox.onmouseenter = function() { 
-				if (jsbox.style.borderColor == "transparent") {
+				if (jsbox != document.activeElement) {
 					jsbox.style.borderColor = "hsl(var(--hue), 0%, 80%)"; 
 					jsbox.style.opacity = "";
 				}
 			}
 			jsbox.onmouseleave = function() { 
-				if (jsbox != document.activeElement) {
-					jsbox.style.borderColor = "transparent"; 
-					jsbox.style.opacity = "0.75";
-					jsbox.style.filter = "saturate(0)";
-				}
+				if (jsbox != document.activeElement) deselect(jsbox);
 			}
 			jsbox.sandbox = "allow-scripts";
 			let str = `<script>window.onload = function() {
@@ -2540,11 +2537,7 @@ window.addEventListener('blur', function() {
 	for (let i = 0; i < iframes.length; i++) {
 		if (iframes[i].parentNode) {
 			iframesNew.push(iframes[i]);
-			if (iframes[i].style.borderColor != "transparent") {
-				iframes[i].style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";				
-				iframes[i].style.opacity = "";			
-				iframes[i].style.filter = "";
-			}
+			if (iframes[i].style.borderColor != "transparent") select(iframes[i]);
 		} 
 	}
 	iframes = iframesNew;
@@ -2555,15 +2548,23 @@ window.addEventListener('focus', function() {
 	for (let i = 0; i < iframes.length; i++) {
 		if (iframes[i].parentNode) {
 			iframesNew.push(iframes[i]);
-			if (iframes[i].style.borderColor != "transparent") {
-				iframes[i].style.borderColor = "transparent";		
-				iframes[i].style.opacity = "0.75";		
-				iframes[i].style.filter = "saturate(0)";
-			}
+			if (iframes[i].style.borderColor != "transparent") deselect(iframes[i]);
 		}
 	}
 	iframes = iframesNew;
-});		
+});	
+
+function select(elt) {
+	elt.style.borderColor = "hsl(var(--hue), var(--butsat), 80%)";				
+	elt.style.opacity = "";			
+	elt.style.filter = "";
+}
+
+function deselect(elt) {
+	elt.style.borderColor = "transparent";		
+	elt.style.opacity = "0.75";		
+	elt.style.filter = "saturate(0.5)";
+}	
 			
 window.addEventListener("beforeunload", function (e) {
     var confirmationMessage = 'It looks like you have been drafting something. If you leave before posting, your changes will be lost.';
