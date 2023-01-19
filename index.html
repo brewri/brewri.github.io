@@ -2550,12 +2550,12 @@ window.addEventListener('focus', function() {
 
 function deselect(elt) {
 	elt.style.borderColor = "transparent";
-	elt.style.filter = "saturate(0.3) opacity(0.75)";
+	elt.style.filter = "saturate(0.5) opacity(0.6)";
 }	
 
 function partialDeselect(elt) {
 	elt.style.borderColor = "hsl(var(--hue), 0%, 80%)"; 
-	elt.style.filter = "saturate(0.5)";
+	elt.style.filter = "opacity(0.6)";
 }
 
 function select(elt) {
