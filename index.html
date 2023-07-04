@@ -81,7 +81,7 @@
 			</div>
 		
 			<div id="popularTags" class="scroll-shadows hideScroll desktop" style="overflow:auto; display:flex; align-items:center; font-size:0.85em; margin-right:25px">
-				<a onclick="queryBrowse();" style="flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px">Recent</a>
+				<a onclick="queryBrowse();" style="flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px; font-weight:600; color:#333">Recent</a>
 			</div>
 		</div>
 		
@@ -828,7 +828,7 @@ function setupWebsocket(fresh) {
 	ws.on('queryTagCountsResponse', function(data) {
 		clearDOM(D('popularTags'));
 		let tagElt = make('a', 'Recent');
-		tagElt.style = "flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px";
+		tagElt.style = "flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px; font-weight:600; color:#333";
 		tagElt.onclick = function() { queryBrowse(); };
 		D('popularTags').appendChild(tagElt);
 		
@@ -2494,27 +2494,22 @@ function toggleVisibility() {
 
 // Global event listeners ///////////////////////////////////////////////////////////////////////
 
-window.addEventListener('blur', function() {
+window.addEventListener('blur', function() { iFrameCycle(); });
+window.addEventListener('focus', function() { iFrameCycle(true); });	
+
+function iFrameCycle(focus) {
 	let iframesNew = [];
 	for (let i = 0; i < iframes.length; i++) {
 		if (iframes[i].parentNode) {
 			iframesNew.push(iframes[i]);
-			if (iframes[i].style.borderColor != "transparent") select(iframes[i]);
+			if (iframes[i].style.borderColor != "transparent") {
+				if (focus) deselect(iframes[i]);
+				else select(iframes[i]);
+			}
 		} 
 	}
 	iframes = iframesNew;
-});
-
-window.addEventListener('focus', function() {
-	let iframesNew = [];
-	for (let i = 0; i < iframes.length; i++) {
-		if (iframes[i].parentNode) {
-			iframesNew.push(iframes[i]);
-			if (iframes[i].style.borderColor != "transparent") deselect(iframes[i]);
-		}
-	}
-	iframes = iframesNew;
-});	
+}
 
 function deselect(elt) {
 	elt.style.borderColor = "transparent";
@@ -2918,8 +2913,7 @@ function networkFailMsg(error) {
 }
 
 function color(elt) {
-	let theColor = elt.value;
-	if (theColor == 0) theColor = funColor(XNO.address, true, true);
+	let theColor = elt.value || funColor(XNO.address, true, true);
 	elt.previousElementSibling.style.color = 'hsl(' + theColor + ', 100%, 27%)';
 	setCSS('--hue', theColor);
 	
