@@ -17,9 +17,9 @@
 <body>
 	<strong id="msg" class="msg" style="display:none;"></strong>
 	
-	<div class="containerDiv">
+	<div class="outermostContainer">
 	
-	<div id="firstDiv" class="firstDiv" style="background-color:hsl(0, 0%, 80%)">	
+	<div id="leftSidebar" class="leftSidebar" style="background-color:hsl(0, 0%, 80%)">	
 	
 		<div id="profilePanel" class="objectWrapper" style="margin-top:30px; margin-bottom:5px" onclick="openSubAccordion(this)">
 			<div class="clickFlash" style="display:flex; justify-content:space-between; margin:0px 10px; align-items:baseline" onclick="toggleSubAccordion(this)">
@@ -72,12 +72,12 @@
 		
 	</div>
 	
-	<div id="secondDiv" class="secondDiv">
-	<div id="secondDivInner" class="secondDivInner">
+	<div id="centralWindow" class="centralWindow">
+	<div id="centralWindowScroller" class="centralWindowScroller">
 	
 		<div class="controlbar">
 			<div class="controlpanel">
-			<button id="browseButton" style="min-width:fit-content" class="left active" onclick="loadPanel('browse', true)" title="Alt + 1">Browse</button><button id="readButton" style="min-width:fit-content" class="center" onclick="loadPanel('read', true)" autocomplete="off" title="Alt + 2">Read</button><button id="postButton" style="min-width:fit-content" class="right" onclick="loadPanel('post', true)" autocomplete="off" title="Alt + 3">Write</button>
+				<button id="browseButton" style="min-width:fit-content" class="left active" onclick="loadPanel('browse', true)" title="Alt + 1">Browse</button><button id="readButton" style="min-width:fit-content" class="center" onclick="loadPanel('read', true)" autocomplete="off" title="Alt + 2">Read</button><button id="writeButton" style="min-width:fit-content" class="right" onclick="loadPanel('write', true)" autocomplete="off" title="Alt + 3">Write</button>
 			</div>
 		
 			<div id="popularTags" class="scroll-shadows hideScroll desktop" style="overflow:auto; display:flex; align-items:center; font-size:0.85em; margin-right:25px">
@@ -93,7 +93,7 @@
 			<div style="display:flex">			
 				<button id="toggleBrowse" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
 				<div style="flex-basis:1px; flex-grow:5;">
-					<ul id="discovery"></ul>
+					<ul id="browseList"></ul>
 				</div>
 				
 				<div class="sidebar desktop" style="flex-grow:4; margin-left:30px;">					
@@ -138,7 +138,7 @@
 			</div>
 		</div>
 
-		<div id="post" style="display:none; padding-bottom:80px; max-width:1200px;">		
+		<div id="write" style="display:none; padding-bottom:80px; max-width:1200px;">		
 			<button id="toggleEdit" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
 		
 			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:0.5em;">
@@ -169,7 +169,7 @@
 				</div>
 				
 				<div style="margin-top:5px; display:flex; justify-content:space-between; flex-grow:1">
-					<input placeHolder="URL to previous post..." id="set-prev" autocomplete="off"
+					<input placeHolder="URL to preceding post..." id="set-prev" autocomplete="off"
 						   style="padding-right:30px; flex-grow:1; width:1px" type="text" autocapitalize="off" onkeyup="if (event.keyCode == 27) this.value = ''; checkTitle(this);" oninput="checkTitle(this);">
 					<button tabindex="-1" class="close-icon" onclick="closeCopy(this.previousElementSibling)"></button>
 					<button id="recip-prev" onclick="toggle(this)" tabindex="-1" style="font-size:0.85em; min-width:fit-content; margin-left:10px" disabled>Reciprocate</button>
@@ -705,9 +705,8 @@ const dec = new TextDecoder();
 const imgurl = /src="https:\/\/[a-zA-Z0-9;:=%&/~_:\-\.,\?\(\)\+]+"/;
 const imgurl2 = /src="data:image\/png;base64,[a-zA-Z0-9;:=%&/~_:\-\.,\?\(\)\+]+"/;
 
-let browseHeight = 0;
-let readHeight = 0;
-let postHeight = 0;
+var scrollCache = {browse:0, read:0, write:0};
+var readPanelButtons = [D("subscribe2"), D("sponsor2"), D("comment")];
 
 const adj = ["Disillusioned", "Nihilistic", "Disenchanted", "Embittered", "Worldly", "Embattled", "Cynical", "Skeptical", "Contemplative", 
 				"Introspective", "Meditative", "Pensive", "Philosophical", "Stoic", "Apathetic", "Analytical", "Scholarly", "Erudite", "Composed", "Detached", "Problematic", 
@@ -718,8 +717,9 @@ const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedge
 
 var url = new URL(window.location);						
 var possibleOrigins = ["https://brewri.github.io"];
-	
-var serverURL = 'wss://brewri-server.fly.dev';
+
+var serverURL = 'wss://brewri-server-stg.fly.dev';
+//var serverURL = 'wss://impuremaths.herokuapp.com';
 var ws;
 setupWebsocket(true);
 
@@ -744,7 +744,7 @@ function setupWebsocket(fresh) {
 	ws.customEvents = {};
 	ws.on = function(cueName, eventAction) { ws.customEvents[cueName] = eventAction; };
 	ws.emit = function(cueName, payload) { 
-		if (ws.readyState == 1) ws.send(JSON.stringify({cueName:cueName, payload:payload})); 
+		if (ws.readyState == 1) ws.send(JSON.stringify({cueName, payload})); 
 		return (ws.readyState == 1);
 	};
 	
@@ -795,7 +795,7 @@ function setupWebsocket(fresh) {
 		noteCount = 0;
 		console.log(data);
 		if (data.notifCounter) noteCount = data.notifCounter;
-		setTitle(false, true);
+		setTabTitle(false, true);
 		if (data.notifications) {
 			data.notifications.sort(function(x, y) { return x.timestamp - y.timestamp; });
 			for (let i = 0; i < data.notifications.length; i++) {
@@ -895,17 +895,17 @@ function setupWebsocket(fresh) {
 }
 
 
-// Data reception ///////////////////////////////////////////////////////////////////////
+// Server data reception ///////////////////////////////////////////////////////////////////////
 
 function cachePost(metaData, chain) {
-	if (!metaData.postid) metaData.postid = metaData.userid + "-" + metaData.createdts.toString();	
+	metaData.postid = metaData.postid || metaData.userid + "-" + metaData.createdts.toString();	
 	if (!metaData.userid) {
 		let split = metaData.postid.split("-");
 		metaData.userid = split[0];
 		metaData.createdts = parseInt(split[1]);
 	}
 	
-	if (!postCache[metaData.postid]) postCache[metaData.postid] = {};
+	postCache[metaData.postid] = postCache[metaData.postid] || {};
 	let cacheData = postCache[metaData.postid];
 
 	cacheData.title = metaData.title;
@@ -937,17 +937,17 @@ function receiveDOMdisplayName(data) {
 	
 	if (DOMdisplayNameQueue[userid]) {
 		for (let j = 0; j < DOMdisplayNameQueue[userid].length; j++) {
-			DOMdisplayNameQueue[userid][j].textContent = funName(userid);
-			if (DOMdisplayNameQueue[userid][j] != D('displayName') && DOMdisplayNameQueue[userid][j] != D('browseHeading')) 
-				DOMdisplayNameQueue[userid][j].style.color = funColor(userid);
+			let elt = DOMdisplayNameQueue[userid][j];
+			elt.textContent = funName(userid);
+			if (elt != D('displayName') && elt != D('browseHeading')) elt.style.color = funColor(userid);
 		}
 	}
 	delete DOMdisplayNameQueue[userid];	
 	
-	if (userid && new URLSearchParams(window.location.search).get('userid') == userid) setTitle(funName(userid));
+	if (userid && new URLSearchParams(window.location.search).get('userid') == userid) setTabTitle(funName(userid));
 	
 	if (userid == XNO.address && D('bioEditor').style.display == "none") {
-		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+		D('leftSidebar').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
 		setCSS('--hue', funColor(XNO.address, false, true));
 	}
 }
@@ -967,10 +967,10 @@ function requestNames() {
 	if (ws && userids.length) ws.emit('queryUsers', {userids});
 }
 
-// Main panel fill routines ///////////////////////////////////////////////////////////////////////
+// Central window fill routines ///////////////////////////////////////////////////////////////////////
 
 function queryBrowse(label, automatic, passive) {
-	if (!label) label = {};
+	label = label || {};
 	let {userid, tag} = label;
 	browseURL = label;
 	closeBio();
@@ -1020,7 +1020,7 @@ function queryBrowse(label, automatic, passive) {
 	
 	
 	if (browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
-	else D('discovery').style.opacity = "0.6";
+	else D('browseList').style.opacity = "0.6";
 	
 	if (!(automatic && browseCache[D('browseHeading').title]) && ws && ws.readyState == 1) {
 		D('loadingMsg').style.display = "";
@@ -1116,12 +1116,9 @@ function fillPost(postid, manual) {
 	}
 	
 	readPostid = postid;	
-	if (XNO.address) {
-		D("subscribe2").disabled = false;
-		D("sponsor2").disabled = false;
-		D("comment").disabled = false;
-	}
-	// readHeight = 0;
+	if (XNO.address) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
+	
+	// scrollCache.read = 0;
 	if (!postCache[postid] || manual) ws.emit('queryPostChain', {userid, createdts});
 	if (manual) {
 		if (!D(postid)) {
@@ -1182,7 +1179,7 @@ function fillEdit(postid, confirmation) {
 				editPostContent = theNewContent;
 				if (typeof metaData.content === "string") {
 					clearDOM(D('postEditor'));	
-					appendBlock().firstChild.value = metaData.content;
+					appendBlockEditor().firstChild.value = metaData.content;
 				} else {
 					fillEditorContent(metaData.content, D('postEditor'));		
 					if (metaData.wall) {
@@ -1199,14 +1196,14 @@ function fillEdit(postid, confirmation) {
 	editPostPending = !confirmation;
 	if (!confirmation) {
 		ws.emit('queryPostChain', { userid: postid.split("-")[0], createdts: parseInt(postid.split("-")[1]) });
-		postHeight = 0;
+		scrollCache.write = 0;
 	}
 	
-	loadPanel('post');
+	loadPanel('write');
 	if (active('toggleEdit')) D('toggleEdit').click();
 }
 
-function setTitle(str, reset) {
+function setTabTitle(str, reset) {
 	if (reset) str = currentTitle;
 	else currentTitle = str;
 	let prepend = "";
@@ -1217,19 +1214,14 @@ function setTitle(str, reset) {
 
 function loadPanel(type, useRAM, goingBack) {
 	let prevType = "browse";
-	if (D('browse').style.display != 'none') {
-		browseHeight = Math.ceil(D('secondDivInner').scrollTop);
-		if (type == prevType) browseHeight = 0;
-	}
-	if (D('read').style.display != 'none') {
-		prevType = "read";
-		readHeight = Math.ceil(D('secondDivInner').scrollTop);
-		if (type == prevType) readHeight = 0;
-	}
-	if (D('post').style.display != 'none') {
-		prevType = "post";
-		postHeight = Math.ceil(D('secondDivInner').scrollTop);
-		if (type == prevType) postHeight = 0;
+	for (let panelType in scrollCache) {
+		if (D(panelType).style.display != 'none') {
+			prevType = panelType;
+			scrollCache[panelType] = Math.ceil(D('centralWindowScroller').scrollTop);
+			if (type == prevType) scrollCache[panelType] = 0;
+		}
+		D(panelType).style.display = 'none';
+		D(panelType + 'Button').classList.remove('active');
 	}
 	
 	if (type != prevType) {
@@ -1242,13 +1234,6 @@ function loadPanel(type, useRAM, goingBack) {
 		}
 		youtubes = newYoutubes;
 	}
-	
-	D('post').style.display = 'none';
-	D('read').style.display = 'none';
-	D('browse').style.display = 'none';
-	D('postButton').classList.remove('active');
-	D('readButton').classList.remove('active');
-	D('browseButton').classList.remove('active');
 	
 	D(type).style.display = "flex";
 	D(type + "Button").classList.add('active');
@@ -1267,22 +1252,19 @@ function loadPanel(type, useRAM, goingBack) {
 	}
 	
 	let params = new URLSearchParams(window.location.search);
-	let theHeight = postHeight;
 	if (type == "read") {
 		url.search = new URLSearchParams({postid:readPostid});		
 		if (params.get('postid') != readPostid) changeHistory();
 
-		if (postCache[readPostid]) setTitle(postCache[readPostid].title);
-		else setTitle("Read");
-		theHeight = readHeight;
+		if (postCache[readPostid]) setTabTitle(postCache[readPostid].title);
+		else setTabTitle("Read");
 	} else if (type == "browse") {		
 		url.search = new URLSearchParams(browseURL);
 		if (params.get('userid') != browseURL.userid || params.get('tag') != browseURL.tag || params.get('postid') != null || params.get('editid') != null) changeHistory();
 		
-		if (browseURL.userid) setTitle(funName(browseURL.userid));
-		else if (browseURL.tag) setTitle(browseURL.tag);
-		else setTitle("");
-		theHeight = browseHeight;
+		if (browseURL.userid) setTabTitle(funName(browseURL.userid));
+		else if (browseURL.tag) setTabTitle(browseURL.tag);
+		else setTabTitle("");
 		
 		D(type).style.display = "";
 		popularTags.classList.remove("desktop");
@@ -1290,13 +1272,13 @@ function loadPanel(type, useRAM, goingBack) {
 		url.search = new URLSearchParams({editid:editPostid});	//url = new URL(window.location);
 		if (params.get('editid') != editPostid) changeHistory();
 		
-		if (postCache[editPostid]) setTitle("Updating \'" + postCache[editPostid].title + "\'");
-		else if (editPostid) setTitle("Update");
-		else setTitle("Write");
+		if (postCache[editPostid]) setTabTitle("Updating \'" + postCache[editPostid].title + "\'");
+		else if (editPostid) setTabTitle("Update");
+		else setTabTitle("Write");
 	}
 
-	D('secondDivInner').scrollTo(0, theHeight);	
-	D('secondDiv').scrollIntoView({behavior: "smooth", block:"nearest"});
+	D('centralWindowScroller').scrollTo(0, scrollCache[type]);	
+	D('centralWindow').scrollIntoView({behavior: "smooth", block:"nearest"});
 }
 
 // Fill helpers ///////////////////////////////////////////////////////////////////////
@@ -1304,8 +1286,8 @@ function loadPanel(type, useRAM, goingBack) {
 function fillBrowseList(data) {
 	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
 	D('loadingMsg').style.display = "none";
-	clearDOM(D('discovery'));
-	D('discovery').style.opacity = "";
+	clearDOM(D('browseList'));
+	D('browseList').style.opacity = "";
 	
 	if (data) {
 		data.sort(function(x, y) { return y.createdts - x.createdts; });
@@ -1327,11 +1309,11 @@ function fillBrowseList(data) {
 			postli.style.marginBottom = "0.85em";			
 			postli.appendChild(fullLabel(data[i].postid, "browse", mediaBox));			
 			if (readPostid == data[i].postid) activeBar(postli);
-			D('discovery').appendChild(postli);
+			D('browseList').appendChild(postli);
 		}
 	}	
 	requestNames();
-	// browseHeight = 0;
+	// scrollCache.browse = 0;
 }
 
 function fillBio(userid, block) {
@@ -1375,12 +1357,8 @@ function fillContent(elt, content, wall, userid) {
 			iframes.push(jsbox);
 			jsbox.style = "width:100%; height:0px; border-top:0px; border-bottom:0px; border-left:2px solid transparent; border-right:0px";
 			deselect(jsbox);
-			jsbox.onmouseenter = function() { 
-				if (jsbox != document.activeElement) partialDeselect(jsbox);
-			}
-			jsbox.onmouseleave = function() { 
-				if (jsbox != document.activeElement) deselect(jsbox);
-			}
+			jsbox.onmouseenter = function() { if (jsbox != document.activeElement) partialDeselect(jsbox); }
+			jsbox.onmouseleave = function() { if (jsbox != document.activeElement) deselect(jsbox);	}
 			jsbox.sandbox = "allow-scripts";
 			let str = `<script>window.onload = function() {
 				window.parent.postMessage({height:Math.max( document.body.scrollHeight, document.body.offsetHeight, document.body.clientHeight,
@@ -1447,9 +1425,9 @@ function fillEditorContent(data, elt) {
 	clearDOM(elt);	
 	if (data && data.length) {
 		for (let i = 0; i < data.length; i++) {
-			inputEvent(appendBlock(data[i].type, null, elt).firstChild, data[i].content);
+			inputEvent(appendBlockEditor(data[i].type, null, elt).firstChild, data[i].content);
 		}
-	} else appendBlock("text", null, elt);
+	} else appendBlockEditor("text", null, elt);
 }
 					
 function fillMediaBox(mediaURL, preview) {
@@ -1643,7 +1621,7 @@ function addComment(commentData) {
 	}
 }
 
-function appendBlock(type, previous, parent) {
+function appendBlockEditor(type, previous, parent) {
 	if (!parent) parent = D('postEditor');
 	let block = make('div');
 	block.tabIndex = "-1";
@@ -1759,7 +1737,7 @@ function appendBlock(type, previous, parent) {
 	mediaBut.classList.add("right");
 	mediaBut.onclick = function() {
 		textbox.title = "media";
-		textbox.placeholder = "URL to image, audio, or video [optional caption]...\n\nSupport: most images; mp3, wav; mp4, ogg, webm, Youtube URL";
+		textbox.placeholder = "URL to image, audio, or video [optional caption]...\n\n(Supports most images; mp3, wav; mp4, ogg, webm, and Youtube URL)";
 		textbox.spellcheck = false;
 		textbox.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		if (textbox.value == "<div>\n\n</div>\n\n" + "<script>\n\n</" + "script>") textbox.value = "";		
@@ -1787,7 +1765,7 @@ function appendBlock(type, previous, parent) {
 	let addBut = make('button', "＋");
 	addBut.style.marginLeft = "4px";
 	addBut.classList.add("right");
-	addBut.onclick = function() { appendBlock("text", block, parent) };
+	addBut.onclick = function() { appendBlockEditor("text", block, parent) };
 
 	let buttonPanel = make('div');
 	buttonPanel.style = "display:flex; justify-content:right";
@@ -1994,7 +1972,7 @@ function timeLabel(createdts, modifiedts) {
 	return dateDiv;
 }
 
-// Main panel UI interaction handlers ///////////////////////////////////////////////////////////////////////
+// Main panel minor UI interaction handlers ///////////////////////////////////////////////////////////////////////
 
 function sponsorHandler() {
 	if (active('sponsor')) {
@@ -2012,7 +1990,7 @@ function sponsorHandler() {
 }
 
 function subscribeHandler(subscribee) {
-	if (!subscribee) subscribee = D('browseHeading').title;
+	subscribee = subscribee || D('browseHeading').title;
 	
 	if (D("tag-" + subscribee)) flash(D("tag-" + subscribee));
 	else if (D(subscribee)) flash(D(subscribee));
@@ -2160,7 +2138,7 @@ function closeBio() {
 	D('bio-name').placeholder = "Public display name...";
 	
 	if (XNO.address) {
-		D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+		D('leftSidebar').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
 		setCSS('--hue', funColor(XNO.address, false, true));
 	}
 }
@@ -2177,7 +2155,7 @@ function cancelPost(override) {
 	D('modificationEdit').title = "";	
 	
 	clearDOM(D('postEditor'));	
-	appendBlock();	
+	appendBlockEditor();	
 	
 	D('postTitle').value = "";	
 	inputEvent(D('set-prev'), "");
@@ -2190,7 +2168,7 @@ function cancelPost(override) {
 	D('clearButton').textContent = "Clear";
 	
 	if (active('toggleEdit')) D('toggleEdit').click();
-	setTitle("Write");
+	setTabTitle("Write");
 	return true;
 }
 
@@ -2249,7 +2227,7 @@ function importSeed() {
 			clearSeed();		
 			XNO.unpackSeed(seed, parseInt(index));						
 			queueDOMdisplayName(XNO.address, D('displayName'), true);
-			D('firstDiv').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
+			D('leftSidebar').style.backgroundColor = "hsl(" + funColor(XNO.address, false, true) + ", 55%, 80%)";
 			setCSS("--butsat", "50%");
 			setCSS("--hue", funColor(XNO.address, false, true));
 			
@@ -2262,11 +2240,7 @@ function importSeed() {
 			localStorage.setItem("localSeed", XNO.seed);
 			
 			D('subscribe').disabled = false;
-			if (readPostid) {
-				D("subscribe2").disabled = false;
-				D("sponsor2").disabled = false;
-				D("comment").disabled = false;
-			}
+			if (readPostid) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
 			
 			makeSubLi(XNO.address);
 			if (D('browseHeading').title != "Recent") {
@@ -2306,7 +2280,7 @@ function clickClearSeed() {
 	XNO.seed = "";
 	XNO.encryptKey = "";	
 	D('displayName').textContent = "Guest";	
-	D('firstDiv').style.backgroundColor = "hsl(0, 0%, 80%)";
+	D('leftSidebar').style.backgroundColor = "hsl(0, 0%, 80%)";
 	setCSS("--butsat", "0%");
 	
 	D("current").disabled = true;	
@@ -2318,9 +2292,7 @@ function clickClearSeed() {
 	localStorage.removeItem("localSeed");
 	
 	D('subscribe').disabled = true;
-	D('subscribe2').disabled = true;
-	D('sponsor2').disabled = true;
-	D("comment").disabled = true;
+	for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = true; }
 	inputEvent(D("seed"), "");
 	
 	if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
@@ -2336,7 +2308,7 @@ function clearSeed() {
 	clearDOM(D('notifications'));
 	D('notificationHeading').textContent = "Activity";
 	noteCount = 0;
-	setTitle(false, true);
+	setTabTitle(false, true);
 	D('libraryPlaceholder').style.display = "";	
 	D('notificationPlaceholder').style.display = "";	
 	if (D('creationEdit').title) cancelPost(true);
@@ -2386,12 +2358,8 @@ function makeNoteLi(data) {
 		
 		text.appendChild(link);
 	}
-	if (data.ntype == "subscribe") {
-		text.textContent = "Subscribed!";
-	}
-	if (data.ntype == "sponsor") {
-		text.textContent = "Sponsored!";
-	}
+	if (data.ntype == "subscribe") text.textContent = "Subscribed!";
+	if (data.ntype == "sponsor") text.textContent = "Sponsored!";
 	theLabel.appendChild(text);
 	
 	if (D('notifications').firstElementChild) {
@@ -2404,7 +2372,7 @@ function makeNoteLi(data) {
 	
 	if (data.notifCounter) noteCount = data.notifCounter;
 	if (noteCount) D('notificationHeading').textContent = "Activity (" + noteCount + ")";
-	setTitle(false, true);
+	setTabTitle(false, true);
 }
 
 function makeSubLi(userid, data) {
@@ -2586,7 +2554,7 @@ window.addEventListener('popstate', function() {
 function closeSidebar() {
 	if (D('browse').style.display != 'none' && active('toggleBrowse')) D('toggleBrowse').click();
 	else if (D('read').style.display != 'none' && active('toggleRead')) D('toggleRead').click();
-	else if (D('post').style.display != 'none' && active('toggleEdit')) D('toggleEdit').click();
+	else if (D('write').style.display != 'none' && active('toggleEdit')) D('toggleEdit').click();
 	else return false;	
 	event.preventDefault();
 	return true;
@@ -2604,7 +2572,7 @@ function loadURL(link) {
 	} else if (params.get('editid') != null) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse({}, true, true);
 		if (XNO.address == params.get('editid').split("-")[0] && (editPostPending || editPostid != params.get('editid'))) fillEdit(params.get('editid'));
-		else loadPanel("post");
+		else loadPanel("write");
 	} else if (params.get('userid')) {
 		if (params.get('userid') != browseURL.userid || !browseCache[browseURL.userid]) queryBrowse({userid:params.get('userid')}, !activeClick);
 		else loadPanel("browse");
@@ -2659,15 +2627,15 @@ window.addEventListener('keydown', function(evt) {
 	if (evt.altKey) {
 		if (evt.keyCode == 49) loadPanel('browse', true);
 		else if (evt.keyCode == 50) loadPanel('read', true);
-		else if (evt.keyCode == 51) loadPanel('post', true);		
+		else if (evt.keyCode == 51) loadPanel('write', true);		
 		else if (evt.keyCode == 81) {
 			if (active('readButton') && readPostid && postCache[readPostid].userid == XNO.address) fillEdit();
-			else if (active('postButton') && D('postEditor').style.display == "none") showEditor();
-			if (active('postButton') && document.activeElement.tagName.toLowerCase() != 'input' && document.activeElement.tagName.toLowerCase() != 'textarea') {
+			else if (active('writeButton') && D('postEditor').style.display == "none") showEditor();
+			if (active('writeButton') && document.activeElement.tagName.toLowerCase() != 'input' && document.activeElement.tagName.toLowerCase() != 'textarea') {
 				D('postEditor').firstElementChild.firstElementChild.focus();
 			}
 		} else if (evt.keyCode == 87) {
-			if (active('postButton') && D('postPreview').style.display == "none") {
+			if (active('writeButton') && D('postPreview').style.display == "none") {
 				event.preventDefault();
 				showPreview();
 			}
@@ -2702,14 +2670,14 @@ function funColor(userid, generated, raw) {
 }
 
 function D(string) { 
-if (!string) console.error("Empty dom string");
-return document.getElementById(string); 
+	if (!string) console.error("Empty dom string");
+	return document.getElementById(string); 
 }
 
 function refreshNoteCounter() {
 	ws.emit('updateNotifCounter');
 	noteCount = 0;
-	setTitle(false, true);
+	setTabTitle(false, true);
 	D('notificationHeading').textContent = "Activity";
 }
 
@@ -2956,7 +2924,7 @@ function color(elt) {
 	elt.previousElementSibling.style.color = 'hsl(' + theColor + ', 100%, 27%)';
 	setCSS('--hue', theColor);
 	
-	D('firstDiv').style.backgroundColor = "hsl(" + theColor + ", 55%, 80%)";
+	D('leftSidebar').style.backgroundColor = "hsl(" + theColor + ", 55%, 80%)";
 }
 
 function setCSS(variable, value) { document.documentElement.style.setProperty(variable, value);}
