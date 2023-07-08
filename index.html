@@ -46,7 +46,7 @@
 				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshBalance(); event.stopPropagation()">&nbsp;XNO</span>
 			</div>
 			<div class="accordion" style="max-height:0px">
-				<div id="notificationPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- empty -</div>
+				<div id="notificationPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- no activity -</div>
 				<ul id="notifications" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px;"></ul>
 			</div>
 		</div>
@@ -65,7 +65,7 @@
 				<span style="font-size:0.9em; color:#888; margin-left:0px">My Library</span>
 			</div>
 			<div class="accordion">
-				<div id="libraryPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- sign in to persist -</div>
+				<div id="libraryPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- no history (sign in to persist) -</div>
 				<ul id="library" style="overflow:auto; max-height:calc(100% - 15px); margin-left:10px; margin-top:10px; margin-bottom:5px"></ul>
 			</div>
 		</div>
@@ -93,6 +93,7 @@
 			<div style="display:flex">			
 				<button id="toggleBrowse" class="mobile" onclick="toggleSecondDiv(this)">. . .</button>
 				<div style="flex-basis:1px; flex-grow:5;">
+					<div id="browsePlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px; display:none">- no posts -</div>
 					<ul id="browseList"></ul>
 				</div>
 				
@@ -112,7 +113,7 @@
 							<div style="font-size:0.85em; color:#888">Unique public address</div>
 							<div class='address' id="theirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
 							<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
-							<span id="theirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickCopy(this, this.textContent)">&nbsp;-&nbsp;</span>&nbsp;XNO or more
+							<span id="theirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickPaste(this, false)">&nbsp;-&nbsp;</span>&nbsp;XNO
 							<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
 							<input id="sponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
 							<button id="sendButton" onclick="sendMoney()" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
@@ -214,7 +215,7 @@
 					<div style="font-size:0.85em; color:#888">Unique public address</div>
 					<div class='address' id="postTheirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
 					<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
-					<span id="postTheirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickCopy(this, this.textContent)">&nbsp;-&nbsp;</span>&nbsp;XNO or more
+					<span id="postTheirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickPaste(this, true)">&nbsp;-&nbsp;</span>&nbsp;XNO
 					<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
 					<input id="postSponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
 					<button id="postSendButton" onclick="sendMoney(true)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
@@ -1270,6 +1271,7 @@ function fillBrowseList(data) {
 	if (D('browseHeading').title) browseCache[D('browseHeading').title] = data;
 	D('loadingMsg').style.display = "none";
 	clearDOM(D('browseList'));
+	D('browsePlaceholder').style.display = "none";
 	D('browseList').style.opacity = "";
 	
 	if (data) {
@@ -1294,7 +1296,7 @@ function fillBrowseList(data) {
 			if (readPostid == data[i].postid) activeBar(postli);
 			D('browseList').appendChild(postli);
 		}
-	}	
+	} else D('browsePlaceholder').style.display = "";
 	requestNames();
 	// scrollCache.browse = 0;
 }
@@ -2229,7 +2231,7 @@ function importSeed() {
 			D("current").disabled = false;
 			D("clear").disabled = false;
 			D("submitButton").disabled = false;
-			D("libraryPlaceholder").textContent = "- empty -";
+			D("libraryPlaceholder").textContent = "- no history -";
 			D("subPanel").style.display = "flex";
 			D("notePanel").style.display = "flex";
 			localStorage.setItem("localSeed", XNO.seed);
@@ -2283,7 +2285,7 @@ function clickClearSeed() {
 	D("current").disabled = true;	
 	D("clear").disabled = true;
 	D("submitButton").disabled = true;
-	D("libraryPlaceholder").textContent = "- sign in to persist -";
+	D("libraryPlaceholder").textContent = "- no history (sign in to persist) -";
 	D("subPanel").style.display = "none";	
 	D("notePanel").style.display = "none";	
 	localStorage.removeItem("localSeed");
@@ -2731,6 +2733,11 @@ function clickCopy(elt, str) {
 		showMsg("Copied to clipboard.");
 	}
 	flash(elt);
+}
+
+function clickPaste(elt, read) {
+	if (read) inputEvent(D('postSponsorInput'), elt.textContent);
+	else inputEvent(D('sponsorInput'), elt.textContent);
 }
 
 var msgTimer;
