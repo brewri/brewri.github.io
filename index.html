@@ -80,7 +80,7 @@
 				<button id="browseButton" style="min-width:fit-content" class="left active" onclick="loadPanel('browse', true)" title="Alt + 1">Browse</button><button id="readButton" style="min-width:fit-content" class="center" onclick="loadPanel('read', true)" autocomplete="off" title="Alt + 2">Read</button><button id="writeButton" style="min-width:fit-content" class="right" onclick="loadPanel('write', true)" autocomplete="off" title="Alt + 3">Write</button>
 			</div>
 		
-			<div id="popularTags" class="scroll-shadows hideScroll desktop" style="overflow:auto; display:flex; align-items:center; font-size:0.85em; margin-right:25px">
+			<div id="popularTags" class="popularTags scroll-shadows hideScroll desktop">
 				<a onclick="queryBrowse();" style="flex-shrink:0; cursor:pointer; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:250px; font-weight:600; color:#333">Recent</a>
 			</div>
 		</div>
@@ -96,18 +96,18 @@
 					<ul id="browseList"></ul>
 				</div>
 				
-				<div class="sidebar desktop" style="flex-grow:4; margin-left:30px;">					
+				<div class="sidebar desktop" style="flex-grow:4; margin-left:40px;">					
 					<div id="bioPreview" style="overflow:hidden; display:none">
 						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:2em"></div>
 						
 						<div style="display:flex; justify-content:right;">
-							<button id="profileBut" onclick="openBio()" style="font-size:0.85em">Update Profile</button>
-							<div id="bioLine" style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 0.85em auto 0.85em; flex-grow:1"></div>						
+							<button id="profileBut" onclick="openBioEditor()" style="font-size:0.85em">Update Profile</button>
+							<div id="bioLine" class="horizontalLine"></div>						
 							<button id="subscribe" onclick="subscribeHandler()" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>
 							&nbsp;<button id="sponsor" onclick="sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>	
 						</div>
 				
-						<div id="bioSponsor" style="margin:1em; margin-top:1.5em; display:none;">
+						<div id="bioSponsor" style="margin:1.5em auto; max-width:fit-content; display:none;">
 							<div id="theirFunName" style="margin-bottom:10px; font-weight:600"> - </div>					
 							<div style="font-size:0.85em; color:#888">Unique public address</div>
 							<div class='address' id="theirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
@@ -132,7 +132,7 @@
 						</div>
 						
 						<button onclick="setData()" style="margin-top:30px">Update</button>
-						<button onclick="closeBio()">Cancel</button>
+						<button onclick="closeBioEditor()">Cancel</button>
 					</div>
 				</div>
 			</div>
@@ -203,10 +203,22 @@
 				<textarea id="commentContent" onfocus="scrollPanel(this)" style="margin-top:10px; margin-bottom:15px; height:80px; width:100%; display:none; font-family:Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif; font-size:0.9em" autocomplete="off" onkeyup="commentKeypress()" oninput="commentKeypress()" placeholder="Comment..."></textarea>
 				<div style="display:flex; justify-content:right;">				
 					<button id="edit2" onclick=" fillEdit();" style="font-size:0.85em; display:none">Update</button>
-					<div style="background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 0.85em auto 0.85em; flex-grow:1"></div>										
+					<div class="horizontalLine"></div>										
 					<button id="subscribe2" onclick="subscribeHandler(D('author').title)" autocomplete="off" style="font-size:0.85em" disabled>Subscribe</button>				
-					&nbsp;<button id="sponsor2" onclick="queryBrowse({userid:D('author').title}); sponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>
+					&nbsp;<button id="sponsor2" onclick="postSponsorHandler()" autocomplete="off" style="font-size:0.85em" disabled>Sponsor</button>
 					&nbsp;<button id="comment" onclick="comment()" autocomplete="off" style="font-size:0.85em" disabled>Comment</button>
+				</div>
+				
+				<div id="postSponsor" style="margin:1.5em auto 3em auto; max-width:fit-content; display:none">
+					<div id="postTheirFunName" style="margin-bottom:10px; font-weight:600"> - </div>					
+					<div style="font-size:0.85em; color:#888">Unique public address</div>
+					<div class='address' id="postTheirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
+					<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
+					<span id="postTheirThreshold" style="margin:5px 0px 15px 10px;">&nbsp;-&nbsp;</span>&nbsp;XNO or more
+					<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
+					<input id="postSponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
+					<button id="postSendButton" onclick="sendMoney(this)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
+					</div>
 				</div>
 				
 				<ul id="readComments" style="margin-top:1.5em"><ul>
@@ -717,7 +729,7 @@ const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedge
 
 var url = new URL(window.location);						
 var possibleOrigins = ["https://brewri.github.io"];
-
+ 
 var serverURL = 'wss://brewri-server.fly.dev';
 var ws;
 setupWebsocket(true);
@@ -855,6 +867,9 @@ function setupWebsocket(fresh) {
 			userCache[data.user.userid] = data.user;
 			fillBio(data.user.userid, !update);
 			if (D(data.user.userid + "-time")) D(data.user.userid + "-time").style = "font-size:0.85em; color:#888";
+			
+			let readid = readPostid.split("-")[0];
+			if (readid == data.user.userid && userCache[readid].sponsor_price) D('postTheirThreshold').textContent = userCache[readid].sponsor_price;
 		}
 	});
 	
@@ -972,7 +987,7 @@ function queryBrowse(label, automatic, passive) {
 	label = label || {};
 	let {userid, tag} = label;
 	browseURL = label;
-	closeBio();
+	closeBioEditor();
 	if (active('sponsor')) sponsorHandler();
 	D('profileBut').style.display = "none";
 	D('toggleBrowse').style.display = "";
@@ -1041,6 +1056,8 @@ function fillPost(postid, manual) {
 		D('commentContent').value = "";
 		D("comment").textContent = "Comment";
 		
+		if (active('sponsor2')) postSponsorHandler();
+		
 		D('readTitle').onclick = function() { ws.emit('queryPostChain', { userid: postid.split("-")[0], createdts: parseInt(postid.split("-")[1]) }); }
 		D('readTitle').textContent = "Loading...";
 		D('readContent').innerHTML = "<i>Loading...</i>";	
@@ -1052,10 +1069,22 @@ function fillPost(postid, manual) {
 		if (D(postid + "-disc")) activeBar(D(postid + "-disc"));
 	}
 	
+	if (XNO.address) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
+		
 	let userid = postid.split("-")[0];
-	let createdts = parseInt(postid.split("-")[1]);
-	
+	let createdts = parseInt(postid.split("-")[1]);	
 	queueDOMdisplayName(userid, D('author'));
+	queueDOMdisplayName(userid, D('postTheirFunName'));
+	D('postTheirAddress').textContent = userid;
+	if (userCache[userid] && userCache[userid].sponsor_price) D('postTheirThreshold').textContent = userCache[userid].sponsor_price;
+	else {
+		D('postTheirThreshold').textContent = "\xa0-\xa0";		
+		if (ws && ws.readyState == 1) ws.emit("queryPostsFromUser", {userid});
+	}
+	
+	D('postSendButton').disabled = true;
+	if (XNO.address && userid != XNO.address) D('postSendButton').disabled = false;
+	
 	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
 	
 	D('creation').textContent = unixToDate(createdts);
@@ -1115,7 +1144,6 @@ function fillPost(postid, manual) {
 	}
 	
 	readPostid = postid;	
-	if (XNO.address) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
 	
 	// scrollCache.read = 0;
 	if (!postCache[postid] || manual) ws.emit('queryPostChain', {userid, createdts});
@@ -1320,7 +1348,7 @@ function fillBio(userid, block) {
 	if (!data) D('bio').textContent = "Full of possibilities.";
 	else {
 		if (data.sponsor_price) D('theirThreshold').textContent = data.sponsor_price;
-		else D('theirThreshold').textContent = "1.00";
+		//else D('theirThreshold').textContent = "1.00";
 		if (!block) {
 			if (data.bio && data.bio.length) fillContent(D('bio'), data.bio);
 			else D('bio').textContent = "Full of possibilities."
@@ -1602,7 +1630,7 @@ function addComment(commentData) {
 		let repButHolder = make('div');
 		repButHolder.style = "display:flex; justify-content:right; margin-bottom:0.85em;";
 		let repLine = make('div');
-		repLine.style = "background-color:#e4e7e7; height:2px; border-radius:20px; margin:auto 0.85em auto 0.85em; flex-grow:1";
+		repLine.classList.add("horizontalLine");
 		repButHolder.appendChild(repLine);
 		repButHolder.appendChild(repBut);
 		
@@ -1988,6 +2016,19 @@ function sponsorHandler() {
 	toggle(D('sponsor'));
 }
 
+function postSponsorHandler() {
+	if (active('sponsor2')) {
+		D('postSponsor').style.display = "none";
+		D('postSponsorInput').value = "";
+	} else {
+		D('postSponsor').style.display = "";
+		// D('sponsorInput').focus();
+		flash(D('postSponsorInput'));
+		D('postSponsorInput').scrollIntoView({behavior: "smooth", block:"nearest"});
+	}
+	toggle(D('sponsor2'));
+}
+
 function subscribeHandler(subscribee) {
 	subscribee = subscribee || D('browseHeading').title;
 	
@@ -2086,7 +2127,7 @@ function setData() {
 		queueDOMdisplayName(XNO.address, D(XNO.address).lastElementChild);
 		
 		ws.emit('updateUser', {displayname:D('bio-name').value, color:parseInt(D('colorslider').value), bio:parseEditorContent(D('bioBlocks')), sponsor_price: D('inputPrice').value });
-		closeBio();
+		closeBioEditor();
 	}
 }
 
@@ -2110,7 +2151,7 @@ function parseEditorContent(elt) {
 	return content;
 }
 
-function openBio() {
+function openBioEditor() {
 	D('bioPreview').style.display = "none";
 	D('bioEditor').style.display = "";
 	
@@ -2123,12 +2164,12 @@ function openBio() {
 	if (!data) data = {};	
 	fillEditorContent(data.bio, D('bioBlocks'));	
 	if (data.sponsor_price) D('inputPrice').value = data.sponsor_price;
-	else D('inputPrice').textContent = "1.00";
+	//else D('inputPrice').value = "1.00";
 	
 	// D('bio-name').focus();
 }
 
-function closeBio() {
+function closeBioEditor() {
 	D('bioEditor').style.display = "none";
 	if (D('browseHeading').title != "Recent") D('bioPreview').style.display = "";
 	clearDOM(D('bioBlocks'));
@@ -2251,6 +2292,8 @@ function importSeed() {
 				} else D('profileBut').style.display = "";
 			}
 			
+			if (XNO.address && readPostid.split("-")[0] != XNO.address) D('postSendButton').disabled = false;
+			
 			if (ws && ws.readyState == 1) {
 				let ts = Date.now();
 				ws.emit('authenticateUser', {userid: XNO.address, ts, signature:XNO.sign(ts, XNO.address)});			
@@ -2312,11 +2355,12 @@ function clearSeed() {
 	D('notificationPlaceholder').style.display = "";	
 	if (D('creationEdit').title) cancelPost(true);
 	D('sendButton').disabled = true;
+	D('postSendButton').disabled = true;
 	if (active('sponsor')) sponsorHandler();
 	closeAccordion(D('editPanel'));
 	D('balance').textContent = "0.00";
 	
-	closeBio();
+	closeBioEditor();
 	D('profileBut').style.display = "none";
 }
 
