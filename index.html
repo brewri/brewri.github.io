@@ -1007,6 +1007,9 @@ function queryBrowse(label, automatic, passive) {
 }
 
 function fillPost(postid, manual) {
+	let userid = postid.split("-")[0];
+	let createdts = parseInt(postid.split("-")[1]);	
+	
 	if (readPostid != postid) {
 		if (D('commentContent').value.length && !confirm("Clear comment draft?")) return false;
 		D('commentContent').style.display = 'none';
@@ -1015,7 +1018,7 @@ function fillPost(postid, manual) {
 		
 		if (active('sponsor2')) postSponsorHandler();
 		
-		D('readTitle').onclick = function() { ws.emit('queryPostChain', { userid: postid.split("-")[0], createdts: parseInt(postid.split("-")[1]) }); }
+		D('readTitle').onclick = function() { ws.emit('queryPostChain', {userid, createdts}); }
 		D('readTitle').textContent = "Loading...";
 		D('readContent').innerHTML = "<i>Loading...</i>";	
 	
@@ -1028,8 +1031,6 @@ function fillPost(postid, manual) {
 	
 	if (XNO.address) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
 		
-	let userid = postid.split("-")[0];
-	let createdts = parseInt(postid.split("-")[1]);	
 	queueDOMdisplayName(userid, D('author'));
 	queueDOMdisplayName(userid, D('postTheirFunName'));
 	D('postTheirAddress').textContent = userid;
