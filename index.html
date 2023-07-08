@@ -1699,6 +1699,8 @@ function appendBlockEditor(type, previous, parent) {
 	let abbrjsText = make('span', "JS");
 	jsText.classList.add("desktop");
 	abbrjsText.classList.add("mobile");
+	abbrjsText.style.position = "initial";
+	abbrjsText.style.fontWeight = "initial";
 	jsBut.appendChild(jsText);
 	jsBut.appendChild(abbrjsText);
 	
@@ -2903,7 +2905,8 @@ function toggleSecondDiv(elt) {
 }
 
 function color(elt) {
-	let theColor = elt.value || funColor(XNO.address, true, true);
+	let theColor = elt.value;
+	if (theColor == "0") theColor = funColor(XNO.address, true, true);
 	elt.previousElementSibling.style.color = 'hsl(' + theColor + ', 100%, 27%)';
 	setCSS('--hue', theColor);
 	
