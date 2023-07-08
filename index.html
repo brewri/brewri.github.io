@@ -43,7 +43,7 @@
 		<div id="notePanel" class="objectWrapper" style="padding-right:0px; overflow:hidden; display:none; flex-direction:column; flex-shrink:0; max-height:33vh" onclick="openSubAccordion(this); refreshNoteCounter()">
 			<div class="clickFlash leftRightBase" style="margin:0px 10px" onclick="toggleSubAccordion(this)">
 				<div id="notificationHeading" style="font-size:0.9em; color:#888; margin-left:0px; flex-grow:1">Activity</div>
-				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshData(); event.stopPropagation()">&nbsp;XNO</span>
+				<div id="balance" class="clickFlash" style="overflow:hidden; text-overflow:ellipsis; flex-shrink:0; max-width:60%; font-size:0.9em; margin-left:5px; color:#888">0.00</div><span style="font-size:0.9em; color:#888" onclick="refreshBalance(); event.stopPropagation()">&nbsp;XNO</span>
 			</div>
 			<div class="accordion" style="max-height:0px">
 				<div id="notificationPlaceholder" style="font-style:italic; color:#888; text-align:center; margin-top:20px">- empty -</div>
@@ -91,7 +91,7 @@
 				<span id="loadingMsg" style="margin-left:10px; font-style:italic; display:none">Loading...</span>
 			</div>
 			<div style="display:flex">			
-				<button id="toggleBrowse" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
+				<button id="toggleBrowse" class="mobile" onclick="toggleSecondDiv(this)">. . .</button>
 				<div style="flex-basis:1px; flex-grow:5;">
 					<ul id="browseList"></ul>
 				</div>
@@ -112,10 +112,10 @@
 							<div style="font-size:0.85em; color:#888">Unique public address</div>
 							<div class='address' id="theirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
 							<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
-							<span id="theirThreshold" style="margin:5px 0px 15px 10px;">&nbsp;-&nbsp;</span>&nbsp;XNO or more
+							<span id="theirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickCopy(this, this.textContent)">&nbsp;-&nbsp;</span>&nbsp;XNO or more
 							<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
 							<input id="sponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
-							<button id="sendButton" onclick="sendMoney(this)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
+							<button id="sendButton" onclick="sendMoney()" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
 							</div>
 						</div>
 					</div>
@@ -139,7 +139,7 @@
 		</div>
 
 		<div id="write" style="display:none; padding-bottom:80px; max-width:1200px;">		
-			<button id="toggleEdit" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
+			<button id="toggleEdit" class="mobile" onclick="toggleSecondDiv(this)">. . .</button>
 		
 			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:0.5em;">
 			
@@ -152,7 +152,7 @@
 				
 			</div>
 			
-			<div class="sidebar desktop" style="flex-grow:1; max-width:360px; margin-left:50px;">
+			<div class="sidebar desktop" style="max-width:360px;">
 				<input id="postTitle" style="font-weight:bold; font-size:1.1em; width:100%; margin-bottom:10px;" autocomplete="off" placeholder="Title (required)..." type="text" onkeyup="if (event.keyCode == 27) this.value = '';">
 				<div id="editid" style="font-size:0.85em; margin-left:10px; display:none">
 					<span id="creationEdit"></span><span id="modificationEdit" style="font-style:italic;"></span>
@@ -195,7 +195,7 @@
 		</div>
 		
 		<div id="read" style="display:none; padding-bottom:80px; max-width:1200px;">
-			<button id="toggleRead" class="mobile" onclick="toggleSecondDiv(this)" style="position:absolute; bottom:45px; right:10px; font-weight:bold; z-index:10">. . .</button>
+			<button id="toggleRead" class="mobile" onclick="toggleSecondDiv(this)">. . .</button>
 			<div style="flex-basis:1px; flex-grow:2;">				
 				<div id="readContent" style="margin-bottom:2.5em; margin-top:2em">Browse for something interesting!</div>
 				
@@ -214,17 +214,17 @@
 					<div style="font-size:0.85em; color:#888">Unique public address</div>
 					<div class='address' id="postTheirAddress" style="margin:5px 10px 15px 10px;" onclick="clickCopy(this, this.textContent)"> - </div>
 					<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
-					<span id="postTheirThreshold" style="margin:5px 0px 15px 10px;">&nbsp;-&nbsp;</span>&nbsp;XNO or more
+					<span id="postTheirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickCopy(this, this.textContent)">&nbsp;-&nbsp;</span>&nbsp;XNO or more
 					<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
 					<input id="postSponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
-					<button id="postSendButton" onclick="sendMoney(this)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
+					<button id="postSendButton" onclick="sendMoney(true)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
 					</div>
 				</div>
 				
 				<ul id="readComments" style="margin-top:1.5em"><ul>
 			</div>
 			
-			<div class="sidebar desktop" style="flex-grow:1; max-width:360px; margin-left:50px;">			
+			<div class="sidebar desktop" style="max-width:360px;">			
 				<div id="readTitle" style="font-weight:bold; font-size:1.1em; margin-bottom:3px; cursor:pointer">Title</div>	
 				
 				<div style="font-size:0.85em">
@@ -255,7 +255,7 @@
   <script src="marked.js"></script>
 <script>
 
-// crypto methods ///////////////////////////////////////////////////////////////////////
+// Raw crypto methods ///////////////////////////////////////////////////////////////////////
 
 var XNO = {};
 var hardMax = 100;
@@ -290,16 +290,11 @@ XNO.derivePrivateKey = function(seed, index) {
   return byteArrayToHex(blake2bFinal(context))
 }
 
-XNO.addressFromSeed = function(seed) { return XNO.addrFromPub(XNO.pubFromPriv(XNO.derivePrivateKey(seed, 0))); }
 XNO.pubFromPriv = function(privateKey) { return byteArrayToHex(derivePublicFromSecret(hexToByteArray(privateKey))); };
 XNO.addrFromPub = function(publicKey) { return 'nano_' + encodeNanoBase32(hexToByteArray(publicKey)) + encodeNanoBase32(blake2b(hexToByteArray(publicKey), null, 5).reverse()); }
 XNO.pubFromAddr = function(address) { return byteArrayToHex(decodeNanoBase32(address.substr(5, 52))); };
 
 XNO.sign = function(message) { return byteArrayToHex(signDetached(enc.encode(message), hexToByteArray(XNO.privateKey))); }
-XNO.verify = function(message, signature, address) {
-	try { return verifyDetached(enc.encode(message), hexToByteArray(signature), hexToByteArray(XNO.pubFromAddr(address))); }
-	catch { return false };
-}
 
 XNO.unpackSeed = function(seed, index) {
 	XNO.seed = seed;
@@ -346,18 +341,18 @@ function twoDigit(str) {
 	return `${parts[0]}.${fraction}`;	
 }
 
+// Higher level crypto methods ///////////////////////////////////////////////////////////////////////
+
 let ccc = {};
-ccc['XNO'] = {shift:30, flashColor:'#def', keyType:'seed', min:0, fee:0, donation:'nano_1gpquwssoy8491ajmxp9cxjb3o38imcxidissob7cxc38o6h6r4d8gg639b7',
-				server:'https://proxy.nanos.cc/proxy',				
-				gettingStarted:'https://nanolinks.info/',
-				
-				faucet: 'https://nanodrop.io/',
-				representative:'nano_1natrium1o3z5519ifou7xii8crpxpk8y65qmkih8e8bpsjri651oza8imdd',
-				repRec:'https://mynano.ninja/api/accounts/verified'};
+ccc['XNO'] = {shift:30, server:'https://rainstorm.city/api', // 'https://proxy.nanos.cc/proxy',				
+						representative:'nano_1natrium1o3z5519ifou7xii8crpxpk8y65qmkih8e8bpsjri651oza8imdd',
+						repRec:'https://mynano.ninja/api/accounts/verified'};
+						
 for (let symbol in ccc) { ccc[symbol].queue = new Promise(function(resolve, reject) { resolve(true); }); }
 	
 ccc['XNO'].getPending = function() {return post(ccc['XNO'].server, {action: 'pending', account: XNO.address, source:true}); };
 ccc['XNO'].getBlock = function(hash) { return post(ccc['XNO'].server, {action: 'block_info', json_block: true, hash: hash}); };	
+
 ccc['XNO'].receive = function(hash) { return enqueue('XNO', async function() {
 	let symbol = 'XNO';
 	let blockInfoFetch = ccc['XNO'].getBlock(hash);
@@ -380,10 +375,7 @@ ccc['XNO'].receive = function(hash) { return enqueue('XNO', async function() {
 				data.sort(function(x, y) { return y.score - x.score; });
 				let repAddr = data[0].account;
 				if (!repAddr) repAddr = data[0].address;
-				if (repAddr) {
-					ccc[symbol].representative = repAddr;
-					// inputEvent(D(`${symbol}-new-rep`), repAddr);
-				}
+				if (repAddr) ccc[symbol].representative = repAddr;
 			});
 		}).catch(function() { console.error("Using default rep")});
 		representative = ccc[symbol].representative;
@@ -393,7 +385,8 @@ ccc['XNO'].receive = function(hash) { return enqueue('XNO', async function() {
 		if (!blockInfo) return false;
 		return await postBlock(symbol, 'receive', workInput, previous, representative, (BigInt(oldBalance) + BigInt(blockInfo.amount)).toString(), hash);
 	});
-});};	
+});};
+	
 ccc['XNO'].sendTo = function(destination, amt) { return enqueue('XNO', async function() { 
 	// check frontier
 	let frontierBlock = await fetchFrontier("XNO");
@@ -408,11 +401,11 @@ ccc['XNO'].createBlock = function(secretKey, data) {
 	if (!XNO.checkAddress(data.representative)) throw new Error('Representative is not valid');
 
 	let correctedPrevious = data.previous;
-	if (data.previous === null) correctedPrevious = BLANK_HASH;
+	if (correctedPrevious === null) correctedPrevious = BLANK_HASH;
 
 	let linkIsAddress = false;
 	let correctedLink = data.link;
-	if (data.link === null) correctedLink = BLANK_HASH;
+	if (correctedLink === null) correctedLink = BLANK_HASH;
 	else if (XNO.checkAddress(correctedLink)) linkIsAddress = true;
 	if (correctedPrevious === BLANK_HASH && (linkIsAddress || correctedLink === BLANK_HASH)) throw new Error('Block is impossible');
 
@@ -436,7 +429,6 @@ ccc['XNO'].createBlock = function(secretKey, data) {
 		representative: data.representative,
 		balance: data.balance,
 		link: correctedLink,
-		// eslint-disable-next-line @typescript-eslint/camelcase
 		link_as_account: XNO.addrFromPub(correctedLink),
 		work: data.work,
 		signature: byteArrayToHex(signDetached(hashBytes, hexToByteArray(secretKey))),
@@ -459,95 +451,42 @@ function enqueue(symbol, func) {
 	return ccc[symbol].queue;
 }
 
-function post(url, params) {
-    return new Promise((resolve, reject) => {
-        let xhttp = new XMLHttpRequest();
-        xhttp.timeout = 10*1000; // 10 seconds
-        xhttp.onreadystatechange = function() {
-			if (this.readyState == 4) {
-				if (this.status == 200) {
-					try { resolve(JSON.parse(this.responseText)); } 
-					catch(e) {
-						console.error('Failed to parse response from node');
-						console.error(this.responseText);
-						resolve();
-					}
-				} else {
-					console.log('Failed to connect to '+ url);
-					networkFailMsg();
-					resolve();
-				}
-			}
-        };
-        xhttp.open("POST", url, true);
-        xhttp.setRequestHeader("Content-Type", "application/json");
-        xhttp.send(JSON.stringify(params));
-    });
-}	
-
-
-function setLocalJSON(name, data) { localStorage.setItem(name, JSON.stringify(data)); }
-
-function getLocalJSON(name) {
-	let data = localStorage.getItem(name);
-	if (data) data = JSON.parse(data);
-	return data;
-}
-
 async function findWork(workInput, subtype) {
-	let localWork = getLocalJSON("localWork");
-	if (!localWork) localWork = {};
-
 	if (!workInput) {
 		workInput = XNO.publicKey;
 		let frontierBlock = await fetchFrontier('XNO');
 		if (frontierBlock) workInput = frontierBlock.hash;
 	}
+	
 	let rawWorkThreshold = await post(ccc['XNO'].server, { action: 'active_difficulty' });
 	let difficulty = rawWorkThreshold.network_current;
 	if (subtype == 'receive') difficulty = rawWorkThreshold.network_receive_current;
 	
 	let work = null;
+	let localWork = getLocalJSON("localWork") || {};
 	if (localWork[XNO.address] && localWork[XNO.address].workInput == workInput && localWork[XNO.address].difficulty == difficulty) {
 		work = localWork[XNO.address].work;
-		console.warn("Using local work!!");
+		console.warn("Using local work!!", work);
 	} else {
 		let prework = (await post(ccc['XNO'].server, {action: 'work_generate', hash: workInput, difficulty}));
-		if (prework && prework.work) work = prework.work;
-		console.warn("Using REMOTE work!!");
+		work = prework && prework.work;
+		console.warn("Generating REMOTE work:", work);
 	}
-	if (work) localWork[XNO.address] = {work, workInput, difficulty};	
 	
+	if (work) localWork[XNO.address] = {work, workInput, difficulty};	
 	setLocalJSON("localWork", localWork);
 	return work;
 }
 
 async function postBlock(symbol, subtype, workInput, previous, representative, balance, link) {
 	let work = await findWork(workInput, subtype);
-	
-	let block = ccc[symbol].createBlock(XNO.privateKey, {
-		work: work,
-		previous: previous,
-		representative: representative.replace('ban_', 'nano_'),
-		balance: balance,
-		link: link.replace('ban_', 'nano_')
-	});
-	
-	if (symbol == "BAN") {
-		block.block.representative = block.block.representative.replace('nano_', 'ban_');
-		block.block.representative = block.block.representative.replace('xrb_', 'ban_');
-		block.block.account = block.block.account.replace('nano_', 'ban_');
-		block.block.account = block.block.account.replace('xrb_', 'ban_');
-		delete block.block.link_as_account;
-	}
-	
-	let formData = {action: 'process', json_block: true, subtype: subtype, block: block.block};
-	if (!work) {
-		formData.do_work = true;
-		formData.block.work = undefined;		
+	if (!work) {	
 		showMsg("Proof of work failed. Amount NOT processed; try again.");
-		// return false;
+		return false;
 	}
+	
+	let block = ccc[symbol].createBlock(XNO.privateKey, { work, previous, balance, representative: representative.replace('ban_', 'nano_'), link: link.replace('ban_', 'nano_') });
+	let formData = {action: 'process', json_block: true, subtype: subtype, block: block.block};
 	post(ccc[symbol].server, formData);
 	
 	return new Promise(async function(resolve, reject) {
@@ -618,73 +557,85 @@ function unitFromRaw(symbol, str) {
 	return whole + '.' + fraction;	
 }
 
-async function sendMoney(elt) {
-	if (D('sponsorInput').validationMessage == "Please enter a number." || D('sponsorInput').value <= 0) {
+async function sendMoney(read) {
+	let but = D('sendButton');
+	let inputElt = D('sponsorInput');
+	let destaddr = D('theirAddress').textContent;
+	let threshold = D('theirThreshold').textContent;
+	let them = D('theirFunName').textContent;
+	if (read) {
+		but = D('postSendButton');
+		inputElt = D('postSponsorInput');
+		destaddr = D('postTheirAddress').textContent;
+		threshold = D('postTheirThreshold').textContent;
+		them = D('postTheirFunName').textContent;
+	}
+	
+	if (inputElt.validationMessage == "Please enter a number." || inputElt.value <= 0) {
 		showMsg("Enter a positive value.");
-		flash(D('sponsorInput'));
+		flash(inputElt);
 	} else {
 		let symbol = "XNO";
-		let amt = D('sponsorInput').value;
-		let destaddr = D('theirAddress').textContent;
-		let them = D('theirFunName').textContent;
+		let amt = inputElt.value;
 			
-		elt.disabled = true;
+		but.disabled = true;
 		let totalAmt = BigInt(rawFromUnit(symbol, amt));
 		let balance = BigInt(rawFromUnit(symbol, D('balance').textContent));
 		let safetyMax = BigInt(rawFromUnit(symbol, hardMax));
 		if (totalAmt > safetyMax) showMsg("Limit for built-in wallet: " + hardMax + " XNO");
 		else if (totalAmt > balance) showMsg("Insufficient funds.");
 		else {
-			let confirmMessage = "Sponsor less than amount required for premium content?";
-			if (totalAmt > BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) confirmMessage = "Sponsor more than amount required for premium content?";
-			if (totalAmt == BigInt(rawFromUnit(symbol, D('theirThreshold').textContent)) || confirm(confirmMessage)) {
-				if (totalAmt >= BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) showMsg("Sponsoring \'" + them + "\'...", null, true);
+			let confirmMessage = "Sponsor less than amount for premium content?";
+			if (totalAmt > BigInt(rawFromUnit(symbol, threshold))) confirmMessage = "Sponsor more than amount for premium content?";
+			if (totalAmt == BigInt(rawFromUnit(symbol, threshold)) || confirm(confirmMessage)) {
+				if (totalAmt >= BigInt(rawFromUnit(symbol, threshold))) showMsg("Sponsoring \'" + them + "\'...", null, true);
 				else showMsg("Tipping \'" + them + "\'...", null, true);
 				let sendResp = await ccc[symbol].sendTo(destaddr, totalAmt.toString());
 				if (sendResp) {
 					console.log(sendResp);
 					flash(D('balance'), unitFromRaw(symbol, BigInt(rawFromUnit(symbol, D('balance').textContent)) - totalAmt));
 					
-					if (totalAmt >= BigInt(rawFromUnit(symbol, D('theirThreshold').textContent))) {
+					if (totalAmt >= BigInt(rawFromUnit(symbol, threshold))) {
 						showMsg("Sponsored \'" + them + "\' with " + amt + " " + symbol + "! Premium content now available.");
 						if (ws) ws.emit('sponsor', {userid:destaddr, blockid:sendResp, amt});
 					} else showMsg("Tipped \'" + them + "\' " + amt + " " + symbol + "!");
 					
-					D('sponsorInput').value = "";
-					refreshData(symbol);
+					inputElt.value = "";
+					refreshBalance(symbol);
 				}
 			}
 		}
-		elt.disabled = false;
+		but.disabled = false;
 	}
 }
 
-function refreshData(symbol) {	
+function refreshBalance(symbol) {	
 	if (!symbol) symbol = "XNO";
-	console.log("refreshing");
 	ccc[symbol].getAccountInfo().then(async function(accountInfo) {
-		if (!XNO.address || !accountInfo) return false;
+		if (!XNO.address) return false;
+		
+		if (!accountInfo) {
+			flash(D('balance'), "??");
+			return false;
+		}
 		
 		if (accountInfo.balance !== undefined) flash(D('balance'), unitFromRaw(symbol, accountInfo.balance));
+		else flash(D('balance'), "??");
 		// if (accountInfo.pending !== undefined) flash(D(`${symbol}-balance-pending`), unitFromRaw(symbol, accountInfo.pending));
 		
-		if (XNO.address) {
-			let data = await ccc[symbol].getPending();
-			if (data) {
-				let count = 0;
-				for (const block in data.blocks) {
-					await ccc[symbol].receive(block);
-					count++;
-				}
-				if (count) {
-					refreshData(symbol);
-					return accountInfo;
-				}
+		let data = await ccc[symbol].getPending();
+		if (data) {
+			let count = 0;
+			for (const block in data.blocks) {
+				await ccc[symbol].receive(block);
+				count++;
 			}
-			if (unitFromRaw(symbol, accountInfo.balance) != 0) findWork();
-			else console.log("Empty account");
+			if (count) {
+				refreshBalance(symbol);
+				return accountInfo;
+			}
 		}
-		return accountInfo;
+		if (unitFromRaw(symbol, accountInfo.balance) != 0) findWork();
 	});
 }
 
@@ -729,7 +680,7 @@ const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedge
 
 var url = new URL(window.location);						
 var possibleOrigins = ["https://brewri.github.io"];
- 
+
 var serverURL = 'wss://brewri-server.fly.dev';
 var ws;
 setupWebsocket(true);
@@ -905,6 +856,11 @@ function setupWebsocket(fresh) {
 		console.log(data);
 		makeSubLi(data.userid2, data);
 		D(data.userid2).scrollIntoView({behavior: "smooth", block:"nearest"});
+		
+		if (readPostWall && D('read').style.display != 'none') {
+			console.log("Trying to clear a wall");
+			fillPost(readPostid, true);
+		}
 	});
 }
 
@@ -1868,10 +1824,7 @@ function fullLabel(postid, type, mediaBox) {
 	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis; margin:2px 0px;";		
 	postMeta.appendChild(timeLabel(data.createdts, data.modifiedts));
 	
-	if (data.wall && data.wall.length) {	
-		let premium = make('span', " • Premium");
-		postMeta.appendChild(premium);
-	}
+	if (data.wall && data.wall.length) postMeta.appendChild(make('span', " • Premium"));
 	
 	if (data.userid == XNO.address) {
 		let editBut = make('a', " • Update");			
@@ -2308,7 +2261,7 @@ function importSeed() {
 				D('edit2').style.display = "none";
 			}
 			
-			refreshData("XNO");
+			refreshBalance("XNO");
 		}
 		D("seed").value = "";
 	}
@@ -2472,7 +2425,7 @@ function makeSubLi(userid, data) {
 				newDate = 2*Date.now() - data.expiryts;
 				expirySpan = make('span', "Premium sponsorship • " + timeSince(newDate) + " left");
 			} else {			
-				expirySpan = make('a', "Sponsorship ended • " + timeSince(data.expiryts) + " ago");
+				expirySpan = make('a', "Premium sponsorship • ended " + timeSince(data.expiryts) + " ago");
 				//expirySpan.style = "font-style:italic";
 				expirySpan.onclick = function() {			
 					event.preventDefault();
@@ -2949,13 +2902,6 @@ function toggleSecondDiv(elt) {
 	toggle(elt);
 }
 
-function networkFailMsg(error) {
-	console.error("XNO network error");
-	if (!error || error.message == "Network Error") showMsg("Unable to connect to XNO network.");
-	else showMsg("Transfer seems to have failed or is delayed.");
-	return false;
-}
-
 function color(elt) {
 	let theColor = elt.value || funColor(XNO.address, true, true);
 	elt.previousElementSibling.style.color = 'hsl(' + theColor + ', 100%, 27%)';
@@ -2981,6 +2927,38 @@ function fileSize(url) {
     });
 }
 
+function setLocalJSON(name, data) { localStorage.setItem(name, JSON.stringify(data)); }
+
+function getLocalJSON(name) {
+	let data = localStorage.getItem(name);
+	if (data) data = JSON.parse(data);
+	return data;
+}
+
+function post(url, params) {
+    return new Promise((resolve, reject) => {
+        let xhttp = new XMLHttpRequest();
+        xhttp.timeout = 15*1000; // 15 seconds
+        xhttp.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				if (this.status == 200) {
+					try { resolve(JSON.parse(this.responseText)); } 
+					catch(e) {
+						console.error('Failed to parse response from node');
+						console.error(this.responseText);
+						resolve();
+					}
+				} else {
+					console.error('Failed to connect to '+ url + ". Parameters:", params);
+					resolve();
+				}
+			}
+        };
+        xhttp.open("POST", url, true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.send(JSON.stringify(params));
+    });
+}	
 
 </script>
 
