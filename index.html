@@ -29,7 +29,7 @@
 
 			<div id="editPanel" class="accordion" style="max-height:0px; margin:0px 10px">
 				<div style="text-align:center; margin-top:20px">
-					<button tabindex="-1" class="left" onclick="generateSeed()">Generate PIN</button><button id="current" class="center" tabindex="-1" onclick="showCurrent()" autocomplete="off" disabled>Current PIN</button><button id="clear" class="right" onclick="if (confirm('Log out of the current account? (Have you saved your account PIN elsewhere?!)')) clickClearSeed();" autocomplete="off" disabled>Log Out</button>
+					<button tabindex="-1" class="left" onclick="generateSeed()">Generate PIN</button><button id="currentLoginButton" class="center" tabindex="-1" onclick="showCurrent()" autocomplete="off" disabled>Current PIN</button><button id="logoutButton" class="right" onclick="if (confirm('Log out of the current account? (Have you saved your account PIN elsewhere?!)')) clickClearSeed();" autocomplete="off" disabled>Log Out</button>
 				</div>
 				
 				<div style="display:flex; justify-content:space-between; margin-top:15px; margin-bottom:5px">
@@ -189,7 +189,7 @@
 					
 				
 				<div style="margin-top:50px; display:flex;">
-					<button id="submitButton" onclick="publish()" tabindex="-1" disabled>Publish</button>
+					<button id="publishButton" onclick="publish()" tabindex="-1" disabled>Publish</button>
 					<button id="clearButton" style="margin-left:5px" tabindex="-1" onclick="cancelPost()">Clear</button>	
 				</div>
 			</div>
@@ -778,7 +778,7 @@ function setupWebsocket(fresh) {
 		
 		if (readPostWall) {
 			console.log("Trying to clear a wall");
-			fillPost(readPostid, true);
+			fillPost(readPostid, false, true);
 		}
 	});
 	
@@ -814,7 +814,7 @@ function setupWebsocket(fresh) {
 	ws.on('queryTagResponse', function (data) { fillBrowseList(data); });	
 	ws.on('queryPostsFromUser', function (data) {
 		let update = (!userCache[data.user.userid] || JSON.stringify(userCache[data.user.userid].content) != JSON.stringify(data.user.content));
-		fillBrowseList(data.posts);
+		if (D('browseHeading').title == data.user.userid) fillBrowseList(data.posts);
 		if (data.user.userid) {
 			userCache[data.user.userid] = data.user;
 			fillBio(data.user.userid, !update);
@@ -860,7 +860,7 @@ function setupWebsocket(fresh) {
 		
 		if (readPostWall && D('read').style.display != 'none') {
 			console.log("Trying to clear a wall");
-			fillPost(readPostid, true);
+			fillPost(readPostid, false, true);
 		}
 	});
 }
@@ -946,11 +946,7 @@ function queryBrowse(label, automatic, passive) {
 	browseURL = label;
 	closeBioEditor();
 	if (active('sponsor')) sponsorHandler();
-	D('profileBut').style.display = "none";
 	D('toggleBrowse').style.display = "";
-		
-	D('sponsor').disabled = true;
-	D('sendButton').disabled = true;
 	D('bioPreview').style.display = "";
 	
 	D('theirFunName').style.color = "";	
@@ -964,10 +960,13 @@ function queryBrowse(label, automatic, passive) {
 		if (D("tag-" + D('browseHeading').title)) removeActiveBar(D("tag-" + D('browseHeading').title));
 	}
 	
+	D('profileBut').style.display = "none";
+	D('sendButton').disabled = true;
+	D('sponsor').disabled = true;
 	if (userid) {		
-		D('sponsor').disabled = false;
-		if (XNO.address) if (userid != XNO.address) D('sendButton').disabled = false;
 		if (userid == XNO.address) D('profileBut').style.display = "";
+		else if (XNO.address) D('sendButton').disabled = false;
+		D('sponsor').disabled = false;
 		queueDOMdisplayName(userid, D('theirFunName'));
 		D('theirAddress').textContent = userid;
 		if (D(userid)) activeBar(D(userid));
@@ -989,7 +988,6 @@ function queryBrowse(label, automatic, passive) {
 		D('bio').textContent = "The trickle of recent posts."
 	}
 	
-	
 	if (browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
 	else D('browseList').style.opacity = "0.6";
 	
@@ -1006,7 +1004,7 @@ function queryBrowse(label, automatic, passive) {
 	if (active('toggleBrowse')) D('toggleBrowse').click();
 }
 
-function fillPost(postid, manual) {
+function fillPost(postid, manual, passive) {
 	let userid = postid.split("-")[0];
 	let createdts = parseInt(postid.split("-")[1]);	
 	
@@ -1028,8 +1026,6 @@ function fillPost(postid, manual) {
 		if (D(postid)) activeBar(D(postid));
 		if (D(postid + "-disc")) activeBar(D(postid + "-disc"));
 	}
-	
-	if (XNO.address) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
 		
 	queueDOMdisplayName(userid, D('author'));
 	queueDOMdisplayName(userid, D('postTheirFunName'));
@@ -1040,23 +1036,13 @@ function fillPost(postid, manual) {
 		if (ws && ws.readyState == 1) ws.emit("queryPostsFromUser", {userid});
 	}
 	
-	D('postSendButton').disabled = true;
-	if (XNO.address && userid != XNO.address) D('postSendButton').disabled = false;
-	
 	while (D('tags').children.length > 1) remove(D('tags').lastElementChild);
 	
 	D('creation').textContent = unixToDate(createdts);
 	D('creation').title = unixToTime(createdts);
 	D('modification').textContent = "";
 	D('modification').title = "";
-	D('modification').style.display = "none";	
-	if (readPostid && userid == XNO.address) {
-		D('edit').style.display = "";
-		D('edit2').style.display = "";
-	} else {
-		D('edit').style.display = "none";
-		D('edit2').style.display = "none";
-	}
+	D('modification').style.display = "none";
 	
 	clearDOM(D('readComments'));
 	clearDOM(D('mapul'));	
@@ -1101,7 +1087,8 @@ function fillPost(postid, manual) {
 		}
 	}
 	
-	readPostid = postid;	
+	readPostid = postid;
+	if (XNO.address) buttonLogout(false);
 	
 	// scrollCache.read = 0;
 	if (!postCache[postid] || manual) ws.emit('queryPostChain', {userid, createdts});
@@ -1113,7 +1100,7 @@ function fillPost(postid, manual) {
 		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
 	}
 	
-	loadPanel('read');
+	if (!passive) loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();	
 }
 
@@ -1127,7 +1114,7 @@ function fillEdit(postid, confirmation) {
 	D('creationEdit').textContent = unixToDate(createdts);
 	D('creationEdit').title = unixToTime(createdts);
 	
-	D('submitButton').textContent = "Publish Update";
+	D('publishButton').textContent = "Update";
 	D('clearButton').textContent = "Cancel";
 	
 	let theNewContent = "";
@@ -1223,7 +1210,6 @@ function loadPanel(type, useRAM, goingBack) {
 	D(type).style.display = "flex";
 	D(type + "Button").classList.add('active');
 	popularTags.classList.add("desktop");
-	if (type != "browse" && active('sponsor')) sponsorHandler();
 	
 	useRAM = (useRAM && type != prevType);
 	if (useRAM && !goingBack) backList.push(prevType);	
@@ -2162,8 +2148,8 @@ function cancelPost(override) {
 	clearDOM(D('editTags'));
 	D('set-tag').value = "";
 	
-	D('submitButton').textContent = "Publish";
-	D('clearButton').textContent = "Clear";
+	D('publishButton').textContent = "Publish";
+	D('clearButton').textContent = "logoutButton";
 	
 	if (active('toggleEdit')) D('toggleEdit').click();
 	setTabTitle("Write");
@@ -2229,46 +2215,47 @@ function importSeed() {
 			setCSS("--butsat", "50%");
 			setCSS("--hue", funColor(XNO.address, false, true));
 			
-			D("current").disabled = false;
-			D("clear").disabled = false;
-			D("submitButton").disabled = false;
 			D("libraryPlaceholder").textContent = "- no history -";
 			D("subPanel").style.display = "flex";
 			D("notePanel").style.display = "flex";
 			localStorage.setItem("localSeed", XNO.seed);
 			
-			D('subscribe').disabled = false;
-			if (readPostid) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = false; }
-			
+			buttonLogout(false);			
 			makeSubLi(XNO.address);
-			if (D('browseHeading').title != "Recent") {
-				if (D('browseHeading').title != XNO.address) {
-					if (D('browseHeading').title.substring(0, 5) == "nano_") {
-						D('sponsor').disabled = false;
-						D('sendButton').disabled = false;
-					}
-				} else D('profileBut').style.display = "";
-			}
-			
-			if (XNO.address && readPostid.split("-")[0] != XNO.address) D('postSendButton').disabled = false;
-			
 			if (ws && ws.readyState == 1) {
 				let ts = Date.now();
 				ws.emit('authenticateUser', {userid: XNO.address, ts, signature:XNO.sign(ts, XNO.address)});			
 			}
 			if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
-			
-			if (readPostid && readPostid.split("-")[0] == XNO.address) {
-				D('edit').style.display = "";
-				D('edit2').style.display = "";
-			} else {
-				D('edit').style.display = "none";
-				D('edit2').style.display = "none";
-			}
-			
 			refreshBalance("XNO");
 		}
 		D("seed").value = "";
+	}
+}
+
+function buttonLogout(side) {
+	D("currentLoginButton").disabled = side;	
+	D("logoutButton").disabled = side;
+	D("publishButton").disabled = side;
+	
+	D("subscribe").disabled = side;
+	if (readPostid) for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = side; }
+	
+	D('sendButton').disabled = side;
+	D('postSendButton').disabled = side;
+	
+	D('edit').style.display = "none";
+	D('edit2').style.display = "none";
+	D('profileBut').style.display = "none";
+	
+	if (!side) {
+		if (D('browseHeading').title == XNO.address || D('browseHeading').title.substring(0, 5) != "nano_") D('sendButton').disabled = true;
+		if (readPostid.split("-")[0] == XNO.address) {
+			D('postSendButton').disabled = true;
+			D('edit').style.display = "";
+			D('edit2').style.display = "";
+		}
+		if (D('browseHeading').title == XNO.address) D('profileBut').style.display = "";
 	}
 }
 
@@ -2283,22 +2270,15 @@ function clickClearSeed() {
 	D('leftSidebar').style.backgroundColor = "hsl(0, 0%, 80%)";
 	setCSS("--butsat", "0%");
 	
-	D("current").disabled = true;	
-	D("clear").disabled = true;
-	D("submitButton").disabled = true;
 	D("libraryPlaceholder").textContent = "- no history (sign in to persist) -";
 	D("subPanel").style.display = "none";	
 	D("notePanel").style.display = "none";	
 	localStorage.removeItem("localSeed");
 	
-	D('subscribe').disabled = true;
-	for (let i = 0; i < readPanelButtons.length; i++) { readPanelButtons[i].disabled = true; }
+	buttonLogout(true);
 	inputEvent(D("seed"), "");
 	
 	if (D('browseHeading').title && browseCache[D('browseHeading').title]) fillBrowseList(browseCache[D('browseHeading').title]);
-	
-	D('edit').style.display = "none";
-	D('edit2').style.display = "none";
 }
 
 function clearSeed() {
@@ -2312,14 +2292,10 @@ function clearSeed() {
 	D('libraryPlaceholder').style.display = "";	
 	D('notificationPlaceholder').style.display = "";	
 	if (D('creationEdit').title) cancelPost(true);
-	D('sendButton').disabled = true;
-	D('postSendButton').disabled = true;
-	if (active('sponsor')) sponsorHandler();
 	closeAccordion(D('editPanel'));
 	D('balance').textContent = "0.00";
 	
 	closeBioEditor();
-	D('profileBut').style.display = "none";
 }
 
 function makeNoteLi(data) {	
