@@ -690,6 +690,7 @@ let localSeed = localStorage.getItem("localSeed");
 if (localSeed) inputEvent(D("seed"), localSeed);
 
 url.search = new URLSearchParams({postid:"nano_3iqcmnezofaufndmmgiykhoab6f3q45pqx1t9jqoi7g81n7qmh1tbe5pyfq3-1670977572136"});
+
 D('abtLink').href = url;
 D('abtLink').onclick = function() {
 	event.preventDefault();
@@ -1792,8 +1793,11 @@ function appendBlockEditor(type, previous, parent) {
 
 function fullLabel(postid, type, mediaBox) {
 	let data = postCache[postid] || {};
-	let postTitle = make('div', data.title);
-	postTitle.title = data.title;
+	let userid = postid.split("-")[0];
+	let createdts = parseInt(postid.split("-")[1]);	
+	
+	let postTitle = make('div', data.title || "- missing title -");
+	postTitle.title = data.title || "- missing title -";
 	postTitle.style = "overflow:hidden; text-overflow:ellipsis;"
 	if (type == "browse") postTitle.style.marginBottom = "3px";
 			
@@ -1804,7 +1808,7 @@ function fullLabel(postid, type, mediaBox) {
 		tags.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
 		postTitle.style.display = "-webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical;";
 	}
-	tags.appendChild(authorLabel(data.userid));	
+	tags.appendChild(authorLabel(userid));	
 	if (data.tags) {
 		for (let i = 0; i < data.tags.length; i++) {			
 			tags.appendChild(tagLabel(data.tags[i]));
@@ -1814,11 +1818,11 @@ function fullLabel(postid, type, mediaBox) {
 	// Meta: dates, edit
 	let postMeta = make('div');
 	postMeta.style = "font-size:0.85em; overflow:hidden; text-overflow:ellipsis; margin:2px 0px;";		
-	postMeta.appendChild(timeLabel(data.createdts, data.modifiedts));
+	postMeta.appendChild(timeLabel(createdts, data.modifiedts));
 	
 	if (data.wall && data.wall.length) postMeta.appendChild(make('span', " • Premium"));
 	
-	if (data.userid == XNO.address) {
+	if (userid == XNO.address) {
 		let editBut = make('a', " • Update");			
 		editBut.onclick = function() {
 			event.stopPropagation();
@@ -1855,7 +1859,7 @@ function fullLabel(postid, type, mediaBox) {
 		event.preventDefault();
 		if (!D(postid)) {
 			makeLibLi(postid);
-			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid:data.userid, createdts:data.createdts, pushedts:Date.now() }] });
+			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:Date.now() }] });
 		}
 		flash(D(postid));
 		D(postid).scrollIntoView({behavior: "smooth", block:"nearest"});
