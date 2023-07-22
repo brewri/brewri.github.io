@@ -1096,7 +1096,7 @@ function fillPost(postid, manual, passive) {
 		if (!D(postid)) {
 			let ts = Date.now();
 			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:ts, lastaccessedts:ts }] });
-			if (metaData) makeLibLi(postid, ts);
+			makeLibLi(postid, ts);
 		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
 	}
 	
@@ -1791,7 +1791,7 @@ function appendBlockEditor(type, previous, parent) {
 // Label routines ///////////////////////////////////////////////////////////////////////
 
 function fullLabel(postid, type, mediaBox) {
-	let data = postCache[postid];
+	let data = postCache[postid] || {};
 	let postTitle = make('div', data.title);
 	postTitle.title = data.title;
 	postTitle.style = "overflow:hidden; text-overflow:ellipsis;"
