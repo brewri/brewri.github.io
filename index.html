@@ -1096,7 +1096,7 @@ function fillPost(postid, manual, passive) {
 		if (!D(postid)) {
 			let ts = Date.now();
 			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:ts, lastaccessedts:ts }] });
-			makeLibLi(postid, ts);
+			if (metaData) makeLibLi(postid, ts);
 		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
 	}
 	
