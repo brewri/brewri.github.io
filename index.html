@@ -682,7 +682,8 @@ const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedge
 var url = new URL(window.location);						
 var possibleOrigins = ["https://brewri.github.io"];
 
-var serverURL = 'wss://brewri-server.fly.dev';
+var serverURL = 'wss://brewri-server-stg.fly.dev';
+//var serverURL = 'wss://impuremaths.herokuapp.com';
 var ws;
 setupWebsocket(true);
 
@@ -772,7 +773,7 @@ function setupWebsocket(fresh) {
 			data.library.sort(function(x, y) { return x.pushedts - y.pushedts; });
 			for (let i = 0; i < data.library.length; i++) {
 				cachePost(data.library[i]);
-				makeLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
+				updateLibLi(data.library[i].postid, data.library[i].lastaccessedts, data.library[i].pushedts);
 			}
 		}
 		requestNames();
@@ -1093,13 +1094,12 @@ function fillPost(postid, manual, passive) {
 	
 	// scrollCache.read = 0;
 	if (!postCache[postid] || manual) ws.emit('queryPostChain', {userid, createdts});
+	let lastaccessedts = 0;
 	if (manual) {
-		if (!D(postid)) {
-			let ts = Date.now();
-			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:ts, lastaccessedts:ts }] });
-			makeLibLi(postid, ts);
-		} else D(postid).firstElementChild.firstElementChild.style.fontWeight = "";
+		lastaccessedts = Date.now();
+		//if (!D(postid) && XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:lastaccessedts, lastaccessedts }] });
 	}
+	if (manual || D(postid)) updateLibLi(postid, lastaccessedts);
 	
 	if (!passive) loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();	
@@ -1858,7 +1858,7 @@ function fullLabel(postid, type, mediaBox) {
 		event.stopPropagation();
 		event.preventDefault();
 		if (!D(postid)) {
-			makeLibLi(postid);
+			updateLibLi(postid);
 			if (XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:Date.now() }] });
 		}
 		flash(D(postid));
@@ -2443,19 +2443,29 @@ function makeSubLi(userid, data) {
 	}
 }
 
-function makeLibLi(postid, lastaccessedts, pushedts) {
-	let libli = make('li');
-	libli.id = postid;
-	libli.style.whiteSpace = "nowrap";
-	libli.appendChild(fullLabel(postid, "library"));	
-	if (!lastaccessedts) libli.firstElementChild.firstElementChild.style.fontWeight = "bold";	
-	//if (pushedts) libli.appendChild(make('span', timeSince(pushedts)));
-	if (postid == readPostid) activeBar(libli);
-	if (D('library').firstElementChild) D('library').insertBefore(libli, D('library').firstElementChild);
-	else {
-		D('library').appendChild(libli);
-		D('libraryPlaceholder').style.display = "none";
+function updateLibLi(postid, lastaccessedts) {
+	let finalState = "bold";
+	if (lastaccessedts) finalState = "";
+	
+	let libli = D(postid);
+	if (!libli) {
+		libli = make('li');
+		libli.id = postid;
+		libli.style.whiteSpace = "nowrap";
+		//if (pushedts) libli.appendChild(make('span', timeSince(pushedts)));
+		if (D('library').firstElementChild) D('library').insertBefore(libli, D('library').firstElementChild);
+		else {
+			D('library').appendChild(libli);
+			D('libraryPlaceholder').style.display = "none";
+		}
+	} else {
+		if (!lastaccessedts) finalState = libli.firstElementChild.firstElementChild.style.fontWeight;
+		clearDOM(D(postid));
 	}
+	libli.appendChild(fullLabel(postid, "library"));
+	
+	libli.firstElementChild.firstElementChild.style.fontWeight = finalState;
+	if (postid == readPostid) activeBar(libli);
 }
 
 function showCurrent() {
