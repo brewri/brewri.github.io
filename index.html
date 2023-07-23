@@ -756,9 +756,8 @@ function setupWebsocket(fresh) {
 		
 		clearDOM(D('notifications'));
 		D('notificationHeading').textContent = "Activity";
-		noteCount = 0;
 		console.log(data);
-		if (data.notifCounter) noteCount = data.notifCounter;
+		noteCount = data.notifCounter || 0;
 		setTabTitle(false, true);
 		if (data.notifications) {
 			data.notifications.sort(function(x, y) { return x.timestamp - y.timestamp; });
@@ -835,7 +834,7 @@ function setupWebsocket(fresh) {
 			if (editPostid == data[x].postid) hasEditPost = true;
 		}
 		if (hasEditPost && editPostPending) fillEdit(editPostid, true); 
-		else if (readPostid) fillPost(readPostid);
+		else if (readPostid) fillPost(readPostid, true, true);
 		requestNames();
 	});
 	
@@ -1005,7 +1004,7 @@ function queryBrowse(label, automatic, passive) {
 	if (active('toggleBrowse')) D('toggleBrowse').click();
 }
 
-function fillPost(postid, manual, passive) {
+function fillPost(postid, automatic, passive) {
 	let userid = postid.split("-")[0];
 	let createdts = parseInt(postid.split("-")[1]);	
 	
@@ -1092,13 +1091,10 @@ function fillPost(postid, manual, passive) {
 	if (XNO.address) buttonLogout(false);
 	
 	// scrollCache.read = 0;
-	if (!postCache[postid] || manual) ws.emit('queryPostChain', {userid, createdts});
-	let lastaccessedts = 0;
-	if (manual) {
-		lastaccessedts = Date.now();
-		//if (!D(postid) && XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:lastaccessedts, lastaccessedts }] });
-	}
-	if (manual || D(postid)) updateLibLi(postid, lastaccessedts);
+	if (!(automatic && postCache[postid])) ws.emit('queryPostChain', {userid, createdts});
+	let lastaccessedts = (!automatic && Date.now()) || 0;
+	//if (!automatic && !D(postid) && XNO.address && ws) ws.emit('updateLibrary', { posts: [{ userid, createdts, pushedts:lastaccessedts, lastaccessedts }] });
+	if (!automatic || D(postid)) updateLibLi(postid, lastaccessedts);
 	
 	if (!passive) loadPanel('read');
 	if (active('toggleRead')) D('toggleRead').click();	
@@ -1897,7 +1893,7 @@ function fullLabel(postid, type, mediaBox) {
 	label.onmouseleave = function() { actions.style.display = "none"; };
 	label.onclick = function() {
 		event.preventDefault();
-		fillPost(postid, true);
+		fillPost(postid);
 		flash(this.parentNode);
 	}
 	return label;
@@ -2334,7 +2330,7 @@ function makeNoteLi(data) {
 		
 		link.onclick = function() {
 			event.preventDefault();
-			fillPost(postid, true);
+			fillPost(postid);
 		}
 		
 		text.appendChild(link);
@@ -2553,7 +2549,7 @@ function loadURL(link) {
 	let params = new URLSearchParams(link.search);
 	if (params.get('postid') != null) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse({}, true, true);
-		if (params.get('postid')) fillPost(params.get('postid'), activeClick);
+		if (params.get('postid')) fillPost(params.get('postid'), !activeClick);
 		else loadPanel("read");
 	} else if (params.get('editid') != null) {
 		if (ws && ws.readyState == 1 && !D('browseHeading').textContent) queryBrowse({}, true, true);
