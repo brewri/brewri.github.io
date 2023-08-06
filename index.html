@@ -345,7 +345,8 @@ function twoDigit(str) {
 // Higher level crypto methods ///////////////////////////////////////////////////////////////////////
 
 let ccc = {};
-ccc['XNO'] = {shift:30, server:'https://rainstorm.city/api', // 'https://proxy.nanos.cc/proxy',				
+ccc['XNO'] = {shift:30, server:'https://rainstorm.city/api', // 'https://proxy.nanos.cc/proxy',	
+						powArray: ['https://rainstorm.city/api', 'https://proxy.nanos.cc/proxy'],
 						representative:'nano_1natrium1o3z5519ifou7xii8crpxpk8y65qmkih8e8bpsjri651oza8imdd',
 						repRec:'https://mynano.ninja/api/accounts/verified'};
 						
@@ -469,9 +470,14 @@ async function findWork(workInput, subtype) {
 		work = localWork[XNO.address].work;
 		console.warn("Using local work!!", work);
 	} else {
-		let prework = (await post(ccc['XNO'].server, {action: 'work_generate', hash: workInput, difficulty}));
-		work = prework && prework.work;
-		console.warn("Generating REMOTE work:", work);
+		let i = 0;
+		while (!work && ccc['XNO'].powArray[i]) {
+			let prework = (await post(ccc['XNO'].powArray[i], {action: 'work_generate', hash: workInput, difficulty}));
+			work = prework && prework.work;
+			console.warn("Generating REMOTE work:", work);
+			i++;
+		}
+		if (!work) console.warn("All REMOTE work attempts failed...");
 	}
 	
 	if (work) localWork[XNO.address] = {work, workInput, difficulty};	
@@ -482,7 +488,7 @@ async function findWork(workInput, subtype) {
 async function postBlock(symbol, subtype, workInput, previous, representative, balance, link) {
 	let work = await findWork(workInput, subtype);
 	if (!work) {	
-		showMsg("Proof of work failed. Amount NOT processed; try again.");
+		showMsg("Proof-of-work failed. Amount NOT processed; try again later.");
 		return false;
 	}
 	
@@ -2148,11 +2154,15 @@ function cancelPost(override) {
 	clearDOM(D('editTags'));
 	D('set-tag').value = "";
 	
+	let readPanelize = (D('clearButton').textContent == "Cancel");
+	
 	D('publishButton').textContent = "Publish";
 	D('clearButton').textContent = "Clear";
 	
 	if (active('toggleEdit')) D('toggleEdit').click();
 	setTabTitle("Write");
+	
+	// if (readPanelize) loadPanel('read');
 	return true;
 }
 
