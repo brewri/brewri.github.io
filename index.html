@@ -1436,7 +1436,7 @@ function fillMediaBox(mediaURL, preview) {
 		mediaBox.style = "display:flex; justify-content:center";
 		
 		let imagediv = make("img");
-		imagediv.style = "font-style:italic; height:fit-content; margin:auto; max-width:100%; max-height:100%";
+		imagediv.style = "font-style:italic; height:fit-content; margin:auto; max-width:85%; max-height:100%";
 		imagediv.alt = "loading image...";
 		mediaBox.appendChild(imagediv);
 		fileSize(mediaURL).then(function(size) {
