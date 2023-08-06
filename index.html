@@ -822,7 +822,8 @@ function setupWebsocket(fresh) {
 	ws.on('queryTagResponse', function (data) { fillBrowseList(data); });	
 	ws.on('queryPostsFromUser', function (data) {
 		let update = (!userCache[data.user.userid] || JSON.stringify(userCache[data.user.userid].content) != JSON.stringify(data.user.content));
-		if (D('browseHeading').title == data.user.userid) fillBrowseList(data.posts);
+		if (data.user && !data.user.userid) fillBrowseList([]);
+		else if (D('browseHeading').title == data.user.userid) fillBrowseList(data.posts);
 		if (data.user.userid) {
 			userCache[data.user.userid] = data.user;
 			fillBio(data.user.userid, !update);
