@@ -896,8 +896,11 @@ function cachePost(metaData, chain) {
 
 	if (metaData.content) {	
 		if (!cacheData.content || typeof metaData.content === "string" || cacheData.content.length != cacheData.content.length) cacheData.content = metaData.content;
-		else for (let i = 0; i < metaData.content.length; i++) {
-			if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
+		else {
+			cacheData.content.length = metaData.content.length;
+			for (let i = 0; i < metaData.content.length; i++) {
+				if (metaData.content[i].content) cacheData.content[i] = metaData.content[i];
+			}
 		}
 	}
 	if (metaData.tags) cacheData.tags = metaData.tags;
