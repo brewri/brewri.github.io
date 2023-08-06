@@ -217,7 +217,7 @@
 					<div style="font-size:0.85em; color:#888">Premium sponsorship • 30 days</div>
 					<span id="postTheirThreshold" style="margin:5px 0px 15px 10px; cursor:pointer; border-radius:3px" onclick="clickPaste(this, true)">&nbsp;-&nbsp;</span>&nbsp;XNO
 					<div style="display:flex; justify-content:space-between; align-items:baseline; max-width:400px; margin:10px auto">
-					<input id="postSponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:10px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
+					<input id="postSponsorInput" onfocus="scrollPanel(this)" onkeyup="" onkeydown="" placeholder="0.00" onblur="prepTwoDigit(this)" style="scroll-margin:80px; margin-right:5px; text-align:right; flex-grow:1; flex-basis:1px; overflow:hidden; text-overflow:ellipsis;" type="number" step="0.01" min="0" autocomplete="off"> XNO							
 					<button id="postSendButton" onclick="sendMoney(true)" autocomplete="off" style="margin-left:20px; font-size:0.85em" disabled>Send</button>
 					</div>
 				</div>
@@ -690,7 +690,8 @@ const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedge
 var url = new URL(window.location);						
 var possibleOrigins = ["https://brewri.github.io"];
 
-var serverURL = 'wss://brewri-server.fly.dev';
+var serverURL = 'wss://brewri-server-stg.fly.dev';
+//var serverURL = 'wss://impuremaths.herokuapp.com';
 var ws;
 setupWebsocket(true);
 
@@ -1328,8 +1329,10 @@ function fillContent(elt, content, wall, userid) {
 			athlabel.onclick = function() {	
 				event.preventDefault();
 				event.stopPropagation();
-				queryBrowse({userid});
-				sponsorHandler();
+				// queryBrowse({userid});
+				// sponsorHandler();
+				if (!active('sponsor2')) postSponsorHandler();
+				else D('postSponsorInput').scrollIntoView({behavior: "smooth", block:"nearest"});
 			}
 			jsbox.appendChild(athlabel);
 			jsbox.appendChild(make('span', "'s sponsors -"));
