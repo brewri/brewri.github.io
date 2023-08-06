@@ -578,6 +578,8 @@ async function sendMoney(read) {
 		them = D('postTheirFunName').textContent;
 	}
 	
+	let overRide = (threshold == " - ");
+	
 	if (inputElt.validationMessage == "Please enter a number." || inputElt.value <= 0) {
 		showMsg("Enter a positive value.");
 		flash(inputElt);
@@ -593,8 +595,8 @@ async function sendMoney(read) {
 		else if (totalAmt > balance) showMsg("Insufficient funds.");
 		else {
 			let confirmMessage = "Sponsor less than amount for premium content?";
-			if (totalAmt > BigInt(rawFromUnit(symbol, threshold))) confirmMessage = "Sponsor more than amount for premium content?";
-			if (totalAmt == BigInt(rawFromUnit(symbol, threshold)) || confirm(confirmMessage)) {
+			if (!overRide && totalAmt > BigInt(rawFromUnit(symbol, threshold))) confirmMessage = "Sponsor more than amount for premium content?";
+			if ((overRide || totalAmt == BigInt(rawFromUnit(symbol, threshold))) || confirm(confirmMessage)) {
 				if (totalAmt >= BigInt(rawFromUnit(symbol, threshold))) showMsg("Sponsoring \'" + them + "\'...", null, true);
 				else showMsg("Tipping \'" + them + "\'...", null, true);
 				let sendResp = await ccc[symbol].sendTo(destaddr, totalAmt.toString());
@@ -602,7 +604,7 @@ async function sendMoney(read) {
 					console.log(sendResp);
 					flash(D('balance'), unitFromRaw(symbol, BigInt(rawFromUnit(symbol, D('balance').textContent)) - totalAmt));
 					
-					if (totalAmt >= BigInt(rawFromUnit(symbol, threshold))) {
+					if (!overRide && totalAmt >= BigInt(rawFromUnit(symbol, threshold))) {
 						showMsg("Sponsored \'" + them + "\' with " + amt + " " + symbol + "! Premium content now available.");
 						if (ws) ws.emit('sponsor', {userid:destaddr, blockid:sendResp, amt});
 					} else showMsg("Tipped \'" + them + "\' " + amt + " " + symbol + "!");
