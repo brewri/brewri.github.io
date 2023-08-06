@@ -1027,6 +1027,7 @@ function fillPost(postid, automatic, passive) {
 		D('commentContent').style.display = 'none';
 		D('commentContent').value = "";
 		D("comment").textContent = "Comment";
+		D("comment").classList.remove("active");
 		
 		if (active('sponsor2')) postSponsorHandler();
 		
@@ -1503,7 +1504,7 @@ function addComment(commentData) {
 		editPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		
 		editPanel.oninput = function() {
-			if (editPanel.value) editBut.textContent = " • Publish edit";
+			if (editPanel.value) editBut.textContent = " • Send edit";
 			else editBut.textContent = " • Cancel";
 		};
 		editPanel.onkeyup = function() {
@@ -1549,7 +1550,7 @@ function addComment(commentData) {
 		repPanel.style.fontFamily = "Segoe UI, Source Sans Pro, Roboto, Helvetica, sans-serif";
 		repPanel.placeholder = "Reply...";
 		repPanel.oninput = function() {
-			if (repPanel.value) repBut.textContent = "Reply";
+			if (repPanel.value) repBut.textContent = "Send";
 			else repBut.textContent = "Cancel";
 		};
 		repPanel.onkeyup = function() {
@@ -1557,6 +1558,7 @@ function addComment(commentData) {
 				repPanel.value = "";
 				repPanel.style.display = "none";
 				repBut.textContent = "Reply";
+				repBut.classList.remove("active");
 				event.stopPropagation();
 			}
 		}					
@@ -1569,10 +1571,12 @@ function addComment(commentData) {
 			if (repPanel.style.display == "none") {
 				repPanel.style.display = "block";
 				this.textContent = "Cancel";
+				repBut.classList.add("active");
 				repPanel.focus();
 			} else {
 				repPanel.style.display = "none";
 				this.textContent = "Reply";
+				repBut.classList.remove("active");
 				let previd = "";
 				if (D(commentData.commentid + "-ul").lastElementChild) previd = D(commentData.commentid + "-ul").lastElementChild.id;
 				if (repPanel.value) ws.emit('updateComment', {content:repPanel.value, postid:commentData.postid, parentid:commentData.commentid, previd});
@@ -2188,19 +2192,24 @@ function commentKeypress() {
 		D('commentContent').value = "";
 		D('commentContent').style.display = "none";
 		D("comment").textContent = "Comment";
+		D("comment").classList.remove("active");
 		event.stopPropagation();
-	} else if (D('commentContent').value) D("comment").textContent = "Comment";
-	else D("comment").textContent = "Cancel";
+	} else {
+		if (D('commentContent').value) D("comment").textContent = "Send";
+		else D("comment").textContent = "Cancel";
+	}
 }
 
 function comment() {
 	if (D('commentContent').style.display) {
 		D('commentContent').style.display = "";
 		D("comment").textContent = "Cancel";
+		D("comment").classList.add("active");
 		D('commentContent').focus();
 	} else {
 		D('commentContent').style.display = "none";
 		D("comment").textContent = "Comment";
+		D("comment").classList.remove("active");
 		ws.emit('updateComment', {content:D('commentContent').value, postid: readPostid});
 		D('commentContent').value = "";
 	}
