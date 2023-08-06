@@ -474,7 +474,7 @@ async function findWork(workInput, subtype) {
 		while (!work && ccc['XNO'].powArray[i]) {
 			let prework = (await post(ccc['XNO'].powArray[i], {action: 'work_generate', hash: workInput, difficulty}));
 			work = prework && prework.work;
-			console.warn("Generating REMOTE work:", work);
+			console.warn("Generating REMOTE work:", work, i, ccc['XNO'].powArray[i]);
 			i++;
 		}
 		if (!work) console.warn("All REMOTE work attempts failed...");
