@@ -853,6 +853,7 @@ function setupWebsocket(fresh) {
 	
 	ws.on('updatePostResponse', function(data) { 
 		cachePost(data);
+		scrollCache.read = 0;
 		fillPost(data.postid);
 		cancelPost(true);
 	});
