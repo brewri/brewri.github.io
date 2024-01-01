@@ -130,7 +130,7 @@ body {
 .sidebar {
 	flex-basis:1px; 
 	overflow:hidden;
-	margin-left:50px;
+	margin-left:80px;
 	flex-grow:1;
 }
 
