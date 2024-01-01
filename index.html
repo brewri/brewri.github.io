@@ -85,7 +85,7 @@
 			</div>
 		</div>
 		
-		<div id="browse" style="padding-bottom:80px; max-width:1200px">			
+		<div id="browse" style="padding-bottom:80px; max-width:1240px">			
 			<div style="margin-bottom:5px">
 				<span style="font-weight:bold; font-size:1.1em; cursor:pointer;" onclick="queryBrowse(browseURL)" id="browseHeading"></span>
 				<span id="loadingMsg" style="margin-left:10px; font-style:italic; display:none">Loading...</span>
@@ -97,7 +97,7 @@
 					<ul id="browseList"></ul>
 				</div>
 				
-				<div class="sidebar desktop" style="flex-grow:4; margin-left:40px;">					
+				<div class="sidebar desktop" style="flex-grow:4; margin-left:80px;">					
 					<div id="bioPreview" style="overflow:hidden; display:none">
 						<div id="bio" style="font-size:0.9em; margin-top:30px; margin-bottom:2em"></div>
 						
@@ -139,7 +139,7 @@
 			</div>
 		</div>
 
-		<div id="write" style="display:none; padding-bottom:80px; max-width:1200px;">		
+		<div id="write" style="display:none; padding-bottom:80px; max-width:1240px;">		
 			<button id="toggleEdit" class="mobile" onclick="toggleSecondDiv(this)">. . .</button>
 		
 			<div style="flex-basis:1px; flex-grow:2; position:relative; margin-top:0.5em;">
@@ -195,7 +195,7 @@
 			</div>
 		</div>
 		
-		<div id="read" style="display:none; padding-bottom:80px; max-width:1200px;">
+		<div id="read" style="display:none; padding-bottom:80px; max-width:1240px;">
 			<button id="toggleRead" class="mobile" onclick="toggleSecondDiv(this)">. . .</button>
 			<div style="flex-basis:1px; flex-grow:2; overflow:hidden">				
 				<div id="readContent" style="margin-bottom:2.5em; margin-top:2em">Browse for something interesting!</div>
@@ -692,7 +692,8 @@ const animals = ["Puppy", "Kitten", "Bunny", "Hamster", "Panda", "Otter", "Hedge
 var url = new URL(window.location);						
 var possibleOrigins = ["https://brewri.github.io"];
 
-var serverURL = 'wss://brewri-server.fly.dev';
+var serverURL = 'wss://brewri-server-stg.fly.dev';
+//var serverURL = 'wss://impuremaths.herokuapp.com';
 var ws;
 setupWebsocket(true);
 
@@ -1356,6 +1357,9 @@ function fillContent(elt, content, wall, userid) {
 				document.body.parentElement.scrollHeight, document.body.parentElement.offsetHeight, document.body.parentElement.clientHeight)}, '*');
 			};<` + "/" + `script>`;
 			jsbox.srcdoc = content[i].content + str;
+			if (!i) {
+				//setTimeout(function() {jsbox.click();}, 1000);
+			}
 		} else if (content[i].type == "image" || content[i].type == "media") {
 			let str = content[i].content.trim();			
 			jsbox.appendChild(fillMediaBox(str.split(" ")));
@@ -1480,7 +1484,7 @@ function addComment(commentData) {
 	else theComment = make('li', commentData.content);
 	theComment.innerHTML = theComment.innerHTML.replace(/([\n]{2,})/g, "<p style='margin:0.9em 0px'></p>");
 	
-	let dateDiv = timeLabel(parseInt(commentData.commentid.split("-")[1]), commentData.modifiedts);
+	let dateDiv = timeLabel(parseInt(commentData.commentid.split("-")[1]), commentData.modifiedts, true);
 	dateDiv.id = commentData.commentid + "-date";
 	dateDiv.style.color = "#888";
 	dateDiv.style.marginLeft = "5px";	
@@ -1955,15 +1959,15 @@ function authorLabel(userid) {
 	return postAuthor;
 }
 
-function timeLabel(createdts, modifiedts) {	
+function timeLabel(createdts, modifiedts, abbrev) {	
 	let dateDiv = make('span');
 	
-	let postDate = make('span', timeSince(createdts));	
+	let postDate = make('span', timeSince(createdts, abbrev));	
 	postDate.title = unixToTime(createdts);
 	dateDiv.appendChild(postDate);	
 	
-	if (modifiedts && timeSince(modifiedts) != timeSince(createdts)) {
-		let postModified = make('span', " •\xa0" + timeSince(modifiedts));
+	if (modifiedts && timeSince(modifiedts, abbrev) != timeSince(createdts, abbrev)) {
+		let postModified = make('span', " •\xa0" + timeSince(modifiedts, abbrev));
 		postModified.style.fontStyle = "italic";
 		postModified.title = unixToTime(modifiedts);
 		dateDiv.appendChild(postModified);
@@ -2817,37 +2821,44 @@ function toggle(div) {
 	else div.classList.add('active');
 }
 
-function timeSince(date) {
+function timeSince(date, abbrev) {
 	if (typeof date !== 'object') date = new Date(date);
 
 	var seconds = Math.floor((new Date() - date) / 1000);
 	var intervalType;
 
 	var interval = Math.floor(seconds / 31536000);
-	if (interval >= 1) intervalType = 'y';
+	if (interval >= 1) intervalType = 'year';
 	else {
 		interval = Math.floor(seconds / 2592000);
-		if (interval >= 1) intervalType = 'mo';
+		if (interval >= 1) intervalType = 'month';
 		else {
 			interval = Math.floor(seconds / 86400);
-			if (interval >= 1) intervalType = 'd';
+			if (interval >= 1) intervalType = 'day';
 			else {
 				interval = Math.floor(seconds / 3600);
-				if (interval >= 1) intervalType = "h";
+				if (interval >= 1) intervalType = "hour";
 				else {
 					interval = Math.floor(seconds / 60);
-					if (interval >= 1) intervalType = "m";
+					if (interval >= 1) intervalType = "minute";
 					else {
 						interval = seconds;
-						intervalType = "s";
+						intervalType = "second";
 					}
 				}
 			}
 		}
 	}
-
+	if (abbrev) {
+		if (intervalType == "month") intervalType = "mo";
+		else intervalType = intervalType.substr(0, 1);
+		return interval + intervalType;
+	}
+	
+	let plural = "s";
+	if (interval == 1) plural = "";
 	//  if (interval > 1 || interval === 0) intervalType += 's';
-	return interval + intervalType;
+	return interval + " " + intervalType + plural + " ago";
 }
 
 function addTabbing(elt) {
