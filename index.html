@@ -1356,7 +1356,11 @@ function fillContent(elt, content, wall, userid) {
 				document.body.parentElement.scrollHeight, document.body.parentElement.offsetHeight, document.body.parentElement.clientHeight)}, '*');
 			};<` + "/" + `script>`;
 			jsbox.srcdoc = content[i].content + str;
-			if (!i) {
+			if (!i && elt == D('readContent')) {
+				jsbox.onload = function() {
+					jsbox.focus();
+					select(jsbox);
+				};
 				//setTimeout(function() {jsbox.click();}, 1000);
 			}
 		} else if (content[i].type == "image" || content[i].type == "media") {
